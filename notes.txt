@@ -1,0 +1,51 @@
+
+- take the code to the server
+----------------
+
+values that become dijoint due to filters. eg. filtered over spatial extent, same series enters and leaves.
+
+
+- jdbc connection - that we can execute.  
+- jdbc connection configuration. 
+
+- string test expression.
+- find a basic java calc example. or parse ourselves based on cql.  
+
+- typing
+
+- ahhh. 
+- temporal type will just be date - ok.
+- spatial extent - will need to parse a geometry representation, or the postgres operators 
+- might be easier to adopt prefix notation
+- contains( geom, ). 
+- think we need to construct a couple of sql examples to see what the sql looks like
+
+
+- library
+
+
+- name<value,field
+- assemble a single netcdf and stream zip ?   
+
+- we have to use geometry because that is the field where that has the spatially indexed value. 
+ 
+	
+Mapping from filter syntax -> sql 
+- double, date, geometry 
+- use an ast? 
+- should we write in ocaml as first pass...
+
+
+- lisp-like to be syntax agnostic. allow us to code up geometry easily as well.
+
+layer=xxx& filter= and ( contains(geom, box( (0,0), ... ) ( time < 1.1.2015 ) 
+
+- we can expose any of the postgres st functions/operators if we want with this type of syntax.
+-
+
+	lispy 
+		syntax agnostic, during development 
+		ability to parse as ast without complication
+
+
+
