@@ -21,7 +21,8 @@ import java.util.ArrayList; //io.BufferedInputStream;
 interface Visitor
 {
 	public void visit(  ExprInteger expr );
-	public void visit(  ExprIdentifier expr );
+	public void visit(  ExprProc expr );
+	public void visit(  ExprLiteral expr );
 }
 
 
@@ -49,6 +50,21 @@ class ExprInteger implements IExpression
 	final int value; //
 }
 
+class ExprLiteral implements IExpression
+{
+	public ExprLiteral( int pos_, String value_)
+	{
+		pos = pos_;
+		value = value_;
+	}
+
+	public int get_position() { return pos; } 
+	public void accept( Visitor v )  { v.visit( this); }  
+	final int pos;
+	final String value; //
+}
+
+
 /*
 class ExprWhite implements IExpression
 {
@@ -63,9 +79,9 @@ class ExprWhite implements IExpression
 */
 
 
-class ExprIdentifier implements IExpression
+class ExprProc implements IExpression
 {
-	public ExprIdentifier( int pos_, String symbol_, ArrayList<IExpression> children_  )
+	public ExprProc( int pos_, String symbol_, ArrayList<IExpression> children_  )
 	{
 		pos = pos_;
 		symbol = symbol_;
@@ -86,7 +102,7 @@ class ExprIdentifier implements IExpression
 // actually why not pass a
 // string s, integer pos, boxed type....
 
-class Context
+class Parser 
 {
 
 /*	public Context( String s, int pos)
@@ -124,7 +140,7 @@ class Context
 			return expr;
 		}
 
-		ExprIdentifier expr2 = parseIdentifier(s, pos);
+		ExprProc expr2 = parseProc(s, pos);
 		if(expr2 != null)
 		{
 			System.out.println("got " + expr2 );
@@ -140,7 +156,7 @@ class Context
 	// alternatively we could actually point at the symbol.
 	// ('+' a b)
 
-	ExprIdentifier parseIdentifier(String s, int pos)
+	ExprProc parseProc(String s, int pos)
 	{
 		String symbol = "";
 
@@ -163,7 +179,7 @@ class Context
 				b.append(s.charAt(pos));
 				++pos;
 			}
-			//return new ExprIdentifier(pos, b.toString());
+			//return new ExprProc(pos, b.toString());
 			//System.out.println("got symbol !" + symbol );
 			//System.out.println("- pos now " + pos);
 			symbol = b.toString();
@@ -193,7 +209,7 @@ class Context
 			return null;
 		++pos;
 
-		return new ExprIdentifier ( pos, symbol, children );
+		return new ExprProc ( pos, symbol, children );
 	}
 	
 	// perhaps add a depth as well 
@@ -214,8 +230,8 @@ class Context
 
 	ExprInteger parseInt( String s, int pos)
 	{
-		// we are committed
 		if(Character.isDigit(s.charAt(pos))) {
+			// we are committed
 			StringBuilder b = new StringBuilder();
 			while(Character.isDigit(s.charAt(pos))) {
 				b.append(s.charAt(pos));
@@ -225,6 +241,24 @@ class Context
 			System.out.println( "whoot integer "  + Integer.toString( value )  );
 			return new ExprInteger( pos, value);
 		}
+		return null;
+	}
+
+	ExprLiteral parseLiteral( String s, int pos)
+	{
+/*
+		if(Character.isDigit(s.charAt(pos))) {
+			// we are committed
+			StringBuilder b = new StringBuilder();
+			while(Character.isDigit(s.charAt(pos))) {
+				b.append(s.charAt(pos));
+				++pos;
+			}
+			int value = Integer.parseInt(b.toString());
+			System.out.println( "whoot integer "  + Integer.toString( value )  );
+			return new ExprInteger( pos, value);
+		}
+*/
 		return null;
 	}
 
@@ -250,7 +284,13 @@ class PrettyPrinter implements Visitor
 		System.out.print( "Integer " + expr.value );
 	}
 
-	public void visit( ExprIdentifier expr )
+	public void visit(  ExprLiteral expr )
+	{
+		System.out.print( "Literal " + expr.value );
+	}
+
+
+	public void visit( ExprProc expr )
 	{
 		System.out.print( "(" + expr.symbol + " " );
 
@@ -272,16 +312,20 @@ public class test2 {
 		//String s = "(contains 123 (geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains  (uuu 123 789) 456) ";
 		//String s = "(contains (f 456) 789 888) ";
-		String s = "(contains 123 (f 456 789) (f2 999) 1000)";
+		//String s = "(contains 123 (f 456 789) (f2 999) 1000 1001)";
+		String s = "(equals 'platform_number' 456) ";
 
-		Context c = new Context();
+		Parser c = new Parser();
 		IExpression expr = c.parseExpression( s, 0);
 
 		if( expr != null) {
 			System.out.println( "got an expression" );
-
 			PrettyPrinter pp = new PrettyPrinter() ;
 			expr.accept( pp);
+		}
+		else {
+			System.out.println( "expression parse failed" );
+
 		}
 	}
 }
