@@ -17,9 +17,19 @@ import java.util.ArrayList; //io.BufferedInputStream;
 // do everything twice?
 // or leave the value there...
 
+
+interface Visitor
+{
+	public void visit(  ExprInteger expr );
+	public void visit(  ExprIdentifier expr );
+}
+
+
+
 interface IExpression
 {
 	public int get_position() ; 
+	public void accept( Visitor v ) ; 
 }
 
 class ExprInteger implements IExpression
@@ -33,10 +43,13 @@ class ExprInteger implements IExpression
 
 	public int get_position() { return pos; } 
 
+	public void accept( Visitor v )  { }  
+
 	int pos;
 	int value; //
 }
 
+/*
 class ExprWhite implements IExpression
 {
 	public ExprWhite( int pos_)
@@ -45,8 +58,12 @@ class ExprWhite implements IExpression
 	}
 
 	public int get_position() { return pos; } 
+
+	public void visit( Visitor v )  { }  
+
 	int pos;
 }
+*/
 
 
 class ExprIdentifier implements IExpression
@@ -59,6 +76,8 @@ class ExprIdentifier implements IExpression
 	}
 
 	public int get_position() { return pos; } 
+
+	public void accept( Visitor v )  { }  
 
 	int		pos;
 	String symbol;
@@ -96,21 +115,10 @@ class Context
 
 	IExpression parseExpression(String s, int pos)
 	{
-		// actually should try to glob up
-		// try whitespace
-		// may want to embed this specifically
-/*
-		ExprWhite white = parseWhite(s, pos);
-		if( white != null) {
-			System.out.println("whoot got white!" + white.pos );
-			pos = white.pos;
-		}
-*/
-
+		// advance over whitespace
 		while(Character.isSpaceChar(s.charAt(pos))) {
 			++pos;
 		}
-
 
 		// try integer
 		ExprInteger expr = parseInt(s, pos);
@@ -122,7 +130,7 @@ class Context
 		}
 
 		ExprIdentifier expr2 = parseIdentifier(s, pos);
-		if( expr2 != null)
+		if(expr2 != null)
 		{
 			System.out.println("got sexp !" + expr );
 			return expr2;
@@ -144,16 +152,15 @@ class Context
 		// assume we've done white 
 		if(s.charAt(pos) != '(')
 			return null;
-
 		++pos;
 
-		// whitespace
+		// advance whitespace
 		while(Character.isSpaceChar(s.charAt(pos))) {
 			++pos;
 		}
 
 		// pull out the symbol...
-		if(Character.isLetter(s.charAt(pos))  ) {
+		if(Character.isLetter(s.charAt(pos)) || s.charAt(pos) == '_' ) {
 			StringBuilder b = new StringBuilder();
 			while(Character.isLetter(s.charAt(pos)) || s.charAt(pos) == '_') {
 				b.append(s.charAt(pos));
@@ -180,7 +187,7 @@ class Context
 			}
 		} while(child != null);
 
-		// whitespace
+		// advance whitespace
 		while(Character.isSpaceChar(s.charAt(pos))) {
 			++pos;
 		}
@@ -236,38 +243,45 @@ class Context
 
 
 
+class PrettyPrinter implements Visitor
+{
+	// think our naming is incorrect
+
+	public void visit(  ExprInteger expr )
+	{
+
+	}
+
+	public void visit(  ExprIdentifier expr )
+	{
+
+	}
+
+
+}
+
+
+
 public class test2 {
 
     public static void main(String[] args)
 	{
 		//String s = "777 and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains 123 (geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
-		String s = "(contains  123 456) ";
+		//String s = "(contains  (uuu 123 789) 456) ";
+		String s = "(contains   456) ";
 
 
 		Context c = new Context();// s, 0 );
-		c.parseExpression( s, 0);
+		IExpression expr = c.parseExpression( s, 0);
 
-/*
-		int pos = 0;
 
-		if(s.charAt(pos) >= '0' &&  s.charAt(pos) <= '9') {
-			while(s.charAt(pos) >= '0' &&  s.charAt(pos) <= '9') {
-				++pos;
-			}
+		if( expr != null) {
+
+			System.out.println( "got an expression" );
+			
 		}
-		else {
-			System.out.println( "not an integer !"  ); // Display the string.
-		}
-*/
 
-/*
-		 StringTokenizer st = new StringTokenizer( s);
-		 while (st.hasMoreTokens()) {
-			String x = st.nextToken();
-			 System.out.println( x );
-		 }
-*/
 
     }
 }
