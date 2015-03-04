@@ -17,7 +17,7 @@ import java.io.BufferedInputStream;
 
 interface IExpression
 {
-
+	public int get_position() ; 
 }
 
 class ExprInteger implements IExpression
@@ -27,6 +27,10 @@ class ExprInteger implements IExpression
 		pos = pos;
 		value = value;
 	}
+
+
+	public int get_position() { return pos; } 
+
 	int pos;
 	int value; //
 }
@@ -37,20 +41,24 @@ class ExprWhite implements IExpression
 	{
 		pos = pos;
 	}
+
+	public int get_position() { return pos; } 
 	int pos;
 }
 
 
 class ExprIdentifier implements IExpression
 {
-	public ExprIdentifier( int pos, String name )
+	public ExprIdentifier( int pos, String symbol )
 	{
 		pos = pos;
-		name = name;
+		symbol = symbol;
 	}
+
+	public int get_position() { return pos; } 
+
 	int		pos;
-	String name;
-	// ArrayList...
+	String symbol;
 }
 
 
@@ -72,7 +80,7 @@ class Context
 
 	think that we might need an abstract ability to get the position.
 	from an upcvlassed object...
-	
+
 */
 
 	// | Int
@@ -85,12 +93,17 @@ class Context
 	{
 		// actually should try to glob up
 		// try whitespace
-
-
-		ExprWhite white = parseWhite( s, pos);
+		// may want to embed this specifically
+/*
+		ExprWhite white = parseWhite(s, pos);
 		if( white != null) {
-			System.out.println("whoot got white!" );
+			System.out.println("whoot got white!" + white.pos );
 			pos = white.pos;
+		}
+*/
+
+		while(Character.isSpaceChar(s.charAt(pos))) {
+			++pos;
 		}
 
 
@@ -100,15 +113,14 @@ class Context
 		{
 			// append
 			System.out.println("whoot got integer!" + expr );
-			//pos = expr.pos;
 			return expr;
 		}
 
 		ExprIdentifier expr2 = parseIdentifier(s, pos);
 		if( expr2 != null)
 		{
-
-
+			System.out.println("got sexp !" + expr );
+			return expr2;
 		}
 		return null;
 	}
@@ -116,12 +128,21 @@ class Context
 
 	// a tuple is just an unnamed s-expression, i don't think we even really need it.
 
-	// why not have a parse string and just appropriate the generated classes 
-	// alternatively we could actually point at the symbol. 
+	// why not have a parse string and just appropriate the generated classes
+	// alternatively we could actually point at the symbol.
 	// ('+' a b)
 
 	ExprIdentifier parseIdentifier(String s, int pos)
 	{
+		String symbol = "";
+
+		// assume we've done white 
+		if(s.charAt(pos) != '(')
+			return null;
+
+		// should be whitespace check
+		++pos;
+
 		// pull out the symbol...
 		if(Character.isLetter(s.charAt(pos))  ) {
 			StringBuilder b = new StringBuilder();
@@ -129,16 +150,34 @@ class Context
 				b.append(s.charAt(pos));
 				++pos;
 			}
+			//return new ExprIdentifier(pos, b.toString());
+
+			System.out.println("got symbol !" + symbol );
+			symbol = b.toString();
+		}
+		// we must have white 
+		// no we just have to parse the expression.
+
+		IExpression g = parseExpression( s, pos); 
+		if( g != null ) {
+			System.out.println("got subexpr !" );
+			pos = g.get_position();
 		}
 
-		// parse white 
 
-		return null;
+		ExprIdentifier p = new ExprIdentifier ( pos, symbol );
+
+		return p ;
 	}
+	
+	// perhaps add a depth as well 
 
-
-	ExprWhite parseWhite( String s, int pos)
+/*
+	ExprWhite parseWhite(String s, int pos)
 	{
+
+		System.out.println(" parseWhite " + pos  );
+
 		if(Character.isSpaceChar(s.charAt(pos))) {
 			while(Character.isSpaceChar(s.charAt(pos))) {
 				++pos;
@@ -147,6 +186,7 @@ class Context
 		}
 		return null;
 	}
+*/
 
 	ExprInteger parseInt( String s, int pos)
 	{
@@ -181,7 +221,9 @@ public class test2 {
 
     public static void main(String[] args)
 	{
-		String s = "777 and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
+		//String s = "777 and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
+		//String s = "(contains 123 (geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
+		String s = "(contains  123) ";
 
 
 		Context c = new Context();// s, 0 );
