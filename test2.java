@@ -346,17 +346,17 @@ class SelectionGenerationVisitor implements Visitor
 
 	public void visit( ExprProc expr )
 	{
+		String symbol = expr.symbol; 
 
-		if(expr.symbol.equals("equals"))
-		{
-			// should throw if not binary expr...
-			expr.children.get(0).accept(this);
-			System.out.print( "=");
-			expr.children.get(1).accept(this);
+		if(symbol.equals("equals")) {
+			emit_infix_expr( "=", expr );
+		}
+		else if( symbol.equals("and")) {
+			emit_infix_expr( "and", expr );
 		}
 		else {
 
-			System.out.print( "WHOOT2");
+			System.out.print( "UNKNOWN EXPRESSION");
 
 			System.out.print( "(" + expr.symbol + " " );
 			for( IExpression child : expr.children ) {
@@ -365,6 +365,19 @@ class SelectionGenerationVisitor implements Visitor
 			}
 			System.out.println( ")" );
 		}
+	}
+
+	public void emit_infix_expr( String operator, ExprProc expr )
+	{
+		// should have sql in the name,
+
+		System.out.print("(" );
+		expr.children.get(0).accept(this);
+		System.out.print(" " );
+		System.out.print(operator);
+		System.out.print(" " );
+		expr.children.get(1).accept(this);
+		System.out.print(")" );
 	}
 }
 
@@ -381,7 +394,7 @@ public class test2 {
 		//String s = "(contains  (uuu 123 789) 456) ";
 		//String s = "(contains (f 456) 789 888) ";
 		//String s = "(contains 123 (f 456 789) (f2 999) 1000 1001)";
-		String s = "(equals instrument 'SEABIRD SBE37SM + P' )";
+		String s = "(and(equals instrument 'SEABIRD SBE37SM + P') (equals instrument 'SEABIRD SBE37SM + P'))";
 
 		Parser c = new Parser();
 		IExpression expr = c.parseExpression( s, 0);
