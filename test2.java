@@ -191,6 +191,7 @@ class Context
 
 		if(s.charAt(pos) != ')')
 			return null;
+		++pos;
 
 		return new ExprIdentifier ( pos, symbol, children );
 	}
@@ -216,7 +217,7 @@ class Context
 		// we are committed
 		if(Character.isDigit(s.charAt(pos))) {
 			StringBuilder b = new StringBuilder();
-			while( Character.isDigit(s.charAt(pos))) {
+			while(Character.isDigit(s.charAt(pos))) {
 				b.append(s.charAt(pos));
 				++pos;
 			}
@@ -271,7 +272,7 @@ public class test2 {
 		//String s = "(contains 123 (geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains  (uuu 123 789) 456) ";
 		//String s = "(contains (f 456) 789 888) ";
-		String s = "(contains (f 456) (f 888)) ";
+		String s = "(contains 123 (f 456 789) (f2 999) 1000)";
 
 		Context c = new Context();
 		IExpression expr = c.parseExpression( s, 0);
