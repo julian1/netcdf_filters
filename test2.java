@@ -117,6 +117,10 @@ class ExprProc implements IExpression
 class Parser
 {
 
+	// the input source is actually constant. while the pos needs to be held
+	// on the stack
+	// potentially we should keep the buffer state around... 
+
 /*	public Context( String s, int pos)
 	{
 		int pos2 = parseExpression( s, pos );
@@ -149,21 +153,17 @@ class Parser
 		IExpression expr = parseInt(s, pos);
 		if(expr != null)
 			return expr;
-
 		// literal
 		expr = parseLiteral(s, pos);
 		if(expr != null)
 			return expr;
-
 		expr = parseSymbol( s, pos );
 		if(expr != null)
 			return expr;
-
 		// proc
 		expr = parseProc(s, pos);
 		if(expr != null)
 			return expr;
-
 		return null;
 	}
 
@@ -222,8 +222,6 @@ class Parser
 		return new ExprProc ( pos, symbol, children );
 	}
 
-
-
 	ExprSymbol parseSymbol( String s, int pos)
 	{
 		// atom....
@@ -238,10 +236,8 @@ class Parser
 			}
 			return new ExprSymbol( pos, b.toString());
 		}
-
 		return null;
 	}
-
 
 	ExprInteger parseInt( String s, int pos)
 	{
@@ -350,12 +346,25 @@ class SelectionGenerationVisitor implements Visitor
 
 	public void visit( ExprProc expr )
 	{
-		System.out.print( "(" + expr.symbol + " " );
-		for( IExpression child : expr.children ) {
-			child.accept(this);
-			System.out.print( " ");
+
+		if(expr.symbol.equals("equals"))
+		{
+			// should throw if not binary expr...
+			expr.children.get(0).accept(this);
+			System.out.print( "=");
+			expr.children.get(1).accept(this);
 		}
-		System.out.println( ")" );
+		else {
+
+			System.out.print( "WHOOT2");
+
+			System.out.print( "(" + expr.symbol + " " );
+			for( IExpression child : expr.children ) {
+				child.accept(this);
+				System.out.print( " ");
+			}
+			System.out.println( ")" );
+		}
 	}
 }
 
@@ -384,6 +393,8 @@ public class test2 {
 			// PrettyPrinterVisitor pp = new PrettyPrinterVisitor() ;
 			SelectionGenerationVisitor v = new SelectionGenerationVisitor();
 			expr.accept(v);
+
+			System.out.println( "" );
 		}
 		else {
 			System.out.println( "expression parse failed" );
