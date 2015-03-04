@@ -41,60 +41,65 @@ class Context
 	}
 */
 
+	// | Int
+	// | f '(' expr_list ')'   f 
+	// | expr_list = 
+	//			expr 
+	// | '(' expr, expr ')'   tuple 
+
 	int parseExpression( String s, int pos )
 	{
+		// actually should try to gobble up
+		
+
 		// try whitespace
+		int pos2  = 0;
+
 
 		// try integer
 		ExprInteger expr = null;
-		int pos2 = parseInt( s, pos, expr); 
+		pos2 = parseInt( s, pos, expr); 
 		if( pos2 != pos)
 		{
 			// append
-			System.out.println( "whoot got integer!"  ); // Display the string.
+			System.out.println("whoot got integer!" + expr ); 
 		}
+		
 		return pos2;
 	}
 
 
 	int parseWhite( String s, int pos)
 	{
-//		if(s.charAt(pos) >= '0' &&  s.charAt(pos) <= '9') {  
-
-
-
+		while(Character.isSpaceChar(s.charAt(pos))) {
+			++pos;
+		}	
 		return pos;
 	}
 
-
 	int parseInt( String s, int pos, ExprInteger expr )
 	{
-		// if it succeeds then we return the value
-		// it maybe that we want to not use Integer but instead an expression . ExprInteger or IntegerExpression 
-		// or TupleExpression
-
 		// we are committed
 		if(Character.isDigit(s.charAt(pos))) {  
-
 			StringBuilder buf = new StringBuilder();
 			while( Character.isDigit(s.charAt(pos))) {
 				buf.append(s.charAt(pos));
 				++pos;
 			}	
 			int value = Integer.parseInt(buf.toString());
-			//	int foo = Integer.parseInt("1234");		
-			//System.out.println( "integer "  + Integer.toString( value )  ); 
+			System.out.println( "whoot integer "  + Integer.toString( value )  ); 
 			expr = new ExprInteger( value); 
-			return pos;
 		}
 		return pos;
 	}
 }
 
 // or we tokenize the
-
 // Why not try to do it recursively
 // to return a tuple means we lose the typing if we use an integer 
+// if it succeeds then we return the value
+// it maybe that we want to not use Integer but instead an expression . ExprInteger or IntegerExpression 
+// or TupleExpression
 
 
 
