@@ -51,16 +51,19 @@ class ExprWhite implements IExpression
 
 class ExprIdentifier implements IExpression
 {
-	public ExprIdentifier( int pos_, String symbol_ )
+	public ExprIdentifier( int pos_, String symbol_, ArrayList<IExpression> children_  )
 	{
 		pos = pos_;
 		symbol = symbol_;
+		children = children_;
 	}
 
 	public int get_position() { return pos; } 
 
 	int		pos;
 	String symbol;
+	ArrayList<IExpression> children;
+
 }
 
 
@@ -142,8 +145,13 @@ class Context
 		if(s.charAt(pos) != '(')
 			return null;
 
-		// should be whitespace check
 		++pos;
+
+		// whitespace
+		while(Character.isSpaceChar(s.charAt(pos))) {
+			++pos;
+		}
+
 
 		// pull out the symbol...
 		if(Character.isLetter(s.charAt(pos))  ) {
@@ -161,23 +169,33 @@ class Context
 		// we must have white 
 		// no we just have to parse the expression.
 
-		IExpression g = null;
-		ArrayList<IExpression> lst = new ArrayList<IExpression>();
+		ArrayList<IExpression> children = new ArrayList<IExpression>();
+		IExpression child = null;
 		do {	
 
 			System.out.println("- pos before parsing expr " + pos);
-			g = parseExpression( s, pos); 
-			if( g != null ) {
-				lst.add( g);
-				System.out.println("got subexpr !" );
-				pos = g.get_position();
+			child = parseExpression( s, pos); 
+			if( child != null ) {
+				children.add( child);
+				System.out.println("childot subexpr !" );
+				pos = child.get_position();
 
 				System.out.println("- pos now" + pos);
 			}
-		} while(g != null);
+		} while(child != null);
 
 
-		ExprIdentifier p = new ExprIdentifier ( pos, symbol );
+		// whitespace
+		while(Character.isSpaceChar(s.charAt(pos))) {
+			++pos;
+		}
+
+
+		if(s.charAt(pos) != ')')
+			return null;
+
+
+		ExprIdentifier p = new ExprIdentifier ( pos, symbol, children );
 
 		return p ;
 	}
@@ -187,9 +205,7 @@ class Context
 /*
 	ExprWhite parseWhite(String s, int pos)
 	{
-
 		System.out.println(" parseWhite " + pos  );
-
 		if(Character.isSpaceChar(s.charAt(pos))) {
 			while(Character.isSpaceChar(s.charAt(pos))) {
 				++pos;
