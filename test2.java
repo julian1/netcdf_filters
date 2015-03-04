@@ -120,14 +120,14 @@ class Context
 		if(expr != null)
 		{
 			// append
-			System.out.println("whoot got integer!" + expr );
+			System.out.println("got " + expr );
 			return expr;
 		}
 
 		ExprIdentifier expr2 = parseIdentifier(s, pos);
 		if(expr2 != null)
 		{
-			System.out.println("got sexp !" + expr );
+			System.out.println("got " + expr2 );
 			return expr2;
 		}
 		return null;
@@ -158,7 +158,7 @@ class Context
 		if(Character.isLetter(s.charAt(pos)) || s.charAt(pos) == '_' ) {
 			StringBuilder b = new StringBuilder();
 			while(Character.isLetter(s.charAt(pos)) 
-				|| Character.isLetter(s.charAt(pos)) 
+				|| Character.isDigit(s.charAt(pos)) 
 				|| s.charAt(pos) == '_') {
 				b.append(s.charAt(pos));
 				++pos;
@@ -270,7 +270,8 @@ public class test2 {
 		//String s = "777 and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains 123 (geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains  (uuu 123 789) 456) ";
-		String s = "(contains (f 456) 789 888) ";
+		//String s = "(contains (f 456) 789 888) ";
+		String s = "(contains (f 456) (f 888)) ";
 
 		Context c = new Context();
 		IExpression expr = c.parseExpression( s, 0);
