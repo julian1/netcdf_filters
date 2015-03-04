@@ -43,7 +43,7 @@ class ExprInteger implements IExpression
 
 	public int get_position() { return pos; } 
 
-	public void accept( Visitor v )  { }  
+	public void accept( Visitor v )  { v.visit( this); }  
 
 	int pos;
 	int value; //
@@ -77,7 +77,7 @@ class ExprIdentifier implements IExpression
 
 	public int get_position() { return pos; } 
 
-	public void accept( Visitor v )  { }  
+	public void accept( Visitor v )  { v.visit( this); }  
 
 	int		pos;
 	String symbol;
@@ -249,15 +249,17 @@ class PrettyPrinter implements Visitor
 
 	public void visit(  ExprInteger expr )
 	{
-
+		System.out.println( "Integer " + expr.value );
 	}
 
-	public void visit(  ExprIdentifier expr )
+	public void visit( ExprIdentifier expr )
 	{
+		System.out.println( "Symbol " + expr.symbol );
 
+		for( IExpression child : expr.children ) {
+			child.accept(this);
+		}
 	}
-
-
 }
 
 
@@ -272,16 +274,15 @@ public class test2 {
 		String s = "(contains   456) ";
 
 
-		Context c = new Context();// s, 0 );
+		Context c = new Context();
 		IExpression expr = c.parseExpression( s, 0);
 
-
 		if( expr != null) {
-
 			System.out.println( "got an expression" );
-			
-		}
 
+			PrettyPrinter pp = new PrettyPrinter() ;
+			expr.accept( pp);
+		}
 
     }
 }
