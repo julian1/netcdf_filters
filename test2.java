@@ -20,15 +20,31 @@ import java.util.ArrayList; //io.BufferedInputStream;
 
 interface Visitor
 {
-	public void visit(  ExprInteger expr );
-	public void visit(  ExprProc expr );
-	public void visit(  ExprLiteral expr );
+	public void visit( ExprInteger expr );
+	public void visit( ExprProc expr );
+	public void visit( ExprLiteral expr );
+	public void visit( ExprSymbol expr );
 }
 
 interface IExpression
 {
 	public int getPosition() ;
 	public void accept( Visitor v ) ;
+}
+
+class ExprSymbol implements IExpression
+{
+	public ExprSymbol( int pos_, String value_)
+	{
+		pos = pos_;
+		value = value_;
+	}
+
+	public int getPosition() { return pos; }
+	public void accept( Visitor v )  { v.visit( this); }
+
+	final int pos;
+	final String value; //
 }
 
 class ExprInteger implements IExpression
@@ -139,6 +155,10 @@ class Parser
 		if(expr != null)
 			return expr;
 
+		expr = parseSymbol( s, pos );
+		if(expr != null)
+			return expr;
+
 		// proc
 		expr = parseProc(s, pos);
 		if(expr != null)
@@ -203,6 +223,26 @@ class Parser
 	}
 
 
+
+	ExprSymbol parseSymbol( String s, int pos)
+	{
+		// atom....
+		// symbol
+		if(Character.isLetter(s.charAt(pos)) || s.charAt(pos) == '_' ) {
+			StringBuilder b = new StringBuilder();
+			while(Character.isLetter(s.charAt(pos))
+				|| Character.isDigit(s.charAt(pos))
+				|| s.charAt(pos) == '_') {
+				b.append(s.charAt(pos));
+				++pos;
+			}
+			return new ExprSymbol( pos, b.toString());
+		}
+
+		return null;
+	}
+
+
 	ExprInteger parseInt( String s, int pos)
 	{
 		if(Character.isDigit(s.charAt(pos))) {
@@ -253,9 +293,16 @@ class Parser
 
 
 
-class PrettyPrinter implements Visitor
+class PrettyPrinterVisitor implements Visitor
 {
+	// should take the stream on the constructor
+
 	// think our naming is incorrect
+
+	public void visit( ExprSymbol expr )
+	{
+		System.out.print( "Symbol:" + expr.value );
+	}
 
 	public void visit(  ExprInteger expr )
 	{
@@ -280,6 +327,42 @@ class PrettyPrinter implements Visitor
 
 
 
+class SelectionGenerationVisitor implements Visitor
+{
+	// should take the stream on the constructor
+	// actually just a string builder...
+
+	// think our naming is incorrect
+	public void visit(  ExprInteger expr )
+	{
+		System.out.print(  expr.value );
+	}
+
+	public void visit(  ExprLiteral expr )
+	{
+		System.out.print( "'"+ expr.value + "'" );
+	}
+
+	public void visit( ExprSymbol expr )
+	{
+		System.out.print( expr.value  );
+	}
+
+	public void visit( ExprProc expr )
+	{
+		System.out.print( "(" + expr.symbol + " " );
+		for( IExpression child : expr.children ) {
+			child.accept(this);
+			System.out.print( " ");
+		}
+		System.out.println( ")" );
+	}
+}
+
+
+// we need raw identifiers which is the way cql does it.
+
+
 public class test2 {
 
     public static void main(String[] args)
@@ -289,15 +372,18 @@ public class test2 {
 		//String s = "(contains  (uuu 123 789) 456) ";
 		//String s = "(contains (f 456) 789 888) ";
 		//String s = "(contains 123 (f 456 789) (f2 999) 1000 1001)";
-		String s = "(equals 'platform_number' 456) ";
+		String s = "(equals instrument 'SEABIRD SBE37SM + P' )";
 
 		Parser c = new Parser();
 		IExpression expr = c.parseExpression( s, 0);
 
 		if( expr != null) {
 			System.out.println( "got an expression" );
-			PrettyPrinter pp = new PrettyPrinter() ;
-			expr.accept( pp);
+			// PrettyPrinterVisitor pp = new PrettyPrinterVisitor() ;
+			// expr.accept( pp);
+			// PrettyPrinterVisitor pp = new PrettyPrinterVisitor() ;
+			SelectionGenerationVisitor v = new SelectionGenerationVisitor();
+			expr.accept(v);
 		}
 		else {
 			System.out.println( "expression parse failed" );
