@@ -15,33 +15,39 @@ import java.util.Properties;
 
 public class test3 {
 
-    public static void fuck2 ( Connection conn )  throws Exception
+    public static void doQuery2 ( Connection conn )  throws Exception
 	{
-
 		PreparedStatement stmt = conn.prepareStatement( "SELECT * FROM anmn_ts.measurement limit ?");
-
-		stmt.setInt(1, new Integer( 1));//e.getValue().intValue());
-
+		//stmt.setInt(1, new Integer( 1));
+		stmt.setInt(1, 1 );
 		ResultSet rs = 	stmt.executeQuery();
-
 		dumpResults ( rs );
 	}	
 
     public static void dumpResults ( ResultSet rs )  throws Exception
 	{
+		// getParameterMetaData()
+		ResultSetMetaData m = rs.getMetaData();
+		int numColumns = m.getColumnCount();
+
+		 // lumnName0i// 
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+			System.out.println( "" + i + " " + m.getColumnClassName( i ) + " " + m.getColumnName(i ) ); 
+		}
+
 		while ( rs.next() ) {
-			int numColumns = rs.getMetaData().getColumnCount();
 			for ( int i = 1 ; i <= numColumns ; i++ ) {
+
 			   // Column numbers start at 1.
 			   // Also there are many methods on the result set to return
 			   //  the column as a particular type. Refer to the Sun documentation
 			   //  for the list of valid conversions.
-			   System.out.println( "COLUMN " + i + " = " + rs.getObject(i) );
+			   System.out.println( "" + i + " = " + rs.getObject(i) );
 			}
 		}
 	}	
 
-    public static void fuck ( Connection conn )  throws Exception
+    public static void doQuery ( Connection conn )  throws Exception
 	{
 		Statement stmt = conn.createStatement(); 
 		ResultSet rs = stmt.executeQuery( "SELECT * FROM anmn_ts.measurement limit 1" );
@@ -70,7 +76,7 @@ public class test3 {
 
 			System.out.println( "got conn" );
 			
-			fuck2( conn );
+			doQuery2( conn );
 
 		}
 
