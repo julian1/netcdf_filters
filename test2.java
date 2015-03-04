@@ -152,7 +152,6 @@ class Context
 			++pos;
 		}
 
-
 		// pull out the symbol...
 		if(Character.isLetter(s.charAt(pos))  ) {
 			StringBuilder b = new StringBuilder();
@@ -161,9 +160,8 @@ class Context
 				++pos;
 			}
 			//return new ExprIdentifier(pos, b.toString());
-
-			System.out.println("got symbol !" + symbol );
-			System.out.println("- pos now " + pos);
+			//System.out.println("got symbol !" + symbol );
+			//System.out.println("- pos now " + pos);
 			symbol = b.toString();
 		}
 		// we must have white 
@@ -172,32 +170,25 @@ class Context
 		ArrayList<IExpression> children = new ArrayList<IExpression>();
 		IExpression child = null;
 		do {	
-
-			System.out.println("- pos before parsing expr " + pos);
+			// System.out.println("- pos before parsing expr " + pos);
 			child = parseExpression( s, pos); 
 			if( child != null ) {
 				children.add( child);
-				System.out.println("childot subexpr !" );
+				//System.out.println("childot subexpr !" );
 				pos = child.get_position();
-
-				System.out.println("- pos now" + pos);
+				//System.out.println("- pos now" + pos);
 			}
 		} while(child != null);
-
 
 		// whitespace
 		while(Character.isSpaceChar(s.charAt(pos))) {
 			++pos;
 		}
 
-
 		if(s.charAt(pos) != ')')
 			return null;
 
-
-		ExprIdentifier p = new ExprIdentifier ( pos, symbol, children );
-
-		return p ;
+		return new ExprIdentifier ( pos, symbol, children );
 	}
 	
 	// perhaps add a depth as well 
