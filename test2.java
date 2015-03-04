@@ -349,10 +349,10 @@ class SelectionGenerationVisitor implements Visitor
 		String symbol = expr.symbol; 
 
 		if(symbol.equals("equals")) {
-			emit_infix_expr( "=", expr );
+			emit_infix_sql_expr( "=", expr );
 		}
 		else if( symbol.equals("and")) {
-			emit_infix_expr( "and", expr );
+			emit_infix_sql_expr( "and", expr );
 		}
 		else {
 
@@ -367,10 +367,8 @@ class SelectionGenerationVisitor implements Visitor
 		}
 	}
 
-	public void emit_infix_expr( String operator, ExprProc expr )
+	public void emit_infix_sql_expr( String operator, ExprProc expr )
 	{
-		// should have sql in the name,
-
 		System.out.print("(" );
 		expr.children.get(0).accept(this);
 		System.out.print(" " );
