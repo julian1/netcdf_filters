@@ -22,12 +22,36 @@ interface IExpression
 
 class ExprInteger implements IExpression
 {
-	public ExprInteger( int value)
+	public ExprInteger( int pos, int value)
 	{
+		pos = pos;
 		value = value;
 	}
+	int pos;
 	int value; //
 }
+
+class ExprWhite implements IExpression
+{
+	public ExprWhite( int pos)
+	{
+		pos = pos;
+	}
+	int pos;
+}
+
+
+class ExprIdentifier implements IExpression
+{
+	public ExprIdentifier( int pos)
+	{
+		pos = pos;
+	}
+	int pos;
+}
+
+
+
 
 // actually why not pass a 
 // string s, integer pos, boxed type....  
@@ -39,6 +63,9 @@ class Context
 	{
 		int pos2 = parseExpression( s, pos ); 
 	}
+
+	So i think we have to parse the thing, and store the pos in the
+	returned result.
 */
 
 	// | Int
@@ -47,37 +74,51 @@ class Context
 	//			expr 
 	// | '(' expr, expr ')'   tuple 
 
-	int parseExpression( String s, int pos )
+	IExpression parseExpression(String s, int pos)
 	{
-		// actually should try to gobble up
+		// actually should try to glob up
 		
-
 		// try whitespace
-		int pos2  = 0;
-
-
 		// try integer
-		ExprInteger expr = null;
-		pos2 = parseInt( s, pos, expr); 
-		if( pos2 != pos)
+		ExprInteger expr = parseInt(s, pos); 
+		if(expr != null)
 		{
 			// append
-			System.out.println("whoot got integer!" + expr ); 
+			//System.out.println("whoot got integer!" + expr ); 
+			//pos = expr.pos;
+			return expr;
 		}
-		
-		return pos2;
+
+		ExprIdentifier expr2 = parseIdentifier(s, pos); 
+		if( expr2 != null)
+		{
+
+
+		} 
+		return null;
 	}
 
 
-	int parseWhite( String s, int pos)
+
+	ExprIdentifier parseIdentifier( String s, int pos)
 	{
-		while(Character.isSpaceChar(s.charAt(pos))) {
-			++pos;
-		}	
-		return pos;
+
+		return null;
 	}
 
-	int parseInt( String s, int pos, ExprInteger expr )
+
+	ExprWhite parseWhite( String s, int pos)
+	{
+		if(Character.isSpaceChar(s.charAt(pos))) {
+			while(Character.isSpaceChar(s.charAt(pos))) {
+				++pos;
+			}	
+			return new ExprWhite(pos);
+		}
+		return null;
+	}
+
+	ExprInteger parseInt( String s, int pos)
 	{
 		// we are committed
 		if(Character.isDigit(s.charAt(pos))) {  
@@ -88,10 +129,13 @@ class Context
 			}	
 			int value = Integer.parseInt(buf.toString());
 			System.out.println( "whoot integer "  + Integer.toString( value )  ); 
-			expr = new ExprInteger( value); 
+			return new ExprInteger( pos, value); 
 		}
-		return pos;
+		return null;
 	}
+
+
+
 }
 
 // or we tokenize the
