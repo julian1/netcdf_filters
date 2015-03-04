@@ -15,13 +15,20 @@ import java.util.Properties;
 
 public class test3 {
 
-
-
-    public static void fuck ( Connection conn )  throws Exception
+    public static void fuck2 ( Connection conn )  throws Exception
 	{
-		Statement stmt = conn.createStatement(); 
-		ResultSet rs = stmt.executeQuery( "SELECT * FROM anmn_ts.measurement limit 1" );
 
+		PreparedStatement stmt = conn.prepareStatement( "SELECT * FROM anmn_ts.measurement limit ?");
+
+		stmt.setInt(1, new Integer( 1));//e.getValue().intValue());
+
+		ResultSet rs = 	stmt.executeQuery();
+
+		dumpResults ( rs );
+	}	
+
+    public static void dumpResults ( ResultSet rs )  throws Exception
+	{
 		while ( rs.next() ) {
 			int numColumns = rs.getMetaData().getColumnCount();
 			for ( int i = 1 ; i <= numColumns ; i++ ) {
@@ -32,7 +39,15 @@ public class test3 {
 			   System.out.println( "COLUMN " + i + " = " + rs.getObject(i) );
 			}
 		}
-	
+	}	
+
+    public static void fuck ( Connection conn )  throws Exception
+	{
+		Statement stmt = conn.createStatement(); 
+		ResultSet rs = stmt.executeQuery( "SELECT * FROM anmn_ts.measurement limit 1" );
+
+		// close stmt, resultset and conn	
+		dumpResults ( rs );
 	}
 
 
@@ -55,7 +70,7 @@ public class test3 {
 
 			System.out.println( "got conn" );
 			
-			fuck( conn );
+			fuck2( conn );
 
 		}
 
