@@ -39,9 +39,7 @@ class ExprInteger implements IExpression
 		value = value_;
 	}
 
-
 	public int getPosition() { return pos; }
-
 	public void accept( Visitor v )  { v.visit( this); }
 
 	final int pos;
@@ -121,6 +119,9 @@ class Parser
 	// | expr_list =
 	//			expr
 	// | '(' expr, expr ')'   tuple
+
+	// TODO we should check that we have matched the string entirely 
+	// with whitespace at the end... parseEOF or similar? 
 
 	IExpression parseExpression(String s, int pos)
 	{
@@ -271,7 +272,7 @@ class PrettyPrinter implements Visitor
 		System.out.print( "(" + expr.symbol + " " );
 		for( IExpression child : expr.children ) {
 			child.accept(this);
-			System.out.print( ", ");
+			System.out.print( " ");
 		}
 		System.out.println( ")" );
 	}
