@@ -29,7 +29,7 @@ interface Visitor
 
 interface IExpression
 {
-	public int get_position() ; 
+	public int getPosition() ; 
 	public void accept( Visitor v ) ; 
 }
 
@@ -42,7 +42,7 @@ class ExprInteger implements IExpression
 	}
 
 
-	public int get_position() { return pos; } 
+	public int getPosition() { return pos; } 
 
 	public void accept( Visitor v )  { v.visit( this); }  
 
@@ -58,7 +58,7 @@ class ExprLiteral implements IExpression
 		value = value_;
 	}
 
-	public int get_position() { return pos; } 
+	public int getPosition() { return pos; } 
 	public void accept( Visitor v )  { v.visit( this); }  
 	final int pos;
 	final String value; //
@@ -72,7 +72,7 @@ class ExprWhite implements IExpression
 	{
 		pos = pos_;
 	}
-	public int get_position() { return pos; } 
+	public int getPosition() { return pos; } 
 	public void visit( Visitor v )  { }  
 	int pos;
 }
@@ -88,7 +88,7 @@ class ExprProc implements IExpression
 		children = children_;
 	}
 
-	public int get_position() { return pos; } 
+	public int getPosition() { return pos; } 
 	public void accept( Visitor v )  { v.visit( this); }  
 
 	final int		pos;
@@ -195,7 +195,7 @@ class Parser
 			if( child != null ) {
 				children.add( child);
 				//System.out.println("childot subexpr !" );
-				pos = child.get_position();
+				pos = child.getPosition();
 				//System.out.println("- pos now" + pos);
 			}
 		} while(child != null);
