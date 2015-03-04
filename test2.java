@@ -126,26 +126,25 @@ class Parser
 
 	IExpression parseExpression(String s, int pos)
 	{
-		// advance over whitespace
+		// advance whitespace
 		while(Character.isSpaceChar(s.charAt(pos))) {
 			++pos;
 		}
-
-		// try integer
-		ExprInteger expr = parseInt(s, pos);
+		// integer
+		IExpression expr = parseInt(s, pos);
 		if(expr != null)
-		{
-			// append
-			System.out.println("got " + expr );
 			return expr;
-		}
+		
+		// literal
+		expr = parseLiteral(s, pos);
+		if(expr != null)
+			return expr;
 
-		ExprProc expr2 = parseProc(s, pos);
-		if(expr2 != null)
-		{
-			System.out.println("got " + expr2 );
-			return expr2;
-		}
+		// proc
+		expr = parseProc(s, pos);
+		if(expr != null)
+			return expr;
+		
 		return null;
 	}
 
@@ -158,9 +157,8 @@ class Parser
 
 	ExprProc parseProc(String s, int pos)
 	{
-		String symbol = "";
+		String symbol = null;
 
-		// assume we've done white 
 		if(s.charAt(pos) != '(')
 			return null;
 		++pos;
@@ -212,21 +210,6 @@ class Parser
 		return new ExprProc ( pos, symbol, children );
 	}
 	
-	// perhaps add a depth as well 
-
-/*
-	ExprWhite parseWhite(String s, int pos)
-	{
-		System.out.println(" parseWhite " + pos  );
-		if(Character.isSpaceChar(s.charAt(pos))) {
-			while(Character.isSpaceChar(s.charAt(pos))) {
-				++pos;
-			}
-			return new ExprWhite(pos);
-		}
-		return null;
-	}
-*/
 
 	ExprInteger parseInt( String s, int pos)
 	{
@@ -246,20 +229,25 @@ class Parser
 
 	ExprLiteral parseLiteral( String s, int pos)
 	{
-/*
-		if(Character.isDigit(s.charAt(pos))) {
-			// we are committed
-			StringBuilder b = new StringBuilder();
-			while(Character.isDigit(s.charAt(pos))) {
-				b.append(s.charAt(pos));
-				++pos;
-			}
-			int value = Integer.parseInt(b.toString());
-			System.out.println( "whoot integer "  + Integer.toString( value )  );
-			return new ExprInteger( pos, value);
+		// don't worry about escaping for now
+
+		if(s.charAt(pos) != '\'')
+			return null;
+		++pos;
+
+
+		StringBuilder b = new StringBuilder();
+		// should test s length as well...
+		while(s.charAt(pos) != '\'') {
+			b.append(s.charAt(pos));
+			++pos;
 		}
-*/
-		return null;
+
+		if(s.charAt(pos) != '\'')
+			return null;
+		++pos;
+
+		return new ExprLiteral( pos, b.toString() );
 	}
 
 
@@ -281,12 +269,12 @@ class PrettyPrinter implements Visitor
 
 	public void visit(  ExprInteger expr )
 	{
-		System.out.print( "Integer " + expr.value );
+		System.out.print( "Integer:" + expr.value );
 	}
 
 	public void visit(  ExprLiteral expr )
 	{
-		System.out.print( "Literal " + expr.value );
+		System.out.print( "Literal:" + expr.value );
 	}
 
 
