@@ -22,10 +22,10 @@ interface IExpression
 
 class ExprInteger implements IExpression
 {
-	public ExprInteger( int pos, int value)
+	public ExprInteger( int pos_, int value_)
 	{
-		pos = pos;
-		value = value;
+		pos = pos_;
+		value = value_;
 	}
 
 
@@ -37,9 +37,9 @@ class ExprInteger implements IExpression
 
 class ExprWhite implements IExpression
 {
-	public ExprWhite( int pos)
+	public ExprWhite( int pos_)
 	{
-		pos = pos;
+		pos = pos_;
 	}
 
 	public int get_position() { return pos; } 
@@ -49,10 +49,10 @@ class ExprWhite implements IExpression
 
 class ExprIdentifier implements IExpression
 {
-	public ExprIdentifier( int pos, String symbol )
+	public ExprIdentifier( int pos_, String symbol_ )
 	{
-		pos = pos;
-		symbol = symbol;
+		pos = pos_;
+		symbol = symbol_;
 	}
 
 	public int get_position() { return pos; } 
@@ -153,6 +153,7 @@ class Context
 			//return new ExprIdentifier(pos, b.toString());
 
 			System.out.println("got symbol !" + symbol );
+			System.out.println("- pos now " + pos);
 			symbol = b.toString();
 		}
 		// we must have white 
@@ -160,10 +161,14 @@ class Context
 
 		IExpression g = null;
 		do {	
+
+			System.out.println("- pos before parsing expr " + pos);
 			g = parseExpression( s, pos); 
 			if( g != null ) {
 				System.out.println("got subexpr !" );
 				pos = g.get_position();
+
+				System.out.println("- pos now" + pos);
 			}
 		} while(g != null);
 
@@ -226,7 +231,7 @@ public class test2 {
 	{
 		//String s = "777 and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains 123 (geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
-		String s = "(contains  123) ";
+		String s = "(contains  123 456) ";
 
 
 		Context c = new Context();// s, 0 );
