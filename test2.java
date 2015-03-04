@@ -8,6 +8,8 @@ import java.io.InputStream ;
 import java.io.FileInputStream;
 import java.io.BufferedInputStream;
 
+import java.util.ArrayList; //io.BufferedInputStream;
+
 //import java.util.StringTokenizer;
 
 // string tokenizer isn't going to work because may not be strings.
@@ -160,11 +162,13 @@ class Context
 		// no we just have to parse the expression.
 
 		IExpression g = null;
+		ArrayList<IExpression> lst = new ArrayList<IExpression>();
 		do {	
 
 			System.out.println("- pos before parsing expr " + pos);
 			g = parseExpression( s, pos); 
 			if( g != null ) {
+				lst.add( g);
 				System.out.println("got subexpr !" );
 				pos = g.get_position();
 
