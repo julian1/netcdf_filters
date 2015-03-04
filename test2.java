@@ -277,11 +277,9 @@ class PrettyPrinter implements Visitor
 		System.out.print( "Literal:" + expr.value );
 	}
 
-
 	public void visit( ExprProc expr )
 	{
 		System.out.print( "(" + expr.symbol + " " );
-
 		for( IExpression child : expr.children ) {
 			child.accept(this);
 			System.out.print( ", ");
