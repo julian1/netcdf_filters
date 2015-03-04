@@ -8,7 +8,7 @@ import java.io.InputStream ;
 import java.io.FileInputStream;
 import java.io.BufferedInputStream; 
 
-import java.util.StringTokenizer;
+//import java.util.StringTokenizer;
 
 // string tokenizer isn't going to work because may not be strings. 
 
@@ -31,33 +31,45 @@ class ExprInteger implements IExpression
 class Context
 {
 
-	public Context( String s, int pos) 
+/*	public Context( String s, int pos) 
 	{
-		int pos2 = parseExpression( pos ); 
-	
+		int pos2 = parseExpression( s, pos ); 
 	}
+*/
 
-	int parseExpression( int pos )
+	int parseExpression( String s, int pos )
 	{
 		// try integer
 		ExprInteger expr = null;
-		int pos2 = parseInt( pos, expr); 
+		int pos2 = parseInt( s, pos, expr); 
 		if( pos2 != pos)
 		{
 			// append
-
+			System.out.println( "whoot got integer!"  ); // Display the string.
 		}
 		return pos2;
 	}
 
-	int parseInt( int pos, ExprInteger expr )
+	int parseInt( String s, int pos, ExprInteger expr )
 	{
 		// if it succeeds then we return the value
 		// it maybe that we want to not use Integer but instead an expression . ExprInteger or IntegerExpression 
 		// or TupleExpression
 
+		StringBuilder buf = new StringBuilder();
+		if(s.charAt(pos) >= '0' &&  s.charAt(pos) <= '9') {  
+				
+			while(s.charAt(pos) >= '0' && s.charAt(pos) <= '9') {
+				buf.append( s.charAt(pos));
+				++pos;
+			}	
+		}
+		buf.toString();
+		
+		System.out.println( "integer "  + Integer.toString( 123 )  ); // Display the string.
+
 		expr = new ExprInteger( ); 
-		return pos + 10;
+		return pos;
 	}
 }
 
@@ -75,8 +87,10 @@ public class test2 {
 		String s = "and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )"; 
 
 
-		Context c = new Context( s, 0 );
+		Context c = new Context();// s, 0 );
+		c.parseExpression( s, 0);
 
+/*
 		int pos = 0;
 
 		if(s.charAt(pos) >= '0' &&  s.charAt(pos) <= '9') {  
@@ -85,9 +99,9 @@ public class test2 {
 			}	
 		}
 		else {
-
 			System.out.println( "not an integer !"  ); // Display the string.
 		}
+*/
 
 /*
 		 StringTokenizer st = new StringTokenizer( s);
