@@ -26,11 +26,9 @@ public class test3 {
 
     public static void dumpResults ( ResultSet rs )  throws Exception
 	{
-		// getParameterMetaData()
 		ResultSetMetaData m = rs.getMetaData();
 		int numColumns = m.getColumnCount();
 
-		 // lumnName0i// 
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
 			System.out.println( "" + i + " " + m.getColumnClassName( i ) + " " + m.getColumnName(i ) ); 
 		}
@@ -72,12 +70,13 @@ public class test3 {
 
 
 		Connection conn = DriverManager.getConnection(url, props);
+
 		if( conn != null ) {
-
 			System.out.println( "got conn" );
-			
 			doQuery2( conn );
-
+		}
+		else {
+			System.out.println( "no conn" );
 		}
 
 	}
