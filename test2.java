@@ -43,11 +43,14 @@ class ExprWhite implements IExpression
 
 class ExprIdentifier implements IExpression
 {
-	public ExprIdentifier( int pos)
+	public ExprIdentifier( int pos, String name )
 	{
 		pos = pos;
+		name = name;
 	}
-	int pos;
+	int		pos;
+	String name;
+	// ArrayList...
 }
 
 
@@ -66,6 +69,10 @@ class Context
 
 	So i think we have to parse the thing, and store the pos in the
 	returned result.
+
+	think that we might need an abstract ability to get the position.
+	from an upcvlassed object...
+	
 */
 
 	// | Int
@@ -77,14 +84,22 @@ class Context
 	IExpression parseExpression(String s, int pos)
 	{
 		// actually should try to glob up
-
 		// try whitespace
+
+
+		ExprWhite white = parseWhite( s, pos);
+		if( white != null) {
+			System.out.println("whoot got white!" );
+			pos = white.pos;
+		}
+
+
 		// try integer
 		ExprInteger expr = parseInt(s, pos);
 		if(expr != null)
 		{
 			// append
-			//System.out.println("whoot got integer!" + expr );
+			System.out.println("whoot got integer!" + expr );
 			//pos = expr.pos;
 			return expr;
 		}
@@ -101,8 +116,13 @@ class Context
 
 	// a tuple is just an unnamed s-expression, i don't think we even really need it.
 
-	ExprIdentifier parseIdentifier( String s, int pos)
+	// why not have a parse string and just appropriate the generated classes 
+	// alternatively we could actually point at the symbol. 
+	// ('+' a b)
+
+	ExprIdentifier parseIdentifier(String s, int pos)
 	{
+		// pull out the symbol...
 		if(Character.isLetter(s.charAt(pos))  ) {
 			StringBuilder b = new StringBuilder();
 			while(Character.isLetter(s.charAt(pos)) || s.charAt(pos) == '_') {
@@ -111,7 +131,7 @@ class Context
 			}
 		}
 
-
+		// parse white 
 
 		return null;
 	}
