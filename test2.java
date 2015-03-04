@@ -102,6 +102,14 @@ class Context
 
 	ExprIdentifier parseIdentifier( String s, int pos)
 	{
+		if(Character.isLetter(s.charAt(pos))) {
+//			while(Character.isSpaceChar(s.charAt(pos))) {
+//				++pos;
+			}	
+
+		}
+		return null;
+
 
 		return null;
 	}
