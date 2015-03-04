@@ -45,8 +45,8 @@ class ExprInteger implements IExpression
 
 	public void accept( Visitor v )  { v.visit( this); }  
 
-	int pos;
-	int value; //
+	final int pos;
+	final int value; //
 }
 
 /*
@@ -56,11 +56,8 @@ class ExprWhite implements IExpression
 	{
 		pos = pos_;
 	}
-
 	public int get_position() { return pos; } 
-
 	public void visit( Visitor v )  { }  
-
 	int pos;
 }
 */
@@ -76,13 +73,11 @@ class ExprIdentifier implements IExpression
 	}
 
 	public int get_position() { return pos; } 
-
 	public void accept( Visitor v )  { v.visit( this); }  
 
-	int		pos;
-	String symbol;
-	ArrayList<IExpression> children;
-
+	final int		pos;
+	final String symbol;
+	final ArrayList<IExpression> children;
 }
 
 
@@ -249,16 +244,18 @@ class PrettyPrinter implements Visitor
 
 	public void visit(  ExprInteger expr )
 	{
-		System.out.println( "Integer " + expr.value );
+		System.out.print( "Integer " + expr.value );
 	}
 
 	public void visit( ExprIdentifier expr )
 	{
-		System.out.println( "Symbol " + expr.symbol );
+		System.out.print( "(" + expr.symbol + " " );
 
 		for( IExpression child : expr.children ) {
 			child.accept(this);
+			System.out.print( ", ");
 		}
+		System.out.println( ")" );
 	}
 }
 
@@ -271,7 +268,7 @@ public class test2 {
 		//String s = "777 and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains 123 (geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains  (uuu 123 789) 456) ";
-		String s = "(contains   456) ";
+		String s = "(contains (f 456) 789 888) ";
 
 
 		Context c = new Context();
