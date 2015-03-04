@@ -25,12 +25,10 @@ interface Visitor
 	public void visit(  ExprLiteral expr );
 }
 
-
-
 interface IExpression
 {
-	public int getPosition() ; 
-	public void accept( Visitor v ) ; 
+	public int getPosition() ;
+	public void accept( Visitor v ) ;
 }
 
 class ExprInteger implements IExpression
@@ -42,9 +40,9 @@ class ExprInteger implements IExpression
 	}
 
 
-	public int getPosition() { return pos; } 
+	public int getPosition() { return pos; }
 
-	public void accept( Visitor v )  { v.visit( this); }  
+	public void accept( Visitor v )  { v.visit( this); }
 
 	final int pos;
 	final int value; //
@@ -58,8 +56,8 @@ class ExprLiteral implements IExpression
 		value = value_;
 	}
 
-	public int getPosition() { return pos; } 
-	public void accept( Visitor v )  { v.visit( this); }  
+	public int getPosition() { return pos; }
+	public void accept( Visitor v )  { v.visit( this); }
 	final int pos;
 	final String value; //
 }
@@ -72,8 +70,8 @@ class ExprWhite implements IExpression
 	{
 		pos = pos_;
 	}
-	public int getPosition() { return pos; } 
-	public void visit( Visitor v )  { }  
+	public int getPosition() { return pos; }
+	public void visit( Visitor v )  { }
 	int pos;
 }
 */
@@ -88,8 +86,8 @@ class ExprProc implements IExpression
 		children = children_;
 	}
 
-	public int getPosition() { return pos; } 
-	public void accept( Visitor v )  { v.visit( this); }  
+	public int getPosition() { return pos; }
+	public void accept( Visitor v )  { v.visit( this); }
 
 	final int		pos;
 	final String symbol;
@@ -102,7 +100,7 @@ class ExprProc implements IExpression
 // actually why not pass a
 // string s, integer pos, boxed type....
 
-class Parser 
+class Parser
 {
 
 /*	public Context( String s, int pos)
@@ -134,7 +132,7 @@ class Parser
 		IExpression expr = parseInt(s, pos);
 		if(expr != null)
 			return expr;
-		
+
 		// literal
 		expr = parseLiteral(s, pos);
 		if(expr != null)
@@ -144,7 +142,7 @@ class Parser
 		expr = parseProc(s, pos);
 		if(expr != null)
 			return expr;
-		
+
 		return null;
 	}
 
@@ -168,33 +166,26 @@ class Parser
 			++pos;
 		}
 
-		// pull out the symbol...
+		// symbol
 		if(Character.isLetter(s.charAt(pos)) || s.charAt(pos) == '_' ) {
 			StringBuilder b = new StringBuilder();
-			while(Character.isLetter(s.charAt(pos)) 
-				|| Character.isDigit(s.charAt(pos)) 
+			while(Character.isLetter(s.charAt(pos))
+				|| Character.isDigit(s.charAt(pos))
 				|| s.charAt(pos) == '_') {
 				b.append(s.charAt(pos));
 				++pos;
 			}
-			//return new ExprProc(pos, b.toString());
-			//System.out.println("got symbol !" + symbol );
-			//System.out.println("- pos now " + pos);
 			symbol = b.toString();
 		}
-		// we must have white 
-		// no we just have to parse the expression.
 
+		// children
 		ArrayList<IExpression> children = new ArrayList<IExpression>();
 		IExpression child = null;
-		do {	
-			// System.out.println("- pos before parsing expr " + pos);
-			child = parseExpression( s, pos); 
+		do {
+			child = parseExpression( s, pos);
 			if( child != null ) {
 				children.add( child);
-				//System.out.println("childot subexpr !" );
 				pos = child.getPosition();
-				//System.out.println("- pos now" + pos);
 			}
 		} while(child != null);
 
@@ -209,7 +200,7 @@ class Parser
 
 		return new ExprProc ( pos, symbol, children );
 	}
-	
+
 
 	ExprInteger parseInt( String s, int pos)
 	{
@@ -230,11 +221,9 @@ class Parser
 	ExprLiteral parseLiteral( String s, int pos)
 	{
 		// don't worry about escaping for now
-
 		if(s.charAt(pos) != '\'')
 			return null;
 		++pos;
-
 
 		StringBuilder b = new StringBuilder();
 		// should test s length as well...
@@ -250,9 +239,9 @@ class Parser
 		return new ExprLiteral( pos, b.toString() );
 	}
 
-
-
 }
+
+
 
 // or we tokenize the
 // Why not try to do it recursively
@@ -315,3 +304,6 @@ public class test2 {
 		}
 	}
 }
+
+
+
