@@ -158,11 +158,14 @@ class Context
 		// we must have white 
 		// no we just have to parse the expression.
 
-		IExpression g = parseExpression( s, pos); 
-		if( g != null ) {
-			System.out.println("got subexpr !" );
-			pos = g.get_position();
-		}
+		IExpression g = null;
+		do {	
+			g = parseExpression( s, pos); 
+			if( g != null ) {
+				System.out.println("got subexpr !" );
+				pos = g.get_position();
+			}
+		} while( g != null);
 
 
 		ExprIdentifier p = new ExprIdentifier ( pos, symbol );
