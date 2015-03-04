@@ -157,7 +157,9 @@ class Context
 		// pull out the symbol...
 		if(Character.isLetter(s.charAt(pos)) || s.charAt(pos) == '_' ) {
 			StringBuilder b = new StringBuilder();
-			while(Character.isLetter(s.charAt(pos)) || s.charAt(pos) == '_') {
+			while(Character.isLetter(s.charAt(pos)) 
+				|| Character.isLetter(s.charAt(pos)) 
+				|| s.charAt(pos) == '_') {
 				b.append(s.charAt(pos));
 				++pos;
 			}
@@ -270,7 +272,6 @@ public class test2 {
 		//String s = "(contains  (uuu 123 789) 456) ";
 		String s = "(contains (f 456) 789 888) ";
 
-
 		Context c = new Context();
 		IExpression expr = c.parseExpression( s, 0);
 
@@ -280,6 +281,5 @@ public class test2 {
 			PrettyPrinter pp = new PrettyPrinter() ;
 			expr.accept( pp);
 		}
-
-    }
+	}
 }
