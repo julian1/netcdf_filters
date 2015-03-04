@@ -165,7 +165,7 @@ class Context
 				System.out.println("got subexpr !" );
 				pos = g.get_position();
 			}
-		} while( g != null);
+		} while(g != null);
 
 
 		ExprIdentifier p = new ExprIdentifier ( pos, symbol );
