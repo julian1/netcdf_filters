@@ -22,6 +22,10 @@ interface IExpression
 
 class ExprInteger implements IExpression
 {
+	public ExprInteger( int value)
+	{
+		value = value;
+	}
 	int value; //
 }
 
@@ -39,6 +43,8 @@ class Context
 
 	int parseExpression( String s, int pos )
 	{
+		// try whitespace
+
 		// try integer
 		ExprInteger expr = null;
 		int pos2 = parseInt( s, pos, expr); 
@@ -50,25 +56,37 @@ class Context
 		return pos2;
 	}
 
+
+	int parseWhite( String s, int pos)
+	{
+//		if(s.charAt(pos) >= '0' &&  s.charAt(pos) <= '9') {  
+
+
+
+		return pos;
+	}
+
+
 	int parseInt( String s, int pos, ExprInteger expr )
 	{
 		// if it succeeds then we return the value
 		// it maybe that we want to not use Integer but instead an expression . ExprInteger or IntegerExpression 
 		// or TupleExpression
 
-		StringBuilder buf = new StringBuilder();
-		if(s.charAt(pos) >= '0' &&  s.charAt(pos) <= '9') {  
-				
-			while(s.charAt(pos) >= '0' && s.charAt(pos) <= '9') {
-				buf.append( s.charAt(pos));
+		// we are committed
+		if(Character.isDigit(s.charAt(pos))) {  
+
+			StringBuilder buf = new StringBuilder();
+			while( Character.isDigit(s.charAt(pos))) {
+				buf.append(s.charAt(pos));
 				++pos;
 			}	
+			int value = Integer.parseInt(buf.toString());
+			//	int foo = Integer.parseInt("1234");		
+			//System.out.println( "integer "  + Integer.toString( value )  ); 
+			expr = new ExprInteger( value); 
+			return pos;
 		}
-		buf.toString();
-		
-		System.out.println( "integer "  + Integer.toString( 123 )  ); // Display the string.
-
-		expr = new ExprInteger( ); 
 		return pos;
 	}
 }
@@ -84,7 +102,7 @@ public class test2 {
 
     public static void main(String[] args) 
 	{
-		String s = "and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )"; 
+		String s = "777 and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )"; 
 
 
 		Context c = new Context();// s, 0 );
