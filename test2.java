@@ -14,7 +14,7 @@ import java.util.ArrayList; //io.BufferedInputStream;
 import java.sql.*;
 
 import java.util.Properties;
-import java.lang.RuntimeException; 
+import java.lang.RuntimeException;
 
 import java.text.SimpleDateFormat;
 /*import java.util.List;
@@ -292,8 +292,8 @@ class Parser
 
 	ExprTimestamp parseTimestamp( String s, int pos)
 	{
-		// eg. if it looks like a date "2012-01-01T00:00:00Z";
-		int pos2 = pos;	
+		// eg. if it looks like a date
+		int pos2 = pos;
 		while(Character.isDigit(s.charAt(pos2))
 			|| s.charAt(pos2) == '-'
 			|| s.charAt(pos2) == ':'
@@ -301,42 +301,16 @@ class Parser
 			|| s.charAt(pos2) == 'T'
 		) ++pos2;
 
-
-		if( pos == pos2)
-			return null;
-
-		System.out.println( "here" );
-
-		try {
-			String x = s.substring( pos, pos2);  
-
-			System.out.println( "x is '" + x + "'"  );
-
-			Timestamp d = new java.sql.Timestamp(df.parse(x).getTime()); 
-			return new ExprTimestamp( pos2, d);
-		} catch( Exception e ) { 
-
-			System.out.println( "exception transforming " );
-		} 
-
-		return null;
-
-/*
-		if(Character.isDigit(s.charAt(pos))) {
-			// we are committed
-			StringBuilder b = new StringBuilder();
-			while(Character.isDigit(s.charAt(pos))) {
-				b.append(s.charAt(pos));
-				++pos;
+		if(pos != pos2) {
+			try {
+				String x = s.substring( pos, pos2);
+				Timestamp d = new java.sql.Timestamp(df.parse(x).getTime());
+				return new ExprTimestamp( pos2, d);
+			} catch( Exception e ) {
 			}
-			int value = Integer.parseInt(b.toString());
-			System.out.println( "whoot integer "  + Integer.toString( value )  );
-			return new ExprInteger( pos, value);
 		}
 		return null;
-*/
 	}
-
 
 	ExprInteger parseInt( String s, int pos)
 	{
@@ -444,7 +418,7 @@ class SelectionGenerationVisitor implements Visitor
 	// should take the stream on the constructor
 	// actually just a string builder...
 
-	StringBuilder b; 
+	StringBuilder b;
 
 	// parameters...
 
@@ -466,8 +440,14 @@ class SelectionGenerationVisitor implements Visitor
 	public void visit( ExprTimestamp expr )
 	{
 
-		b.append("MYTIME");
-		// throw new RuntimeException( "opps timestamp" ); 
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+//		for(Object value : values) {
+ //      result.add(df.format((Date)value ));
+
+		Timestamp ts =  expr.value; 
+
+		b.append(  df.format(expr.value ) );
+		// throw new RuntimeException( "opps timestamp" );
 	}
 
 
@@ -533,7 +513,7 @@ class SelectionGenerationVisitor implements Visitor
 
 class Test3 {
 
-	Connection conn; 
+	Connection conn;
 
 	public Test3( Connection conn_ )
 	{
@@ -642,7 +622,7 @@ public class test2 {
 
 		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 		df.parse( date);
-		Timestamp d = new java.sql.Timestamp(df.parse(date).getTime()); 
+		Timestamp d = new java.sql.Timestamp(df.parse(date).getTime());
 
 		System.out.println( "got date " + d );
 */
@@ -655,9 +635,9 @@ public class test2 {
 		            else if (clazz.equals(java.sql.Date.class)) {
                 SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
                 for(Object value : values) {
-                    result.add(df.format((Date)value )); 
+                    result.add(df.format((Date)value ));
                 }
- */	
+ */
 
 		//String s = "777 and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains 123 (geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
@@ -666,9 +646,9 @@ public class test2 {
 
 		//String s = "(contains 123 (f 456 789) (f2 999) 1000 1001)";
 		// String s = "(and (equals instrument 'SEABIRD SBE37SM + P') (equals instrument 'SEABIRD SBE37SM + P'))";
-		
+
 		// String s = "(equals instrument 2012-01-01T00:00:00Z)";
-		String s = "(equals instrument 2012-01-01T00:00:00Z)";
+		String s = "(equals time 2012-01-01T00:03:03Z)";
 
 		Parser c = new Parser();
 		IExpression expr = c.parseExpression( s, 0);
@@ -676,12 +656,12 @@ public class test2 {
 		if( expr == null) {
 			throw new RuntimeException( "failed to parse expression" );
 		}
-		
+
 		System.out.println( "got an expression" );
 
 
 		// Should make it Postgres specific ?...
-		StringBuilder b = new StringBuilder(); 
+		StringBuilder b = new StringBuilder();
 		SelectionGenerationVisitor v = new SelectionGenerationVisitor( b);
 		expr.accept(v);
 
@@ -693,12 +673,12 @@ public class test2 {
 
 		Test3 t = new Test3( conn );
 
-		String query = "SELECT * FROM anmn_ts.timeseries where " + b.toString();  
+		String query = "SELECT * FROM anmn_ts.timeseries where " + b.toString();
 
 		System.out.println( "query " + query  );
 
 		t.doQuery2( query  );
-*/		
+*/
 	}
 }
 
