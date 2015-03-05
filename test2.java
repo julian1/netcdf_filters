@@ -16,6 +16,14 @@ import java.sql.*;
 import java.util.Properties;
 import java.lang.RuntimeException; 
 
+import java.text.SimpleDateFormat;
+/*import java.util.List;
+import java.util.Set;
+import java.util.ArrayList;
+*/
+//import java.util.Date;
+
+
 
 //import java.util.StringTokenizer;
 
@@ -283,6 +291,13 @@ class Parser
 		return new ExprLiteral( pos, b.toString() );
 	}
 
+/*
+	ExprLiteral parseLiteral( String s, int pos)
+	{
+		"2012-01-01T00:00:00Z";
+	}
+*/
+
 }
 
 
@@ -523,6 +538,30 @@ public class test2 {
 
     public static void main(String[] args) throws Exception
 	{
+		String date = "2012-01-01T00:03:03Z";
+
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		df.parse( date);
+		Timestamp d = new java.sql.Timestamp(df.parse(date).getTime()); 
+
+		System.out.println( "got date " + d );
+
+
+
+	//	new java.sql.Date(sdfout.parse(date).getTime())
+
+
+/*
+		            else if (clazz.equals(java.sql.Date.class)) {
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+                for(Object value : values) {
+                    result.add(df.format((Date)value )); 
+                }
+ */	
+
+
+
+
 		//String s = "777 and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains 123 (geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains  (uuu 123 789) 456) ";
@@ -553,7 +592,7 @@ public class test2 {
 
 		Test3 t = new Test3( conn );
 
-		String query = "SELECT * FROM anmn_ts.timeseries where "  + b.toString();  
+		String query = "SELECT * FROM anmn_ts.timeseries where " + b.toString();  
 
 		System.out.println( "query " + query  );
 
