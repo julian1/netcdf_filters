@@ -10,6 +10,13 @@ import java.io.BufferedInputStream;
 
 import java.util.ArrayList; //io.BufferedInputStream;
 
+
+import java.sql.*;
+
+import java.util.Properties;
+import java.lang.RuntimeException; 
+
+
 //import java.util.StringTokenizer;
 
 // string tokenizer isn't going to work because may not be strings.
@@ -20,17 +27,31 @@ import java.util.ArrayList; //io.BufferedInputStream;
 
 interface Visitor
 {
-	public void visit(  ExprInteger expr );
-	public void visit(  ExprProc expr );
-	public void visit(  ExprLiteral expr );
+	public void visit( ExprInteger expr );
+	public void visit( ExprProc expr );
+	public void visit( ExprLiteral expr );
+	public void visit( ExprSymbol expr );
 }
-
-
 
 interface IExpression
 {
-	public int getPosition() ; 
-	public void accept( Visitor v ) ; 
+	public int getPosition() ;
+	public void accept( Visitor v ) ;
+}
+
+class ExprSymbol implements IExpression
+{
+	public ExprSymbol( int pos_, String value_)
+	{
+		pos = pos_;
+		value = value_;
+	}
+
+	public int getPosition() { return pos; }
+	public void accept( Visitor v )  { v.visit( this); }
+
+	final int pos;
+	final String value; //
 }
 
 class ExprInteger implements IExpression
@@ -41,10 +62,8 @@ class ExprInteger implements IExpression
 		value = value_;
 	}
 
-
-	public int getPosition() { return pos; } 
-
-	public void accept( Visitor v )  { v.visit( this); }  
+	public int getPosition() { return pos; }
+	public void accept( Visitor v )  { v.visit( this); }
 
 	final int pos;
 	final int value; //
@@ -58,8 +77,8 @@ class ExprLiteral implements IExpression
 		value = value_;
 	}
 
-	public int getPosition() { return pos; } 
-	public void accept( Visitor v )  { v.visit( this); }  
+	public int getPosition() { return pos; }
+	public void accept( Visitor v )  { v.visit( this); }
 	final int pos;
 	final String value; //
 }
@@ -72,8 +91,8 @@ class ExprWhite implements IExpression
 	{
 		pos = pos_;
 	}
-	public int getPosition() { return pos; } 
-	public void visit( Visitor v )  { }  
+	public int getPosition() { return pos; }
+	public void visit( Visitor v )  { }
 	int pos;
 }
 */
@@ -88,8 +107,8 @@ class ExprProc implements IExpression
 		children = children_;
 	}
 
-	public int getPosition() { return pos; } 
-	public void accept( Visitor v )  { v.visit( this); }  
+	public int getPosition() { return pos; }
+	public void accept( Visitor v )  { v.visit( this); }
 
 	final int		pos;
 	final String symbol;
@@ -102,8 +121,12 @@ class ExprProc implements IExpression
 // actually why not pass a
 // string s, integer pos, boxed type....
 
-class Parser 
+class Parser
 {
+
+	// the input source is actually constant. while the pos needs to be held
+	// on the stack
+	// potentially we should keep the buffer state around...
 
 /*	public Context( String s, int pos)
 	{
@@ -124,6 +147,9 @@ class Parser
 	//			expr
 	// | '(' expr, expr ')'   tuple
 
+	// TODO we should check that we have matched the string entirely
+	// with whitespace at the end... parseEOF or similar?
+
 	IExpression parseExpression(String s, int pos)
 	{
 		// advance whitespace
@@ -134,17 +160,17 @@ class Parser
 		IExpression expr = parseInt(s, pos);
 		if(expr != null)
 			return expr;
-		
 		// literal
 		expr = parseLiteral(s, pos);
 		if(expr != null)
 			return expr;
-
+		expr = parseSymbol( s, pos );
+		if(expr != null)
+			return expr;
 		// proc
 		expr = parseProc(s, pos);
 		if(expr != null)
 			return expr;
-		
 		return null;
 	}
 
@@ -168,33 +194,26 @@ class Parser
 			++pos;
 		}
 
-		// pull out the symbol...
+		// symbol
 		if(Character.isLetter(s.charAt(pos)) || s.charAt(pos) == '_' ) {
 			StringBuilder b = new StringBuilder();
-			while(Character.isLetter(s.charAt(pos)) 
-				|| Character.isDigit(s.charAt(pos)) 
+			while(Character.isLetter(s.charAt(pos))
+				|| Character.isDigit(s.charAt(pos))
 				|| s.charAt(pos) == '_') {
 				b.append(s.charAt(pos));
 				++pos;
 			}
-			//return new ExprProc(pos, b.toString());
-			//System.out.println("got symbol !" + symbol );
-			//System.out.println("- pos now " + pos);
 			symbol = b.toString();
 		}
-		// we must have white 
-		// no we just have to parse the expression.
 
+		// children
 		ArrayList<IExpression> children = new ArrayList<IExpression>();
 		IExpression child = null;
-		do {	
-			// System.out.println("- pos before parsing expr " + pos);
-			child = parseExpression( s, pos); 
+		do {
+			child = parseExpression( s, pos);
 			if( child != null ) {
 				children.add( child);
-				//System.out.println("childot subexpr !" );
 				pos = child.getPosition();
-				//System.out.println("- pos now" + pos);
 			}
 		} while(child != null);
 
@@ -209,7 +228,23 @@ class Parser
 
 		return new ExprProc ( pos, symbol, children );
 	}
-	
+
+	ExprSymbol parseSymbol( String s, int pos)
+	{
+		// atom....
+		// symbol
+		if(Character.isLetter(s.charAt(pos)) || s.charAt(pos) == '_' ) {
+			StringBuilder b = new StringBuilder();
+			while(Character.isLetter(s.charAt(pos))
+				|| Character.isDigit(s.charAt(pos))
+				|| s.charAt(pos) == '_') {
+				b.append(s.charAt(pos));
+				++pos;
+			}
+			return new ExprSymbol( pos, b.toString());
+		}
+		return null;
+	}
 
 	ExprInteger parseInt( String s, int pos)
 	{
@@ -230,11 +265,9 @@ class Parser
 	ExprLiteral parseLiteral( String s, int pos)
 	{
 		// don't worry about escaping for now
-
 		if(s.charAt(pos) != '\'')
 			return null;
 		++pos;
-
 
 		StringBuilder b = new StringBuilder();
 		// should test s length as well...
@@ -250,9 +283,9 @@ class Parser
 		return new ExprLiteral( pos, b.toString() );
 	}
 
-
-
 }
+
+
 
 // or we tokenize the
 // Why not try to do it recursively
@@ -263,9 +296,16 @@ class Parser
 
 
 
-class PrettyPrinter implements Visitor
+class PrettyPrinterVisitor implements Visitor
 {
+	// should take the stream on the constructor
+
 	// think our naming is incorrect
+
+	public void visit( ExprSymbol expr )
+	{
+		System.out.print( "Symbol:" + expr.value );
+	}
 
 	public void visit(  ExprInteger expr )
 	{
@@ -282,7 +322,7 @@ class PrettyPrinter implements Visitor
 		System.out.print( "(" + expr.symbol + " " );
 		for( IExpression child : expr.children ) {
 			child.accept(this);
-			System.out.print( ", ");
+			System.out.print( " ");
 		}
 		System.out.println( ")" );
 	}
@@ -290,28 +330,237 @@ class PrettyPrinter implements Visitor
 
 
 
+class SelectionGenerationVisitor implements Visitor
+{
+	// rename PGDialectSelectionGenerator
+
+	// we don't know the bloody index offset of the parameter.
+	// we might have
+
+	// should take the stream on the constructor
+	// actually just a string builder...
+
+	StringBuilder b; 
+
+	public SelectionGenerationVisitor( StringBuilder b_  )
+	{
+		b = b_;
+	}
+
+	// think our naming is incorrect
+	public void visit(  ExprInteger expr )
+	{
+		// This should actually emit a '?' and load the value into the sql parameter list
+		// to avoid sql injection
+		//System.out.print(  expr.value );
+
+		b.append( expr.value );
+	}
+
+	public void visit(  ExprLiteral expr )
+	{
+		b.append("'"+ expr.value + "'" );
+	}
+
+	public void visit( ExprSymbol expr )
+	{
+		b.append(expr.value );
+	}
+
+	public void visit( ExprProc expr )
+	{
+		String symbol = expr.symbol;
+
+		if(symbol.equals("equals")) {
+			emit_infix_sql_expr( "=", expr );
+		}
+		else if( symbol.equals("and")
+			|| symbol.equals("or")
+			) {
+			emit_infix_sql_expr( symbol, expr );
+		}
+		else {
+			System.out.print( "UNKNOWN EXPRESSION");
+
+			System.out.print( "(" + expr.symbol + " " );
+			for( IExpression child : expr.children ) {
+				child.accept(this);
+				System.out.print( " ");
+			}
+			System.out.println( ")" );
+		}
+	}
+
+	public void emit_infix_sql_expr( String op, ExprProc expr )
+	{
+		// if expansion is done in order we may be ok,....
+		b.append('(');
+		expr.children.get(0).accept(this);
+		b.append(' ');
+		b.append(op);
+		b.append(' ');
+		expr.children.get(1).accept(this);
+		b.append(')');
+	}
+}
+
+
+// we need raw identifiers which is the way cql does it.
+
+
+
+
+
+/*
+	jdbc3 doesn't work for non-validating factory
+	export CLASSPATH=.:postgresql-9.1-901.jdbc4.jar
+	java test3
+*/
+
+class Test3 {
+
+	Connection conn; 
+
+	public Test3( Connection conn_ )
+	{
+		conn = conn_;
+	}
+
+    public void doQuery2 ( String query  )  throws Exception
+	{
+		//PreparedStatement stmt = conn.prepareStatement( "SELECT * FROM anmn_ts.measurement limit ?");
+		PreparedStatement stmt = conn.prepareStatement( query );
+		//stmt.setInt(1, new Integer( 1));
+		//stmt.setInt(1, 1 );
+		ResultSet rs = 	stmt.executeQuery();
+		dumpResults ( rs );
+	}
+
+    public void dumpResults ( ResultSet rs )  throws Exception
+	{
+		ResultSetMetaData m = rs.getMetaData();
+		int numColumns = m.getColumnCount();
+
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+			System.out.println( "" + i + " " + m.getColumnClassName( i ) + ", " + m.getColumnName(i ) );
+		}
+
+		while ( rs.next() ) {
+			for ( int i = 1 ; i <= numColumns ; i++ ) {
+
+			   // Column numbers start at 1.
+			   // Also there are many methods on the result set to return
+			   //  the column as a particular type. Refer to the Sun documentation
+			   //  for the list of valid conversions.
+			   System.out.println( "" + i + " = " + rs.getObject(i) );
+			}
+		}
+	}
+/*
+	// conn initialization should be external dependendy.
+
+    public static void main(String[] args)  throws Exception
+	{
+		//String url = "jdbc:postgresql://127.0.0.1/postgres";
+		String url = "jdbc:postgresql://dbprod.emii.org.au/harvest";
+		Properties props = new Properties();
+		props.setProperty("user","jfca");
+		props.setProperty("password","fredfred");
+		props.setProperty("ssl","true");
+		props.setProperty("sslfactory","org.postgresql.ssl.NonValidatingFactory");
+
+		props.setProperty("driver","org.postgresql.Driver" );
+
+
+		Connection conn = DriverManager.getConnection(url, props);
+
+		if( conn != null ) {
+			System.out.println( "got conn" );
+			doQuery2( conn );
+		}
+		else {
+			System.out.println( "no conn" );
+		}
+	}
+*/
+}
+
+//			Statement stmt = conn.createStatement();
+		//	ResultSet rs = stmt.executeQuery( "SELECT * FROM anmn_ts.measurement limit 1" );
+		// String url = "jdbc:postgresql://localhost/test?user=fred&password=secret&ssl=true";
+		// Connection conn = DriverManager.getConnection(url);
+
+
+
+
+
+
+
+
+
+
 public class test2 {
 
-    public static void main(String[] args)
+    public static Connection getConn() throws Exception
+	{
+		//String url = "jdbc:postgresql://127.0.0.1/postgres";
+
+		String url = "jdbc:postgresql://dbprod.emii.org.au/harvest";
+		Properties props = new Properties();
+		props.setProperty("user","jfca");
+		props.setProperty("password","fredfred");
+		props.setProperty("ssl","true");
+		props.setProperty("sslfactory","org.postgresql.ssl.NonValidatingFactory");
+		props.setProperty("driver","org.postgresql.Driver" );
+
+		Connection conn = DriverManager.getConnection(url, props);
+		if(conn == null) {
+			throw new RuntimeException( "Could not get connection" );
+		}
+		return conn;
+	}
+
+
+    public static void main(String[] args) throws Exception
 	{
 		//String s = "777 and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains 123 (geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains  (uuu 123 789) 456) ";
 		//String s = "(contains (f 456) 789 888) ";
 		//String s = "(contains 123 (f 456 789) (f2 999) 1000 1001)";
-		String s = "(equals 'platform_number' 456) ";
+		String s = "(and (equals instrument 'SEABIRD SBE37SM + P') (equals instrument 'SEABIRD SBE37SM + P'))";
 
 		Parser c = new Parser();
 		IExpression expr = c.parseExpression( s, 0);
 
-		if( expr != null) {
-			System.out.println( "got an expression" );
-			PrettyPrinter pp = new PrettyPrinter() ;
-			expr.accept( pp);
-		}
-		else {
-			System.out.println( "expression parse failed" );
 
+		if( expr == null) {
+			throw new RuntimeException( "failed to parse expression" );
 		}
+		
+		System.out.println( "got an expression" );
+
+
+		// Should make it Postgres specific ?...
+		StringBuilder b = new StringBuilder(); 
+		SelectionGenerationVisitor v = new SelectionGenerationVisitor( b);
+		expr.accept(v);
+
+
+		System.out.println( "expression is " + b.toString() );
+
+		Connection conn = getConn();
+
+		Test3 t = new Test3( conn );
+
+		String query = "SELECT * FROM anmn_ts.timeseries where "  + b.toString();  
+
+		System.out.println( "query " + query  );
+
+		t.doQuery2( query  );
+		
 	}
 }
+
+
+

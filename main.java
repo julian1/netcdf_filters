@@ -13,6 +13,13 @@ interface IX
 
 }
 
+class J 
+{
+
+
+}
+
+
 class X implements IX
 {
 
