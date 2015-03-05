@@ -175,14 +175,29 @@ class Parser
 	// TODO we should check that we have matched the string entirely
 	// with whitespace at the end... parseEOF or similar?
 
+
+	public Parser() {
+			// TODO don't generate this every time...
+		df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+	}
+
+	SimpleDateFormat df;
+
 	IExpression parseExpression(String s, int pos)
 	{
 		// advance whitespace
 		while(Character.isSpaceChar(s.charAt(pos))) {
 			++pos;
 		}
+		// timestamp
+		IExpression expr = parseTimestamp(s, pos);
+		if(expr != null) {
+			System.out.println( "parsed Timestamp" );
+			return expr;
+		}
+
 		// integer
-		IExpression expr = parseInt(s, pos);
+		expr = parseInt(s, pos);
 		if(expr != null)
 			return expr;
 		// literal
@@ -275,25 +290,33 @@ class Parser
 	}
 
 
-	ExprTimestamp parseDate( String s, int pos)
+	ExprTimestamp parseTimestamp( String s, int pos)
 	{
-		// "2012-01-01T00:00:00Z";
+		// eg. if it looks like a date "2012-01-01T00:00:00Z";
 		int pos2 = pos;	
 		while(Character.isDigit(s.charAt(pos2))
 			|| s.charAt(pos2) == '-'
 			|| s.charAt(pos2) == ':'
 			|| s.charAt(pos2) == 'Z'
+			|| s.charAt(pos2) == 'T'
 		) ++pos2;
+
 
 		if( pos == pos2)
 			return null;
 
+		System.out.println( "here" );
+
 		try {
-			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 			String x = s.substring( pos, pos2);  
+
+			System.out.println( "x is '" + x + "'"  );
+
 			Timestamp d = new java.sql.Timestamp(df.parse(x).getTime()); 
 			return new ExprTimestamp( pos2, d);
 		} catch( Exception e ) { 
+
+			System.out.println( "exception transforming " );
 		} 
 
 		return null;
@@ -442,7 +465,9 @@ class SelectionGenerationVisitor implements Visitor
 
 	public void visit( ExprTimestamp expr )
 	{
-		throw new RuntimeException( "opps timestamp" ); 
+
+		b.append("MYTIME");
+		// throw new RuntimeException( "opps timestamp" ); 
 	}
 
 
@@ -612,6 +637,7 @@ public class test2 {
 
     public static void main(String[] args) throws Exception
 	{
+/*
 		String date = "2012-01-01T00:03:03Z";
 
 		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -619,7 +645,7 @@ public class test2 {
 		Timestamp d = new java.sql.Timestamp(df.parse(date).getTime()); 
 
 		System.out.println( "got date " + d );
-
+*/
 
 
 	//	new java.sql.Date(sdfout.parse(date).getTime())
@@ -633,18 +659,16 @@ public class test2 {
                 }
  */	
 
-
-
-
 		//String s = "777 and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains 123 (geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains  (uuu 123 789) 456) ";
 		//String s = "(contains (f 456) 789 888) ";
 
 		//String s = "(contains 123 (f 456 789) (f2 999) 1000 1001)";
-		String s = "(and (equals instrument 'SEABIRD SBE37SM + P') (equals instrument 'SEABIRD SBE37SM + P'))";
+		// String s = "(and (equals instrument 'SEABIRD SBE37SM + P') (equals instrument 'SEABIRD SBE37SM + P'))";
 		
 		// String s = "(equals instrument 2012-01-01T00:00:00Z)";
+		String s = "(equals instrument 2012-01-01T00:00:00Z)";
 
 		Parser c = new Parser();
 		IExpression expr = c.parseExpression( s, 0);
@@ -654,16 +678,17 @@ public class test2 {
 		}
 		
 		System.out.println( "got an expression" );
-/*
+
 
 		// Should make it Postgres specific ?...
 		StringBuilder b = new StringBuilder(); 
 		SelectionGenerationVisitor v = new SelectionGenerationVisitor( b);
 		expr.accept(v);
 
-
 		System.out.println( "expression is " + b.toString() );
 
+
+/*
 		Connection conn = getConn();
 
 		Test3 t = new Test3( conn );
