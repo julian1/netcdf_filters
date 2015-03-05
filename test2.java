@@ -432,33 +432,24 @@ class SelectionGenerationVisitor implements Visitor
 	{
 		// This should actually emit a '?' and load the value into the sql parameter list
 		// to avoid sql injection
-		//System.out.print(  expr.value );
-
 		b.append( expr.value );
 	}
 
 	public void visit( ExprTimestamp expr )
 	{
-
 		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-//		for(Object value : values) {
- //      result.add(df.format((Date)value ));
-
-		Timestamp ts =  expr.value; 
-
-		b.append(  df.format(expr.value ) );
-		// throw new RuntimeException( "opps timestamp" );
+		b.append( "'" + df.format(expr.value ) + "'" );
 	}
-
 
 	public void visit(  ExprLiteral expr )
 	{
-		b.append("'"+ expr.value + "'" );
+		b.append("'"+ expr.value + "'");
 	}
 
 	public void visit( ExprSymbol expr )
 	{
-		b.append(expr.value );
+		// must quote field to enforce full case handling
+		b.append('\"' + expr.value + '\"' );
 	}
 
 	public void visit( ExprProc expr )
@@ -541,52 +532,13 @@ class Test3 {
 
 		while ( rs.next() ) {
 			for ( int i = 1 ; i <= numColumns ; i++ ) {
-
 			   // Column numbers start at 1.
-			   // Also there are many methods on the result set to return
-			   //  the column as a particular type. Refer to the Sun documentation
-			   //  for the list of valid conversions.
 			   System.out.println( "" + i + " = " + rs.getObject(i) );
 			}
 		}
 	}
-/*
-	// conn initialization should be external dependendy.
 
-    public static void main(String[] args)  throws Exception
-	{
-		//String url = "jdbc:postgresql://127.0.0.1/postgres";
-		String url = "jdbc:postgresql://dbprod.emii.org.au/harvest";
-		Properties props = new Properties();
-		props.setProperty("user","jfca");
-		props.setProperty("password","fredfred");
-		props.setProperty("ssl","true");
-		props.setProperty("sslfactory","org.postgresql.ssl.NonValidatingFactory");
-
-		props.setProperty("driver","org.postgresql.Driver" );
-
-
-		Connection conn = DriverManager.getConnection(url, props);
-
-		if( conn != null ) {
-			System.out.println( "got conn" );
-			doQuery2( conn );
-		}
-		else {
-			System.out.println( "no conn" );
-		}
-	}
-*/
 }
-
-//			Statement stmt = conn.createStatement();
-		//	ResultSet rs = stmt.executeQuery( "SELECT * FROM anmn_ts.measurement limit 1" );
-		// String url = "jdbc:postgresql://localhost/test?user=fred&password=secret&ssl=true";
-		// Connection conn = DriverManager.getConnection(url);
-
-
-
-
 
 
 
@@ -617,27 +569,7 @@ public class test2 {
 
     public static void main(String[] args) throws Exception
 	{
-/*
-		String date = "2012-01-01T00:03:03Z";
 
-		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-		df.parse( date);
-		Timestamp d = new java.sql.Timestamp(df.parse(date).getTime());
-
-		System.out.println( "got date " + d );
-*/
-
-
-	//	new java.sql.Date(sdfout.parse(date).getTime())
-
-
-/*
-		            else if (clazz.equals(java.sql.Date.class)) {
-                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-                for(Object value : values) {
-                    result.add(df.format((Date)value ));
-                }
- */
 
 		//String s = "777 and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains 123 (geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
@@ -648,7 +580,10 @@ public class test2 {
 		// String s = "(and (equals instrument 'SEABIRD SBE37SM + P') (equals instrument 'SEABIRD SBE37SM + P'))";
 
 		// String s = "(equals instrument 2012-01-01T00:00:00Z)";
-		String s = "(equals time 2012-01-01T00:03:03Z)";
+
+		//	select *  from anmn_ts.measurement where "TIME" = 2013-03-24T21:35:01Z limit 2; 
+
+		String s = "(equals TIME 2012-01-01T00:03:03Z)";
 
 		Parser c = new Parser();
 		IExpression expr = c.parseExpression( s, 0);
@@ -668,17 +603,18 @@ public class test2 {
 		System.out.println( "expression is " + b.toString() );
 
 
-/*
+
 		Connection conn = getConn();
 
 		Test3 t = new Test3( conn );
 
-		String query = "SELECT * FROM anmn_ts.timeseries where " + b.toString();
+		String query = "SELECT * FROM anmn_ts.measurement where " + b.toString();
+		// String query = "SELECT * FROM anmn_ts.timeseries where " + b.toString();
 
 		System.out.println( "query " + query  );
 
 		t.doQuery2( query  );
-*/
+
 	}
 }
 
