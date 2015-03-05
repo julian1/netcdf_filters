@@ -1,8 +1,27 @@
 
+- USE SPRING 'LIKE' TO DRIVE THE CONFIGURATION . 
+not if in geoserver.
+
+
+VERY IMPORTANT
+- the configuration - can actually specify all the different classes that go together to
+make up the decoder, projector, filter, encoder etc. to get full control
+
+much like a spring configuration. 
+
+----
+
+CQL ref
+http://svemir.co/2012/08/16/introduction-to-cql-and-geoserver-implementation/
+
+2012-01-01T00:00:00Z
+
+
 We might have an issue with trying to identify the index of the parameter that's
 going to get substituted.
 
 Token (string) token  (parameter)
+
 
 -------
 Need to move the library into the library path.

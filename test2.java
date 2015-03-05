@@ -271,12 +271,8 @@ class Parser
 
 	ExprSymbol parseSymbol( String s, int pos)
 	{
-		// TODO we should probably be using substrings everywhere.
-		// rather than this string builder business.
-
 		// atom....
 		// symbol
-
 		int pos2 = pos;
 		if(Character.isLetter(s.charAt(pos2)) || s.charAt(pos2) == '_' ) {
 			while(Character.isLetter(s.charAt(pos2))
@@ -328,24 +324,17 @@ class Parser
 	ExprLiteral parseLiteral( String s, int pos )
 	{
 		// TODO pos2
-	
-		// don't worry about escaping for now
-		if(s.charAt(pos) != '\'')
+		int pos2 = pos;
+		// ignore escaping for the moment
+		if(s.charAt(pos2) != '\'')
 			return null;
-		++pos;
+		++pos2;
 
-		StringBuilder b = new StringBuilder();
-		// should test s length as well...
-		while(s.charAt(pos) != '\'') {
-			b.append(s.charAt(pos));
-			++pos;
-		}
+		while(s.charAt(pos2) != '\'')
+			++pos2;
 
-		if(s.charAt(pos) != '\'')
-			return null;
-		++pos;
-
-		return new ExprLiteral( pos, b.toString() );
+		++pos2;
+		return new ExprLiteral(pos, s.substring( pos + 1, pos2 - 1));
 	}
 
 /*
@@ -506,9 +495,9 @@ class Test3 {
 
 	Connection conn;
 
-	public Test3( Connection conn_ )
+	public Test3( Connection conn )
 	{
-		conn = conn_;
+		this.conn = conn;
 	}
 
     public void doQuery2 ( String query  )  throws Exception
@@ -520,6 +509,11 @@ class Test3 {
 		ResultSet rs = 	stmt.executeQuery();
 		dumpResults ( rs );
 	}
+
+	// we need to query the timeseries and then the measurements.
+	// this wants to be a separate class to output ...
+
+	// eg. encode row. 
 
     public void dumpResults ( ResultSet rs )  throws Exception
 	{
