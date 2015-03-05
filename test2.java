@@ -50,10 +50,10 @@ interface IExpression
 
 class ExprSymbol implements IExpression
 {
-	public ExprSymbol( int pos_, String value_)
+	public ExprSymbol( int pos, String value)
 	{
-		pos = pos_;
-		value = value_;
+		this.pos = pos;
+		this.value = value;
 	}
 
 	public int getPosition() { return pos; }
@@ -65,10 +65,10 @@ class ExprSymbol implements IExpression
 
 class ExprInteger implements IExpression
 {
-	public ExprInteger( int pos_, int value_)
+	public ExprInteger( int pos, int value)
 	{
-		pos = pos_;
-		value = value_;
+		this.pos = pos;
+		this.value = value;
 	}
 
 	public int getPosition() { return pos; }
@@ -80,10 +80,10 @@ class ExprInteger implements IExpression
 
 class ExprTimestamp implements IExpression
 {
-	public ExprTimestamp( int pos_, Timestamp value_)
+	public ExprTimestamp( int pos, Timestamp value)
 	{
-		pos = pos_;
-		value = value_;
+		this.pos = pos;
+		this.value = value;
 	}
 
 	public int getPosition() { return pos; }
@@ -96,10 +96,10 @@ class ExprTimestamp implements IExpression
 
 class ExprLiteral implements IExpression
 {
-	public ExprLiteral( int pos_, String value_)
+	public ExprLiteral( int pos, String value)
 	{
-		pos = pos_;
-		value = value_;
+		this.pos = pos;
+		this.value = value;
 	}
 
 	public int getPosition() { return pos; }
@@ -125,11 +125,11 @@ class ExprWhite implements IExpression
 
 class ExprProc implements IExpression
 {
-	public ExprProc( int pos_, String symbol_, ArrayList<IExpression> children_  )
+	public ExprProc( int pos, String symbol, ArrayList<IExpression> children  )
 	{
-		pos = pos_;
-		symbol = symbol_;
-		children = children_;
+		this.pos = pos;
+		this.symbol = symbol;
+		this.children = children;
 	}
 
 	public int getPosition() { return pos; }
