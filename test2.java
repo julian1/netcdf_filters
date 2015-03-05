@@ -422,6 +422,8 @@ class SelectionGenerationVisitor implements Visitor
 
 	// parameters...
 
+	// ok, 
+
 	public SelectionGenerationVisitor( StringBuilder b )
 	{
 		this.b = b;
@@ -583,7 +585,7 @@ public class test2 {
 
 		//	select *  from anmn_ts.measurement where "TIME" = 2013-03-24T21:35:01Z limit 2; 
 
-		String s = "(equals TIME 2012-01-01T00:03:03Z)";
+		String s = "(equals TIME 2013-03-24T21:35:01Z )";
 
 		Parser c = new Parser();
 		IExpression expr = c.parseExpression( s, 0);
@@ -608,7 +610,7 @@ public class test2 {
 
 		Test3 t = new Test3( conn );
 
-		String query = "SELECT * FROM anmn_ts.measurement where " + b.toString();
+		String query = "SELECT * FROM anmn_ts.measurement where " + b.toString() + " limit 2";
 		// String query = "SELECT * FROM anmn_ts.timeseries where " + b.toString();
 
 		System.out.println( "query " + query  );
