@@ -290,7 +290,7 @@ class Parser
 	}
 
 
-	ExprTimestamp parseTimestamp( String s, int pos)
+	ExprTimestamp parseTimestamp( String s, int pos )
 	{
 		// eg. if it looks like a date
 		int pos2 = pos;
@@ -312,24 +312,23 @@ class Parser
 		return null;
 	}
 
-	ExprInteger parseInt( String s, int pos)
+	ExprInteger parseInt( String s, int pos )
 	{
-		if(Character.isDigit(s.charAt(pos))) {
-			// we are committed
-			StringBuilder b = new StringBuilder();
-			while(Character.isDigit(s.charAt(pos))) {
-				b.append(s.charAt(pos));
-				++pos;
-			}
-			int value = Integer.parseInt(b.toString());
-			System.out.println( "whoot integer "  + Integer.toString( value )  );
-			return new ExprInteger( pos, value);
+		int pos2 = pos;
+		while(Character.isDigit(s.charAt(pos2))) 
+			++pos2;
+
+		if( pos != pos2) {
+			int value = Integer.parseInt(s.substring(pos, pos2));
+			return new ExprInteger(pos2, value);
 		}
 		return null;
 	}
 
-	ExprLiteral parseLiteral( String s, int pos)
+	ExprLiteral parseLiteral( String s, int pos )
 	{
+		// TODO pos2
+	
 		// don't worry about escaping for now
 		if(s.charAt(pos) != '\'')
 			return null;
@@ -443,7 +442,7 @@ class SelectionGenerationVisitor implements Visitor
 		b.append( "'" + df.format(expr.value ) + "'" );
 	}
 
-	public void visit(  ExprLiteral expr )
+	public void visit( ExprLiteral expr )
 	{
 		b.append("'"+ expr.value + "'");
 	}
@@ -459,19 +458,25 @@ class SelectionGenerationVisitor implements Visitor
 		String symbol = expr.symbol;
 
 		if(symbol.equals("equals")) {
-			emit_infix_sql_expr( "=", expr );
+			emitInfixSqlExpr( "=", expr );
+		}
+		else if(symbol.equals("gt")) {
+			emitInfixSqlExpr( ">", expr );
+		}
+		else if(symbol.equals("geq")) {
+			emitInfixSqlExpr( ">=", expr );
 		}
 		else if( symbol.equals("and")
 			|| symbol.equals("or")
 			) {
-			emit_infix_sql_expr( symbol, expr );
+			emitInfixSqlExpr( symbol, expr );
 		}
 		else {
-			throw new RuntimeException( "unknown expression '" + symbol + "'" );
+			throw new RuntimeException( "Unrecognized proc expression symbol '" + symbol + "'" );
 		}
 	}
 
-	public void emit_infix_sql_expr( String op, ExprProc expr )
+	public void emitInfixSqlExpr( String op, ExprProc expr )
 	{
 		// if expansion is done in order we may be ok,....
 		b.append('(');
@@ -538,14 +543,21 @@ class Test3 {
 
 class Timeseries
 {
+	/*
+		collaborators
+			- 
+			- selector (filter) subsetter
+			- conn
+			- limit
+			- netcdf encoder 
+			- streaming output / whatever output control we need (should just push encoded netcdf to outputer ) 
+	*/
 
 	public Timeseries( ) {
 		// we need to inject the selector ...
 		// 
 
 	}
-
-
 }
 
 
@@ -588,7 +600,9 @@ public class test2 {
 
 		//	select *  from anmn_ts.measurement where "TIME" = 2013-03-24T21:35:01Z limit 2; 
 
-		String s = "(and (equals TIME 2013-03-24T21:35:01Z ) (equals ts_id 6341))  "; // works...
+		String s = "(and (gt TIME 2013-6-28T21:35:01Z ) (equals ts_id 6341))"; 
+
+		// select *  from anmn_ts.measurement where "TIME" > '2013-6-28T21:35:01Z' and ts_id = 6341 ;
 
 		Parser c = new Parser();
 		IExpression expr = c.parseExpression( s, 0);
