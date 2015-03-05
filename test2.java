@@ -39,6 +39,7 @@ interface Visitor
 	public void visit( ExprProc expr );
 	public void visit( ExprLiteral expr );
 	public void visit( ExprSymbol expr );
+	public void visit( ExprTimestamp expr );
 }
 
 interface IExpression
@@ -76,6 +77,22 @@ class ExprInteger implements IExpression
 	final int pos;
 	final int value; //
 }
+
+class ExprTimestamp implements IExpression
+{
+	public ExprTimestamp( int pos_, Timestamp value_)
+	{
+		pos = pos_;
+		value = value_;
+	}
+
+	public int getPosition() { return pos; }
+	public void accept( Visitor v )  { v.visit( this); }
+
+	final int pos;
+	final Timestamp value; //
+}
+
 
 class ExprLiteral implements IExpression
 {
@@ -239,6 +256,9 @@ class Parser
 
 	ExprSymbol parseSymbol( String s, int pos)
 	{
+		// TODO we should probably be using substrings everywhere.
+		// rather than this string builder business.
+
 		// atom....
 		// symbol
 		if(Character.isLetter(s.charAt(pos)) || s.charAt(pos) == '_' ) {
@@ -253,6 +273,47 @@ class Parser
 		}
 		return null;
 	}
+
+
+	ExprTimestamp parseDate( String s, int pos)
+	{
+		// "2012-01-01T00:00:00Z";
+		int pos2 = pos;	
+		while(Character.isDigit(s.charAt(pos2))
+			|| s.charAt(pos2) == '-'
+			|| s.charAt(pos2) == ':'
+			|| s.charAt(pos2) == 'Z'
+		) ++pos2;
+
+		if( pos == pos2)
+			return null;
+
+		try {
+			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+			String x = s.substring( pos, pos2);  
+			Timestamp d = new java.sql.Timestamp(df.parse(x).getTime()); 
+			return new ExprTimestamp( pos2, d);
+		} catch( Exception e ) { 
+		} 
+
+		return null;
+
+/*
+		if(Character.isDigit(s.charAt(pos))) {
+			// we are committed
+			StringBuilder b = new StringBuilder();
+			while(Character.isDigit(s.charAt(pos))) {
+				b.append(s.charAt(pos));
+				++pos;
+			}
+			int value = Integer.parseInt(b.toString());
+			System.out.println( "whoot integer "  + Integer.toString( value )  );
+			return new ExprInteger( pos, value);
+		}
+		return null;
+*/
+	}
+
 
 	ExprInteger parseInt( String s, int pos)
 	{
@@ -327,6 +388,11 @@ class PrettyPrinterVisitor implements Visitor
 		System.out.print( "Integer:" + expr.value );
 	}
 
+	public void visit( ExprTimestamp expr )
+	{
+		System.out.print( "Timestamp:" + expr.value );
+	}
+
 	public void visit(  ExprLiteral expr )
 	{
 		System.out.print( "Literal:" + expr.value );
@@ -357,13 +423,15 @@ class SelectionGenerationVisitor implements Visitor
 
 	StringBuilder b; 
 
-	public SelectionGenerationVisitor( StringBuilder b_  )
+	// parameters...
+
+	public SelectionGenerationVisitor( StringBuilder b )
 	{
-		b = b_;
+		this.b = b;
 	}
 
 	// think our naming is incorrect
-	public void visit(  ExprInteger expr )
+	public void visit( ExprInteger expr )
 	{
 		// This should actually emit a '?' and load the value into the sql parameter list
 		// to avoid sql injection
@@ -371,6 +439,12 @@ class SelectionGenerationVisitor implements Visitor
 
 		b.append( expr.value );
 	}
+
+	public void visit( ExprTimestamp expr )
+	{
+		throw new RuntimeException( "opps timestamp" ); 
+	}
+
 
 	public void visit(  ExprLiteral expr )
 	{
@@ -566,19 +640,21 @@ public class test2 {
 		//String s = "(contains 123 (geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains  (uuu 123 789) 456) ";
 		//String s = "(contains (f 456) 789 888) ";
+
 		//String s = "(contains 123 (f 456 789) (f2 999) 1000 1001)";
 		String s = "(and (equals instrument 'SEABIRD SBE37SM + P') (equals instrument 'SEABIRD SBE37SM + P'))";
+		
+		// String s = "(equals instrument 2012-01-01T00:00:00Z)";
 
 		Parser c = new Parser();
 		IExpression expr = c.parseExpression( s, 0);
-
 
 		if( expr == null) {
 			throw new RuntimeException( "failed to parse expression" );
 		}
 		
 		System.out.println( "got an expression" );
-
+/*
 
 		// Should make it Postgres specific ?...
 		StringBuilder b = new StringBuilder(); 
@@ -597,7 +673,7 @@ public class test2 {
 		System.out.println( "query " + query  );
 
 		t.doQuery2( query  );
-		
+*/		
 	}
 }
 
