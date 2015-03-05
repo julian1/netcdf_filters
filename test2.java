@@ -332,6 +332,7 @@ class PrettyPrinterVisitor implements Visitor
 
 class SelectionGenerationVisitor implements Visitor
 {
+	// rename PGDialectSelectionGenerator
 
 	// we don't know the bloody index offset of the parameter.
 	// we might have
@@ -346,13 +347,11 @@ class SelectionGenerationVisitor implements Visitor
 		b = b_;
 	}
 
-
 	// think our naming is incorrect
 	public void visit(  ExprInteger expr )
 	{
 		// This should actually emit a '?' and load the value into the sql parameter list
 		// to avoid sql injection
-
 		//System.out.print(  expr.value );
 
 		b.append( expr.value );
@@ -360,14 +359,12 @@ class SelectionGenerationVisitor implements Visitor
 
 	public void visit(  ExprLiteral expr )
 	{
-		//System.out.print( "'"+ expr.value + "'" );
 		b.append("'"+ expr.value + "'" );
 	}
 
 	public void visit( ExprSymbol expr )
 	{
 		b.append(expr.value );
-		//System.out.print( expr.value  );
 	}
 
 	public void visit( ExprProc expr )
@@ -404,15 +401,6 @@ class SelectionGenerationVisitor implements Visitor
 		b.append(' ');
 		expr.children.get(1).accept(this);
 		b.append(')');
-/*
-		System.out.print("(" );
-		expr.children.get(0).accept(this);
-		System.out.print(" " );
-		System.out.print(operator);
-		System.out.print(" " );
-		expr.children.get(1).accept(this);
-		System.out.print(")" );
-*/
 	}
 }
 
@@ -560,13 +548,17 @@ public class test2 {
 
 
 		System.out.println( "expression is " + b.toString() );
-/*
+
 		Connection conn = getConn();
 
 		Test3 t = new Test3( conn );
 
-		t.doQuery2( "SELECT * FROM anmn_ts.measurement limit 1" );
-*/		
+		String query = "SELECT * FROM anmn_ts.timeseries where "  + b.toString();  
+
+		System.out.println( "query " + query  );
+
+		t.doQuery2( query  );
+		
 	}
 }
 
