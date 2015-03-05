@@ -467,14 +467,7 @@ class SelectionGenerationVisitor implements Visitor
 			emit_infix_sql_expr( symbol, expr );
 		}
 		else {
-			System.out.print( "UNKNOWN EXPRESSION");
-
-			System.out.print( "(" + expr.symbol + " " );
-			for( IExpression child : expr.children ) {
-				child.accept(this);
-				System.out.print( " ");
-			}
-			System.out.println( ")" );
+			throw new RuntimeException( "unknown expression '" + symbol + "'" );
 		}
 	}
 
@@ -543,7 +536,17 @@ class Test3 {
 }
 
 
+class Timeseries
+{
 
+	public Timeseries( ) {
+		// we need to inject the selector ...
+		// 
+
+	}
+
+
+}
 
 
 
@@ -585,7 +588,7 @@ public class test2 {
 
 		//	select *  from anmn_ts.measurement where "TIME" = 2013-03-24T21:35:01Z limit 2; 
 
-		String s = "(equals TIME 2013-03-24T21:35:01Z )";
+		String s = "(and (equals TIME 2013-03-24T21:35:01Z ) (equals ts_id 6341))  "; // works...
 
 		Parser c = new Parser();
 		IExpression expr = c.parseExpression( s, 0);
