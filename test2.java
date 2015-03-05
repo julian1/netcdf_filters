@@ -339,23 +339,35 @@ class SelectionGenerationVisitor implements Visitor
 	// should take the stream on the constructor
 	// actually just a string builder...
 
+	StringBuilder b; 
+
+	public SelectionGenerationVisitor( StringBuilder b_  )
+	{
+		b = b_;
+	}
+
+
 	// think our naming is incorrect
 	public void visit(  ExprInteger expr )
 	{
 		// This should actually emit a '?' and load the value into the sql parameter list
 		// to avoid sql injection
 
-		System.out.print(  expr.value );
+		//System.out.print(  expr.value );
+
+		b.append( expr.value );
 	}
 
 	public void visit(  ExprLiteral expr )
 	{
-		System.out.print( "'"+ expr.value + "'" );
+		//System.out.print( "'"+ expr.value + "'" );
+		b.append("'"+ expr.value + "'" );
 	}
 
 	public void visit( ExprSymbol expr )
 	{
-		System.out.print( expr.value  );
+		b.append(expr.value );
+		//System.out.print( expr.value  );
 	}
 
 	public void visit( ExprProc expr )
@@ -382,8 +394,17 @@ class SelectionGenerationVisitor implements Visitor
 		}
 	}
 
-	public void emit_infix_sql_expr( String operator, ExprProc expr )
+	public void emit_infix_sql_expr( String op, ExprProc expr )
 	{
+		// if expansion is done in order we may be ok,....
+		b.append('(');
+		expr.children.get(0).accept(this);
+		b.append(' ');
+		b.append(op);
+		b.append(' ');
+		expr.children.get(1).accept(this);
+		b.append(')');
+/*
 		System.out.print("(" );
 		expr.children.get(0).accept(this);
 		System.out.print(" " );
@@ -391,6 +412,7 @@ class SelectionGenerationVisitor implements Visitor
 		System.out.print(" " );
 		expr.children.get(1).accept(this);
 		System.out.print(")" );
+*/
 	}
 }
 
@@ -532,17 +554,19 @@ public class test2 {
 
 
 		// Should make it Postgres specific ?...
-		SelectionGenerationVisitor v = new SelectionGenerationVisitor();
+		StringBuilder b = new StringBuilder(); 
+		SelectionGenerationVisitor v = new SelectionGenerationVisitor( b);
 		expr.accept(v);
 
 
-
+		System.out.println( "expression is " + b.toString() );
+/*
 		Connection conn = getConn();
 
 		Test3 t = new Test3( conn );
 
 		t.doQuery2( "SELECT * FROM anmn_ts.measurement limit 1" );
-		
+*/		
 	}
 }
 
