@@ -276,15 +276,15 @@ class Parser
 
 		// atom....
 		// symbol
-		if(Character.isLetter(s.charAt(pos)) || s.charAt(pos) == '_' ) {
-			StringBuilder b = new StringBuilder();
-			while(Character.isLetter(s.charAt(pos))
-				|| Character.isDigit(s.charAt(pos))
-				|| s.charAt(pos) == '_') {
-				b.append(s.charAt(pos));
-				++pos;
+
+		int pos2 = pos;
+		if(Character.isLetter(s.charAt(pos2)) || s.charAt(pos2) == '_' ) {
+			while(Character.isLetter(s.charAt(pos2))
+				|| Character.isDigit(s.charAt(pos2))
+				|| s.charAt(pos2) == '_') {
+				++pos2;
 			}
-			return new ExprSymbol( pos, b.toString());
+			return new ExprSymbol( pos2, s.substring(pos,pos2));
 		}
 		return null;
 	}
