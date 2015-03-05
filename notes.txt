@@ -1,4 +1,36 @@
 
+We might have an issue with trying to identify the index of the parameter that's
+going to get substituted.
+
+Token (string) token  (parameter)
+
+-------
+Need to move the library into the library path.
+
+----
+VERY IMPORTANT...
+- we are going to need some type of introspection on the tables, so that
+we can correctly prefix the table for the parameter.
+
+actually may get away without this for a while.
+
+---
+
+Important - we can do deeper child node matching if we want...
+	eg for date between range etc... if don't want to use and
+
+-------
+to know to which table the clause applies - we are going to have to do 
+a dynamic lookup of the 2 different tables.
+
+Do we really need to fully decode literal types - 
+	- integers, dates, strings etc. Or can we keep them
+	simply as tokens?
+	- probably want to distinguish fields in some way.
+
+
+-------
+
 tinyscheme
 ts> (+ 2 3 4)
 ts> (string-append "hi" "there")
@@ -87,4 +119,4 @@ sql argument substitution will need to be dynamic...  uggh...
 
 
 
-
+gg
