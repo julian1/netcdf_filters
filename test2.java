@@ -529,11 +529,6 @@ class PostgresTranslate implements ITranslate
 	export CLASSPATH=.:postgresql-9.1-901.jdbc4.jar
 	java test3
 */
-
-
-
-class Timeseries
-{
 	/*
 		collaborators
 			- 
@@ -543,26 +538,29 @@ class Timeseries
 			- netcdf encoder, file... 
 			- streaming output / whatever output control we need (should just push encoded netcdf to outputer ) 
 	*/
-	Parser parser;				// change name to expressionParser or SelectionParser
-	ITranslate translate ;		// will also load up the parameters?
-	Connection conn;
-	// Encoder
-	// Order criterion (actually a projection bit) 
-
-	public Timeseries( Parser parser, ITranslate translate, Connection conn ) {
-		// we need to inject the selector ...
-		// 
-		this.parser = parser;
-		this.translate = translate; // sqlEncode.. dialect... specialization
-		this.conn = conn;
-	}
-
 	/*
 		two methods
 			- init()      initial query
 			- nextFile()  encode file by file.
 		but we'll need to be able to get another connectionjjjjjjjjjjjjjjjjj
 	*/
+
+
+class Timeseries1
+{
+	Parser parser;				// change name to expressionParser or SelectionParser
+	ITranslate translate ;		// will also load up the parameters?
+	Connection conn;
+	// Encoder
+	// Order criterion (actually a projection bit) 
+
+	public Timeseries1( Parser parser, ITranslate translate, Connection conn ) {
+		// we need to inject the selector ...
+		// 
+		this.parser = parser;
+		this.translate = translate; // sqlEncode.. dialect... specialization
+		this.conn = conn;
+	}
 
 	public void run() throws Exception
 	{
@@ -579,6 +577,7 @@ class Timeseries
 		stmt.setFetchSize(1000);
 		ResultSet rs = 	stmt.executeQuery();
 
+		int count = 0;
 		while ( rs.next() ) {  
 
 			long ts_id = (long) rs.getObject(1); 
@@ -589,18 +588,102 @@ class Timeseries
 			stmt2.setFetchSize(1000);
 			ResultSet rs2 = stmt2.executeQuery();
 
-			int count = 0;
 			while ( rs2.next() ) {  
+				++count;
+			}
+		}
+
+		System.out.println( "count " + count );
+	}
+}
+
+
+class Timeseries2
+{
+	Parser parser;				
+	ITranslate translate ;		
+	Connection conn;
+
+	public Timeseries2( Parser parser, ITranslate translate, Connection conn ) {
+		this.parser = parser;
+		this.translate = translate; // sqlEncode.. dialect... specialization
+		this.conn = conn;
+	}
+
+	public void run() throws Exception
+	{
+		String s = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
+		IExpression expr = parser.parseExpression( s, 0);
+		if(expr == null) {
+			throw new RuntimeException( "failed to parse expression" );
+		}
+		String selection = translate.process( expr );
+		String query = "SELECT * FROM anmn_ts.measurement m join anmn_ts.timeseries ts on m.ts_id = ts.id where " + selection + " order by ts_id, \"TIME\""; 
+		System.out.println( "first query " + query  );
+
+		PreparedStatement stmt = conn.prepareStatement( query );
+		stmt.setFetchSize(1000);
+		ResultSet rs = 	stmt.executeQuery();
+
+		System.out.println( "got some data " );
+		int count = 0;
+		while ( rs.next() ) {  
+			++count;
+		}
+		System.out.println( "count " + count );
+	}
+}
+
+
+class Timeseries3
+{
+	Parser parser;				
+	ITranslate translate ;		
+	Connection conn;
+
+	public Timeseries3( Parser parser, ITranslate translate, Connection conn ) {
+		this.parser = parser;
+		this.translate = translate; // sqlEncode.. dialect... specialization
+		this.conn = conn;
+	}
+
+	public void run() throws Exception
+	{
+		String s = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
+		IExpression expr = parser.parseExpression( s, 0);
+		if(expr == null) {
+			throw new RuntimeException( "failed to parse expression" );
+		}
+		// join anmn_ts.timeseries ts on m.ts_id = ts.id 
+
+
+		{
+			String selection = translate.process( expr );
+			String query = "SELECT * FROM anmn_ts.measurement m where " + selection + " order by ts_id, \"TIME\""; 
+			System.out.println( "first query " + query  );
+
+			PreparedStatement stmt = conn.prepareStatement( query );
+			stmt.setFetchSize(1000);
+			ResultSet rs = 	stmt.executeQuery();
+
+			System.out.println( "got some data " );
+			int count = 0;
+			while ( rs.next() ) {  
 				++count;
 			}
 			System.out.println( "count " + count );
 		}
+
+
 	}
-
-
-
-
 }
+
+
+
+
+
+
+
 
 
 
@@ -644,7 +727,8 @@ public class test2 {
 
 		Connection conn = getConn();
 	
-		Timeseries timeseries = new Timeseries( parser, translate, conn ); 
+		Timeseries3 timeseries = new Timeseries3( parser, translate, conn ); 
+		// Timeseries timeseries = new Timeseries( parser, translate, conn ); 
 
 		timeseries.run( );	
 

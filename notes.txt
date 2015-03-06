@@ -1,4 +1,23 @@
 
+Strategies
+
+	Timeseries1
+	- do a distinct on instance table, and then separate queries for each instance ordering by time 
+	- begins instantly
+	- 30 secs. 
+
+	Timeseries2
+	- join both tables and do a single query order by ts_id, time 
+	- 23sec - nothing for 22secs then everything.
+
+	Timeseries3
+	- just the measurements table without join order by ts_id, time 
+	- nothing then everything in 10 secs 
+
+
+
+-----------
+
 - USE SPRING 'LIKE' TO DRIVE THE CONFIGURATION . 
 not if in geoserver.
 
