@@ -42,6 +42,9 @@ interface Visitor
 	public void visit( ExprTimestamp expr );
 }
 
+// change name to AST . 
+// can use 
+
 interface IExpression
 {
 	public int getPosition() ;
@@ -410,6 +413,7 @@ class SelectionGenerationVisitor implements Visitor
 	// actually just a string builder...
 
 	StringBuilder b;
+	SimpleDateFormat df; 
 
 	// parameters...
 
@@ -418,6 +422,7 @@ class SelectionGenerationVisitor implements Visitor
 	public SelectionGenerationVisitor( StringBuilder b )
 	{
 		this.b = b;
+		this.df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 	}
 
 	// think our naming is incorrect
@@ -430,7 +435,6 @@ class SelectionGenerationVisitor implements Visitor
 
 	public void visit( ExprTimestamp expr )
 	{
-		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 		b.append( "'" + df.format(expr.value ) + "'" );
 	}
 
@@ -539,7 +543,7 @@ class Timeseries
 			- netcdf encoder, file... 
 			- streaming output / whatever output control we need (should just push encoded netcdf to outputer ) 
 	*/
-	Parser parser;				// change name to expressionParser 
+	Parser parser;				// change name to expressionParser or SelectionParser
 	ITranslate translate ;		// will also load up the parameters?
 	Connection conn;
 	// Encoder
@@ -555,7 +559,8 @@ class Timeseries
 
 	public void run () throws Exception
 	{
-		String s = "(and (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-28T00:40:01Z )) (or (equals ts_id 6341) (equals ts_id 6342)) )"; 
+		//String s = "(and (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-28T00:40:01Z )) (or (equals ts_id 6341) (equals ts_id 6342)) )"; 
+		String s = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-28T00:40:01Z )) "; 
 
 		IExpression expr = parser.parseExpression( s, 0);
 		if(expr == null) {
@@ -574,7 +579,7 @@ class Timeseries
 
 		System.out.println( "selection is " + selection );
 
-		String query = "SELECT * FROM anmn_ts.measurement where " + selection;//+ " limit 10";
+		String query = "SELECT * FROM anmn_ts.measurement where " + selection + " order by ts_id, \"TIME\" " ;//+ " limit 10";
 
 		System.out.println( "query now " + query  );
 
@@ -587,7 +592,13 @@ class Timeseries
 		int numColumns = m.getColumnCount();
 
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
-			System.out.print( "" + i + " " + m.getColumnClassName( i ) + ", " + m.getColumnName(i ) + ", ");
+			System.out.print( "" + m.getColumnClassName( i ) + ", ");
+		}
+		System.out.println( "" );
+
+
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+			System.out.print( "" + m.getColumnName(i ) + ", ");
 		}
 		System.out.println( "" );
 
@@ -598,6 +609,9 @@ class Timeseries
 			}
 			System.out.println( "" );
 		}
+
+
+		// need cursors ...
 
 
 		// assume we only have a single feature ...
@@ -623,10 +637,19 @@ public class test2 {
 	{
 		//String url = "jdbc:postgresql://127.0.0.1/postgres";
 
+		// psql -h test-geoserver -U meteo -d harvest
+
+		String url = "jdbc:postgresql://test-geoserver/harvest";
+		Properties props = new Properties();
+		props.setProperty("user","meteo");
+		props.setProperty("password","meteo");
+/*
 		String url = "jdbc:postgresql://dbprod.emii.org.au/harvest";
 		Properties props = new Properties();
 		props.setProperty("user","jfca");
 		props.setProperty("password","fredfred");
+*/
+
 		props.setProperty("ssl","true");
 		props.setProperty("sslfactory","org.postgresql.ssl.NonValidatingFactory");
 		props.setProperty("driver","org.postgresql.Driver" );
@@ -643,7 +666,7 @@ public class test2 {
 	{
 		Parser parser = new Parser();
 
-		ITranslate translate  = new  PostgresTranslate( );
+		ITranslate translate = new  PostgresTranslate();
 
 		Connection conn = getConn();
 	
