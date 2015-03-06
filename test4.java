@@ -1,9 +1,15 @@
 
 /*
-
 	export CLASSPATH=.:netcdfAll-4.2.jar
 	javac test4.java 
 	java test4
+
+	This worked too
+
+	unset CLASSPATH
+	javac test4.java  -cp .:netcdfAll-4.2.jar
+	java -classpath '.:netcdfAll-4.2.jar' test4 
+
 */
 
 import ucar.nc2.NetcdfFileWriteable; 
@@ -27,8 +33,8 @@ public class test4
  NetcdfFileWriteable ncfile = NetcdfFileWriteable.createNew(filename, false);
 
    // add dimensions
- Dimension latDim = ncfile.addDimension("lat", 64);
-   Dimension lonDim = ncfile.addDimension("lon", 128);
+ Dimension latDim = ncfile.addDimension("lat", 5);
+   Dimension lonDim = ncfile.addDimension("lon", 6);
 
    // define Variable
    ArrayList dims = new ArrayList();
