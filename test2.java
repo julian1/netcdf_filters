@@ -543,6 +543,7 @@ class Timeseries
 	ITranslate translate ;		// will also load up the parameters?
 	Connection conn;
 	// Encoder
+	// Order criterion (actually a projection bit) 
 
 	public Timeseries( Parser parser, ITranslate translate, Connection conn ) {
 		// we need to inject the selector ...
@@ -554,7 +555,7 @@ class Timeseries
 
 	public void run () throws Exception
 	{
-		String s = "(and (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-28T01:35:01Z )) (equals ts_id 6341))"; 
+		String s = "(and (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-28T00:40:01Z )) (or (equals ts_id 6341) (equals ts_id 6342)) )"; 
 
 		IExpression expr = parser.parseExpression( s, 0);
 		if(expr == null) {
@@ -582,7 +583,6 @@ class Timeseries
 		//stmt.setInt(1, 1 );
 		ResultSet rs = 	stmt.executeQuery();
 
-
 		ResultSetMetaData m = rs.getMetaData();
 		int numColumns = m.getColumnCount();
 
@@ -592,12 +592,24 @@ class Timeseries
 		System.out.println( "" );
 
 		while ( rs.next() ) {
-			for ( int i = 1 ; i <= numColumns ; i++ ) {
+			for ( int i = 1 ; i <= numColumns; i++ ) {
 			   // Column numbers start at 1.
 			   System.out.print(  rs.getObject(i) + ", " );
 			}
 			System.out.println( "" );
 		}
+
+
+		// assume we only have a single feature ...
+		// so lets try encoding that.
+
+		// remember that we actually want to pull individual files out. 
+		// except lat,lon come from timeseries ...
+	
+		// one-per-file. 	
+		
+		// order by ts, id...
+		// streaming means need to be able to request the next file...
 
 	}
 }
@@ -620,9 +632,9 @@ public class test2 {
 		props.setProperty("driver","org.postgresql.Driver" );
 
 		Connection conn = DriverManager.getConnection(url, props);
-		if(conn == null) {
+		/*if(conn == null) {
 			throw new RuntimeException( "Could not get connection" );
-		}
+		}*/
 		return conn;
 	}
 
@@ -641,22 +653,16 @@ public class test2 {
 
 	}
 
-
 		//String s = "777 and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains 123 (geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains  (uuu 123 789) 456) ";
 		//String s = "(contains (f 456) 789 888) ";
-
 		//String s = "(contains 123 (f 456 789) (f2 999) 1000 1001)";
 		// String s = "(and (equals instrument 'SEABIRD SBE37SM + P') (equals instrument 'SEABIRD SBE37SM + P'))";
-
 		// String s = "(equals instrument 2012-01-01T00:00:00Z)";
-
 		//	select *  from anmn_ts.measurement where "TIME" = 2013-03-24T21:35:01Z limit 2; 
-
 //		String s = "(and (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-28T01:35:01Z )) (equals ts_id 6341))"; 
 //		String s = "(equals ts_id 6341)"; 
-
 		// select *  from anmn_ts.measurement where "TIME" > '2013-6-28T21:35:01Z' and ts_id = 6341 ;
 
 }
