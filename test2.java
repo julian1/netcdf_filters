@@ -482,6 +482,35 @@ class SelectionGenerationVisitor implements Visitor
 }
 
 
+
+interface ITranslate 
+{
+	public String process( IExpression expr ) ;
+}
+
+
+class PostgresTranslate implements ITranslate 
+{
+	// we have to have something to instantiate the specific visitor
+	public PostgresTranslate( ) 
+	{
+		; // this.visitor = visitor; 
+	}
+
+
+	public String process( IExpression expr ) 
+	{
+		// Should make it Postgres specific ?...
+		StringBuilder b = new StringBuilder();
+		 SelectionGenerationVisitor visitor = new SelectionGenerationVisitor( b);
+		expr.accept( visitor );
+
+		// System.out.println( "expression is " + b.toString() );
+		return b.toString();
+	}
+}
+
+
 // we need raw identifiers which is the way cql does it.
 
 
@@ -547,13 +576,43 @@ class Timeseries
 			- selector (filter) subsetter
 			- conn
 			- limit
-			- netcdf encoder 
+			- netcdf encoder, file... 
 			- streaming output / whatever output control we need (should just push encoded netcdf to outputer ) 
 	*/
+	Parser parser;				// change name to expressionParser 
+	ITranslate translate ;
+	Connection conn;
+	// Encoder
 
-	public Timeseries( ) {
+	public Timeseries( Parser parser, ITranslate translate, Connection conn ) {
 		// we need to inject the selector ...
 		// 
+		this.parser = parser;
+		this.translate = translate;
+		this.conn = conn;
+	}
+
+	public void run ()
+	{
+		String s = "(and (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-28T01:35:01Z )) (equals ts_id 6341))"; 
+
+		IExpression expr = parser.parseExpression( s, 0);
+		if( expr == null) {
+			throw new RuntimeException( "failed to parse expression" );
+		}
+
+		System.out.println( "got an expression" );
+
+		String query = translate.process( expr );
+
+/*		// Should make it Postgres specific ?...
+		StringBuilder b = new StringBuilder();
+		SelectionGenerationVisitor v = new SelectionGenerationVisitor( b);
+		expr.accept( v );
+*/
+
+		System.out.println( "query is " + query  );
+
 
 	}
 }
@@ -583,6 +642,20 @@ public class test2 {
 
 
     public static void main(String[] args) throws Exception
+	{
+		Parser parser = new Parser();
+
+		ITranslate translate  = new  PostgresTranslate( );
+
+		Connection conn = getConn();
+	
+		Timeseries timeseries = new Timeseries( parser, translate, conn ); 
+
+		timeseries.run( );	
+
+	}
+
+    public static void main2(String[] args) throws Exception
 	{
 
 
@@ -619,8 +692,6 @@ public class test2 {
 		expr.accept(v);
 
 		System.out.println( "expression is " + b.toString() );
-
-
 
 		Connection conn = getConn();
 
