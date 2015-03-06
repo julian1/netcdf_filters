@@ -530,7 +530,8 @@ class Test3 {
 		while ( rs.next() ) {
 			for ( int i = 1 ; i <= numColumns ; i++ ) {
 			   // Column numbers start at 1.
-			   System.out.println( "" + i + " = " + rs.getObject(i) );
+			   System.out.print( "" + i + " = " + rs.getObject(i) );
+			   System.out.println( "" );
 			}
 		}
 	}
