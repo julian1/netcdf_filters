@@ -452,6 +452,9 @@ class SelectionGenerationVisitor implements Visitor
 		else if(symbol.equals("gt")) {
 			emitInfixSqlExpr( ">", expr );
 		}
+		else if(symbol.equals("lt")) {
+			emitInfixSqlExpr( "<", expr );
+		}
 		else if(symbol.equals("geq")) {
 			emitInfixSqlExpr( ">=", expr );
 		}
@@ -594,7 +597,8 @@ public class test2 {
 
 		//	select *  from anmn_ts.measurement where "TIME" = 2013-03-24T21:35:01Z limit 2; 
 
-		String s = "(and (gt TIME 2013-6-28T21:35:01Z ) (equals ts_id 6341))"; 
+		String s = "(and (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-28T01:35:01Z )) (equals ts_id 6341))"; 
+//		String s = "(equals ts_id 6341)"; 
 
 		// select *  from anmn_ts.measurement where "TIME" > '2013-6-28T21:35:01Z' and ts_id = 6341 ;
 
@@ -621,7 +625,7 @@ public class test2 {
 
 		Test3 t = new Test3( conn );
 
-		String query = "SELECT * FROM anmn_ts.measurement where " + b.toString() + " limit 2";
+		String query = "SELECT * FROM anmn_ts.measurement where " + b.toString() ;//+ " limit 10";
 		// String query = "SELECT * FROM anmn_ts.timeseries where " + b.toString();
 
 		System.out.println( "query " + query  );
