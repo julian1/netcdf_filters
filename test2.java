@@ -523,49 +523,6 @@ class PostgresTranslate implements ITranslate
 	java test3
 */
 
-class Test3 {
-
-	Connection conn;
-
-	public Test3( Connection conn )
-	{
-		this.conn = conn;
-	}
-
-    public void doQuery2 ( String query  )  throws Exception
-	{
-		//PreparedStatement stmt = conn.prepareStatement( "SELECT * FROM anmn_ts.measurement limit ?");
-		PreparedStatement stmt = conn.prepareStatement( query );
-		//stmt.setInt(1, new Integer( 1));
-		//stmt.setInt(1, 1 );
-		ResultSet rs = 	stmt.executeQuery();
-		dumpResults ( rs );
-	}
-
-	// we need to query the timeseries and then the measurements.
-	// this wants to be a separate class to output ...
-
-	// eg. encode row. 
-
-    public void dumpResults ( ResultSet rs )  throws Exception
-	{
-		ResultSetMetaData m = rs.getMetaData();
-		int numColumns = m.getColumnCount();
-
-		for ( int i = 1 ; i <= numColumns ; i++ ) {
-			System.out.println( "" + i + " " + m.getColumnClassName( i ) + ", " + m.getColumnName(i ) );
-		}
-
-		while ( rs.next() ) {
-			for ( int i = 1 ; i <= numColumns ; i++ ) {
-			   // Column numbers start at 1.
-			   System.out.print(  rs.getObject(i) + ", " );
-			}
-			System.out.println( "" );
-		}
-	}
-
-}
 
 
 class Timeseries
@@ -580,7 +537,7 @@ class Timeseries
 			- streaming output / whatever output control we need (should just push encoded netcdf to outputer ) 
 	*/
 	Parser parser;				// change name to expressionParser 
-	ITranslate translate ;
+	ITranslate translate ;		// will also load up the parameters?
 	Connection conn;
 	// Encoder
 
@@ -592,7 +549,7 @@ class Timeseries
 		this.conn = conn;
 	}
 
-	public void run ()
+	public void run () throws Exception
 	{
 		String s = "(and (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-28T01:35:01Z )) (equals ts_id 6341))"; 
 
@@ -603,7 +560,7 @@ class Timeseries
 
 		System.out.println( "got an expression" );
 
-		String query = translate.process( expr );
+		String selection = translate.process( expr );
 
 /*		// Should make it Postgres specific ?...
 		StringBuilder b = new StringBuilder();
@@ -611,8 +568,32 @@ class Timeseries
 		expr.accept( v );
 */
 
-		System.out.println( "query is " + query  );
+		System.out.println( "selection is " + selection );
 
+		String query = "SELECT * FROM anmn_ts.measurement where " + selection;//+ " limit 10";
+
+		System.out.println( "query now " + query  );
+
+		PreparedStatement stmt = conn.prepareStatement( query );
+		//stmt.setInt(1, new Integer( 1));
+		//stmt.setInt(1, 1 );
+		ResultSet rs = 	stmt.executeQuery();
+
+
+		ResultSetMetaData m = rs.getMetaData();
+		int numColumns = m.getColumnCount();
+
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+			System.out.println( "" + i + " " + m.getColumnClassName( i ) + ", " + m.getColumnName(i ) );
+		}
+
+		while ( rs.next() ) {
+			for ( int i = 1 ; i <= numColumns ; i++ ) {
+			   // Column numbers start at 1.
+			   System.out.print(  rs.getObject(i) + ", " );
+			}
+			System.out.println( "" );
+		}
 
 	}
 }
@@ -620,6 +601,7 @@ class Timeseries
 
 
 public class test2 {
+
 
     public static Connection getConn() throws Exception
 	{
@@ -655,9 +637,6 @@ public class test2 {
 
 	}
 
-    public static void main2(String[] args) throws Exception
-	{
-
 
 		//String s = "777 and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
 		//String s = "(contains 123 (geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
@@ -671,40 +650,11 @@ public class test2 {
 
 		//	select *  from anmn_ts.measurement where "TIME" = 2013-03-24T21:35:01Z limit 2; 
 
-		String s = "(and (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-28T01:35:01Z )) (equals ts_id 6341))"; 
+//		String s = "(and (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-28T01:35:01Z )) (equals ts_id 6341))"; 
 //		String s = "(equals ts_id 6341)"; 
 
 		// select *  from anmn_ts.measurement where "TIME" > '2013-6-28T21:35:01Z' and ts_id = 6341 ;
 
-		Parser c = new Parser();
-		IExpression expr = c.parseExpression( s, 0);
-
-		if( expr == null) {
-			throw new RuntimeException( "failed to parse expression" );
-		}
-
-		System.out.println( "got an expression" );
-
-
-		// Should make it Postgres specific ?...
-		StringBuilder b = new StringBuilder();
-		SelectionGenerationVisitor v = new SelectionGenerationVisitor( b);
-		expr.accept(v);
-
-		System.out.println( "expression is " + b.toString() );
-
-		Connection conn = getConn();
-
-		Test3 t = new Test3( conn );
-
-		String query = "SELECT * FROM anmn_ts.measurement where " + b.toString() ;//+ " limit 10";
-		// String query = "SELECT * FROM anmn_ts.timeseries where " + b.toString();
-
-		System.out.println( "query " + query  );
-
-		t.doQuery2( query  );
-
-	}
 }
 
 
