@@ -539,7 +539,7 @@ class Timeseries
 			- 
 			- selector (filter) subsetter
 			- conn
-			- limit
+			j- limit
 			- netcdf encoder, file... 
 			- streaming output / whatever output control we need (should just push encoded netcdf to outputer ) 
 	*/
@@ -557,75 +557,49 @@ class Timeseries
 		this.conn = conn;
 	}
 
-	public void run () throws Exception
-	{
-		//String s = "(and (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-28T00:40:01Z )) (or (equals ts_id 6341) (equals ts_id 6342)) )"; 
-		String s = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-28T00:40:01Z )) "; 
+	/*
+		two methods
+			- init()      initial query
+			- nextFile()  encode file by file.
+		but we'll need to be able to get another connectionjjjjjjjjjjjjjjjjj
+	*/
 
+	public void run() throws Exception
+	{
+		String s = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
 		IExpression expr = parser.parseExpression( s, 0);
 		if(expr == null) {
 			throw new RuntimeException( "failed to parse expression" );
 		}
-
-		System.out.println( "got an expression" );
-
 		String selection = translate.process( expr );
-
-/*		// Should make it Postgres specific ?...
-		StringBuilder b = new StringBuilder();
-		SelectionGenerationVisitor v = new SelectionGenerationVisitor( b);
-		expr.accept( v );
-*/
-
-		System.out.println( "selection is " + selection );
-
-		String query = "SELECT * FROM anmn_ts.measurement where " + selection + " order by ts_id, \"TIME\" " ;//+ " limit 10";
-
-		System.out.println( "query now " + query  );
+		String query = "SELECT distinct ts_id  FROM anmn_ts.measurement where " + selection ; 
+		System.out.println( "first query " + query  );
 
 		PreparedStatement stmt = conn.prepareStatement( query );
-		//stmt.setInt(1, new Integer( 1));
-		//stmt.setInt(1, 1 );
+		stmt.setFetchSize(1000);
 		ResultSet rs = 	stmt.executeQuery();
 
-		ResultSetMetaData m = rs.getMetaData();
-		int numColumns = m.getColumnCount();
+		while ( rs.next() ) {  
 
-		for ( int i = 1 ; i <= numColumns ; i++ ) {
-			System.out.print( "" + m.getColumnClassName( i ) + ", ");
-		}
-		System.out.println( "" );
+			long ts_id = (long) rs.getObject(1); 
 
+			String query2 = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
+			System.out.println( "whoot " + query2 ) ; 
+			PreparedStatement stmt2 = conn.prepareStatement( query2 );
+			stmt2.setFetchSize(1000);
+			ResultSet rs2 = stmt2.executeQuery();
 
-		for ( int i = 1 ; i <= numColumns ; i++ ) {
-			System.out.print( "" + m.getColumnName(i ) + ", ");
-		}
-		System.out.println( "" );
-
-		while ( rs.next() ) {
-			for ( int i = 1 ; i <= numColumns; i++ ) {
-			   // Column numbers start at 1.
-			   System.out.print(  rs.getObject(i) + ", " );
+			int count = 0;
+			while ( rs2.next() ) {  
+				++count;
 			}
-			System.out.println( "" );
+			System.out.println( "count " + count );
 		}
-
-
-		// need cursors ...
-
-
-		// assume we only have a single feature ...
-		// so lets try encoding that.
-
-		// remember that we actually want to pull individual files out. 
-		// except lat,lon come from timeseries ...
-	
-		// one-per-file. 	
-		
-		// order by ts, id...
-		// streaming means need to be able to request the next file...
-
 	}
+
+
+
+
 }
 
 
