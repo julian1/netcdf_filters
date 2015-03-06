@@ -146,6 +146,8 @@ class ExprProc implements IExpression
 // actually why not pass a
 // string s, integer pos, boxed type....
 
+// change name exprParser
+
 class Parser
 {
 
@@ -181,6 +183,7 @@ class Parser
 		df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 	}
 
+	// should pass this as a dependency
 	SimpleDateFormat df;
 
 	IExpression parseExpression(String s, int pos)
@@ -545,7 +548,7 @@ class Timeseries
 		// we need to inject the selector ...
 		// 
 		this.parser = parser;
-		this.translate = translate;
+		this.translate = translate; // sqlEncode.. dialect... specialization
 		this.conn = conn;
 	}
 
@@ -554,7 +557,7 @@ class Timeseries
 		String s = "(and (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-28T01:35:01Z )) (equals ts_id 6341))"; 
 
 		IExpression expr = parser.parseExpression( s, 0);
-		if( expr == null) {
+		if(expr == null) {
 			throw new RuntimeException( "failed to parse expression" );
 		}
 
@@ -584,8 +587,9 @@ class Timeseries
 		int numColumns = m.getColumnCount();
 
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
-			System.out.println( "" + i + " " + m.getColumnClassName( i ) + ", " + m.getColumnName(i ) );
+			System.out.print( "" + i + " " + m.getColumnClassName( i ) + ", " + m.getColumnName(i ) + ", ");
 		}
+		System.out.println( "" );
 
 		while ( rs.next() ) {
 			for ( int i = 1 ; i <= numColumns ; i++ ) {
