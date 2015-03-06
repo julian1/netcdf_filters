@@ -1,0 +1,75 @@
+	
+
+
+/*
+
+		ResultSetMetaData m = rs.getMetaData();
+		int numColumns = m.getColumnCount();
+
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+			System.out.print( "" + m.getColumnClassName( i ) + ", ");
+		}
+		System.out.println( "" );
+
+
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+			System.out.print( "" + m.getColumnName(i ) + ", ");
+		}
+		System.out.println( "" );
+*/
+
+		// need cursors ...
+
+
+		// assume we only have a single feature ...
+		// so lets try encoding that.
+
+		// remember that we actually want to pull individual files out. 
+		// except lat,lon come from timeseries ...
+	
+		// one-per-file. 	
+		
+		// order by ts, id...
+		// streaming means need to be able to request the next file...
+
+
+
+
+	
+		//String s = "(and (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-28T00:40:01Z )) (or (equals ts_id 6341) (equals ts_id 6342)) )"; 
+		String s = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
+
+
+//String query = "SELECT * FROM anmn_ts.measurement where " + selection + " order by ts_id, \"TIME\" " ;//+ " limit 10";
+		// String query = "SELECT * FROM anmn_ts.measurement where " + selection + " order by ts_id, \"TIME\" " ;//+ " limit 10";
+		// String query = "SELECT * FROM anmn_ts.measurement where " + selection + " order by ts_id";   // 
+//		String query = "SELECT * FROM anmn_ts.measurement where " + selection ; // + " order by ts_id";   // 
+
+		// this is lightening fast and tells us all the ft instances we need to encode...
+		// SELECT distinct ts_id  FROM anmn_ts.measurement where (("TIME" > '2013-06-28T00:35:01Z') and ("TIME" < '2013-06-29T00:40:01Z')) ;
+
+		// getting all timeseries data.
+		// select * from anmn_ts.timeseries where id in ( SELECT distinct ts_id  FROM anmn_ts.measurement where (("TIME" > '2013-06-28T00:35:01Z') and ("TIME" < '2013-06-29T00:40:01Z')) ) ; 
+
+
+		// String query = "SELECT distinct ( m.ts_id) FROM anmn_ts.measurement m join anmn_ts.timeseries ts on m.ts_id = ts.id  where " + selection + " order by ts_id " ;//+ " limit 10";
+		// String query = "SELECT ts.* FROM anmn_ts.timeseries ts join anmn_ts.measurement m on m.ts_id = ts.id  where " + selection ;// + " order by ts_id " ;//+ " limit 10";
+
+		// how long does it take to actually get the subset of ids.
+
+
+		// we are going to process file by file - therefore - we can sort everything locally not using the db. 
+	
+		// having order by ts_id, means that it has to retrieve the lowest... 
+
+		// perhaps we should do a query for every feature ? 
+
+		// there's a bunch of different sql strategies to get stuff...
+		// more queries - immediate streaming.
+		// less queries - with 2nd table sort - needs to compute order by 
+
+		// i think we really need to be able to have several strategy classes that we can just inject into the computation.
+
+		// advantage of doing 
+
+
