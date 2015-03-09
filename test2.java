@@ -1,6 +1,8 @@
 
 // rm *.class ; javac main.java  ; java main
 
+//  javac test2.java -cp .:netcdfAll-4.2.jar
+
 //import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.InputStream ;
@@ -22,6 +24,14 @@ import java.util.Set;
 import java.util.ArrayList;
 */
 //import java.util.Date;
+
+import ucar.nc2.NetcdfFileWriteable; 
+import ucar.nc2.Dimension; 
+//import ucar.nc2.DataType.DOUBLE; 
+//import ucar.nc2.*; 
+
+import ucar.ma2.DataType; 
+import ucar.ma2.Array;
 
 
 
@@ -546,57 +556,6 @@ class PostgresTranslate implements ITranslate
 	*/
 
 
-class Timeseries1
-{
-	Parser parser;				// change name to expressionParser or SelectionParser
-	ITranslate translate ;		// will also load up the parameters?
-	Connection conn;
-	// Encoder
-	// Order criterion (actually a projection bit) 
-
-	public Timeseries1( Parser parser, ITranslate translate, Connection conn ) {
-		// we need to inject the selector ...
-		// 
-		this.parser = parser;
-		this.translate = translate; // sqlEncode.. dialect... specialization
-		this.conn = conn;
-	}
-
-	public void run() throws Exception
-	{
-		String s = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
-		IExpression expr = parser.parseExpression( s, 0);
-		if(expr == null) {
-			throw new RuntimeException( "failed to parse expression" );
-		}
-		String selection = translate.process( expr );
-		String query = "SELECT distinct ts_id  FROM anmn_ts.measurement where " + selection ; 
-		System.out.println( "first query " + query  );
-
-		PreparedStatement stmt = conn.prepareStatement( query );
-		stmt.setFetchSize(1000);
-		ResultSet rs = 	stmt.executeQuery();
-
-		int count = 0;
-		while ( rs.next() ) {  
-
-			long ts_id = (long) rs.getObject(1); 
-
-			String query2 = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
-			System.out.println( "whoot " + query2 ) ; 
-			PreparedStatement stmt2 = conn.prepareStatement( query2 );
-			stmt2.setFetchSize(1000);
-			ResultSet rs2 = stmt2.executeQuery();
-
-			while ( rs2.next() ) {  
-				++count;
-			}
-		}
-
-		System.out.println( "count " + count );
-	}
-}
-
 
 class Timeseries2
 {
@@ -637,6 +596,9 @@ class Timeseries2
 
 class Timeseries3
 {
+	// ok, we need to start encoding this as a netcdf ...
+	// to be streaming this will generate a netcdf with a pull model....
+
 	Parser parser;				
 	ITranslate translate ;		
 	Connection conn;
@@ -649,32 +611,175 @@ class Timeseries3
 
 	public void run() throws Exception
 	{
-		String s = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
-		IExpression expr = parser.parseExpression( s, 0);
+		String filter = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
+		IExpression expr = parser.parseExpression( filter, 0);
 		if(expr == null) {
 			throw new RuntimeException( "failed to parse expression" );
 		}
 		// join anmn_ts.timeseries ts on m.ts_id = ts.id 
 
+		// we should really take the easiest case and just start encoding ...
 
-		{
-			String selection = translate.process( expr );
-			String query = "SELECT * FROM anmn_ts.measurement m where " + selection + " order by ts_id, \"TIME\""; 
-			System.out.println( "first query " + query  );
+		String selection = translate.process( expr );
+		String query = "SELECT * FROM anmn_ts.measurement m where " + selection + " order by ts_id, \"TIME\""; 
+		System.out.println( "first query " + query  );
 
-			PreparedStatement stmt = conn.prepareStatement( query );
-			stmt.setFetchSize(1000);
-			ResultSet rs = 	stmt.executeQuery();
+		PreparedStatement stmt = conn.prepareStatement( query );
+		stmt.setFetchSize(1000);
+		ResultSet rs = 	stmt.executeQuery();
 
-			System.out.println( "got some data " );
-			int count = 0;
-			while ( rs.next() ) {  
-				++count;
-			}
-			System.out.println( "count " + count );
+		System.out.println( "got some data " );
+		int count = 0;
+		while ( rs.next() ) {  
+			++count;
+		}
+		System.out.println( "count " + count );
+
+	}
+}
+
+
+class Timeseries1
+{
+	Parser parser;				// change name to expressionParser or SelectionParser
+	ITranslate translate ;		// will also load up the parameters?
+	Connection conn;
+	// Encoder
+	// Order criterion (actually a projection bit) 
+
+	//  state required for streaming..
+	// should we cache the result of the translation or the translator??
+	IExpression selection_expr;
+	// id's of feature instances we will need
+	ResultSet featureInstances;
+
+
+	public Timeseries1( Parser parser, ITranslate translate, Connection conn ) {
+		// we need to inject the selector ...
+		// 
+		this.parser = parser;
+		this.translate = translate; // sqlEncode.. dialect... specialization
+		this.conn = conn;
+	
+		featureInstances = null;
+		selection_expr = null;
+	}
+
+	// init, get, close
+
+
+
+	public void init() throws Exception
+	{
+		// avoiding ordering clauses that will prevent immediate stream response
+
+
+		// set up the featureInstances that we will need to process 
+		String s = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
+
+		selection_expr = parser.parseExpression( s, 0);
+		// bad, should return expr or throw
+		if(selection_expr == null) {
+			throw new RuntimeException( "failed to parse expression" );
+		}
+		String selection = translate.process( selection_expr);
+		String query = "SELECT distinct ts_id  FROM anmn_ts.measurement where " + selection ; 
+		System.out.println( "first query " + query  );
+
+		PreparedStatement stmt = conn.prepareStatement( query );
+		stmt.setFetchSize(1000);
+
+		// try ...
+		// change name featureInstancesToProcess ?
+		featureInstances = stmt.executeQuery();
+
+		System.out.println( "done determining feature instances " );
+	}
+
+
+	// we need the query or the selection to be exposed, so we can formulate
+	
+	// like a fold, with an init and transform
+
+	public void get() throws Exception
+	{
+		featureInstances.next();
+
+		long ts_id = (long) featureInstances.getObject(1); 
+
+		System.out.println( "whoot get(), ts_id is " + ts_id );
+
+		String selection = translate.process( selection_expr); // we ought to be caching the specific query ??? 
+															
+		// sql stuff
+		// need to encode the additional parameter...
+		String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
+		PreparedStatement stmt = conn.prepareStatement( query );
+		stmt.setFetchSize(1000);
+		ResultSet rs = stmt.executeQuery();
+
+		// we're going to need to query the metadata... to perform our sql -> netcdf field mappings.
+
+		// netcdf stuff
+		String filename = "testWrite.nc";
+		NetcdfFileWriteable ncfile = NetcdfFileWriteable.createNew(filename, false);
+		// add dimensions
+		Dimension latDim = ncfile.addDimension("lat", 1);
+		Dimension lonDim = ncfile.addDimension("lon", 1);
+		// need time,
+		// define Variable
+		ArrayList dims = new ArrayList();
+
+		dims.add( latDim);
+		dims.add( lonDim);
+		ncfile.addVariable("temperature", DataType.DOUBLE, dims);
+	
+
+		int count = 0;
+		while ( rs.next() ) {  
+			++count;
 		}
 
+		System.out.println( "count " + count );
+	}
 
+
+	public void run() throws Exception
+	{
+/*
+		int count = 0;
+		while ( rs.next() ) {  
+
+			long ts_id = (long) rs.getObject(1); 
+
+			String query2 = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
+			System.out.println( "whoot " + query2 ) ; 
+			PreparedStatement stmt2 = conn.prepareStatement( query2 );
+			stmt2.setFetchSize(1000);
+			ResultSet rs2 = stmt2.executeQuery();
+
+			while ( rs2.next() ) {  
+				++count;
+			}
+		}
+		System.out.println( "count " + count );
+		// what is the easiest way to extract? probably by just selecting the values that we want 
+		//// lat,lon...
+		String filename = "testWrite.nc";
+		NetcdfFileWriteable ncfile = NetcdfFileWriteable.createNew(filename, false);
+		// add dimensions
+		Dimension latDim = ncfile.addDimension("lat", 1);
+		Dimension lonDim = ncfile.addDimension("lon", 1);
+		// define Variable
+		ArrayList dims = new ArrayList();
+
+		dims.add( latDim);
+		dims.add( lonDim);
+		ncfile.addVariable("temperature", DataType.DOUBLE, dims);
+		// ncfile.addVariableAttribute("temperature", "units", "K");
+
+		System.out.println( "whoot did some netcdf stuff" );
+*/
 	}
 }
 
@@ -686,9 +791,11 @@ class Timeseries3
 
 
 
-
 public class test2 {
 
+	// if we're going to need more than one connection. No it's actually not clear that this is the case. 
+	// we can handle multiple record sets on the same connection.
+	// we need to expose the actual Driver manager.
 
     public static Connection getConn() throws Exception
 	{
@@ -727,10 +834,11 @@ public class test2 {
 
 		Connection conn = getConn();
 	
-		Timeseries3 timeseries = new Timeseries3( parser, translate, conn ); 
+		Timeseries1 timeseries = new Timeseries1( parser, translate, conn ); 
 		// Timeseries timeseries = new Timeseries( parser, translate, conn ); 
 
-		timeseries.run( );	
+		timeseries.init();	
+		timeseries.get();	
 
 	}
 
