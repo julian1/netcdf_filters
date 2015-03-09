@@ -710,29 +710,68 @@ class Timeseries1
 		System.out.println( "whoot get(), ts_id is " + ts_id );
 
 		String selection = translate.process( selection_expr); // we ought to be caching the specific query ??? 
-															
+					
+		// doing independent queries for COUNT, then values, 
+		// should be faster than creating a scrollable cursor, iterating and rewinding.
+		// we can query the count independently of querying all the values...
+		
+		// we're going to have to close all this stuff,
+						
 		// sql stuff
 		// need to encode the additional parameter...
 		String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
-		PreparedStatement stmt = conn.prepareStatement( query );
+		//PreparedStatement stmt = conn.prepareStatement( query,  ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+		PreparedStatement stmt = conn.prepareStatement( query ); 
+
 		stmt.setFetchSize(1000);
 		ResultSet rs = stmt.executeQuery();
 
 		// we're going to need to query the metadata... to perform our sql -> netcdf field mappings.
 
+		// however we should do the name mapping we should actually delegate this to a strategy class ...
+		// that can instantiate ...
+		// eg. can take the result set....
+		// or else to the init() and f() action ?
+
+		ResultSetMetaData m = rs.getMetaData();
+		int numColumns = m.getColumnCount();
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+			System.out.print( "" + m.getColumnName(i ) + ", ");
+			System.out.print( "" + m.getColumnClassName( i ) );
+			System.out.println( "" );
+		}
+
+		
+/*		int rowCount = 0;
+		// ResultSet rs = ps.executeQuery();
+		if (rs.last()) {
+		  rowCount = rs.getRow();
+		  rs.beforeFirst(); // not rs.first() because the rs.next() below will move on, missing the first element
+		}
+		System.out.print( "rowCount " + rowCount  );
+		while (rs.next()) {
+		  // do your standard per row stuff
+		}
+*/
+
+
 		// netcdf stuff
 		String filename = "testWrite.nc";
-		NetcdfFileWriteable ncfile = NetcdfFileWriteable.createNew(filename, false);
+		NetcdfFileWriteable writer = NetcdfFileWriteable.createNew(filename, false);
 		// add dimensions
-		Dimension latDim = ncfile.addDimension("lat", 1);
-		Dimension lonDim = ncfile.addDimension("lon", 1);
+		Dimension latDim = writer.addDimension("lat", 1);
+		Dimension lonDim = writer.addDimension("lon", 1);
+		Dimension timeDim = writer.addUnlimitedDimension("time");
+
+		// time unlimited ...
 		// need time,
 		// define Variable
 		ArrayList dims = new ArrayList();
 
+		dims.add( timeDim);
 		dims.add( latDim);
 		dims.add( lonDim);
-		ncfile.addVariable("temperature", DataType.DOUBLE, dims);
+		writer.addVariable("temperature", DataType.DOUBLE, dims);
 	
 
 		int count = 0;
