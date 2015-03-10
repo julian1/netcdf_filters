@@ -39,6 +39,7 @@ import ucar.ma2.Array;
 
 import ucar.ma2.ArrayDouble;
 import ucar.ma2.ArrayFloat;
+//import ucar.ma2.ArrayString;
 
 import ucar.ma2.Index;
 
@@ -733,6 +734,8 @@ class Timeseries1
 
 	public void get() throws Exception
 	{
+		// code organized so we only iterate over the recordset returned by the query once
+
 		featureInstances.next();
 
 		long ts_id = (long) featureInstances.getObject(1); 
@@ -758,11 +761,14 @@ class Timeseries1
 		}
 
 
+		System.out.println( "done getting count" );
 
 	
 		System.out.println( "count " + count );
 
 				
+		System.out.println( "* doing query" );
+
 		// sql stuff
 		// need to encode the additional parameter...
 		String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
@@ -772,6 +778,10 @@ class Timeseries1
 		stmt.setFetchSize(1000);
 		ResultSet rs = stmt.executeQuery();
 
+
+		System.out.println( "* done doing query" );
+
+
 		// we're going to need to query the metadata... to perform our sql -> netcdf field mappings.
 
 		// however we should do the name mapping we should actually delegate this to a strategy class ...
@@ -780,6 +790,7 @@ class Timeseries1
 		// or else to the init() and f() action ?
 
 
+		System.out.println( "creating writer" );
 		// netcdf stuff
 		String filename = "testWrite.nc";
 		NetcdfFileWriteable writer = NetcdfFileWriteable.createNew(filename, false);
@@ -801,43 +812,50 @@ class Timeseries1
 		ResultSetMetaData m = rs.getMetaData();
 		int numColumns = m.getColumnCount();
 
+		System.out.println( "beginnning extract mappings" );
 
 		// we'll construct a set of mappings
-
+		// change name array_mappings ? or something
 		Map<String, Object> map = new HashMap<String, Object>();
 
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
-			System.out.print( "" + m.getColumnName(i ) + ", ");
-			System.out.print( "" + m.getColumnClassName( i ) );
 
-			String variableName = m.getColumnName(i ); 
-			Class clazz = Class.forName( m.getColumnClassName( i ) );
+			// System.out.print( "" + m.getColumnName(i ) + ", ");
+			// System.out.print( "" + m.getColumnClassName( i ) );
 
-			// apply convention that var names are upper cased
+			String variableName = m.getColumnName(i); 
+			Class clazz = Class.forName(m.getColumnClassName(i));
+
+			System.out.println( " name " + variableName + " type " + clazz);
+
+
+
+			// convention that var names are upper cased
 			if( Character.isUpperCase(variableName.charAt(0))) {
-
-				System.out.print( "UPPER" );
-
 				if (clazz.equals(Float.class)) {
-					System.out.print( "it's a float" );
 					// add our array into the mappings
-					map.put( variableName,  new ArrayFloat.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength() ));
+					map.put(variableName, new ArrayFloat.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength()));
 					// add the var to definition
-					writer.addVariable( variableName, DataType.FLOAT, dims);
+					writer.addVariable(variableName, DataType.FLOAT, dims);
+				}
+				else if ( clazz.equals(String.class)) {
+
+					// ok, i think that we have to just stuff all the strings in there, then analyze
+					// them for max length... which will thus be handled var by var, or for eac file generated.
+				
+
+					// map.put(variableName, new ArrayString.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength()));
+					// writer.addVariable(variableName, DataType.STRING, dims);
 				}
 			}
-			System.out.println( "" );
-//			writer.addVariable("temperature", DataType.FLOAT, dims); // what about the data ????
 		}
 
 
 		writer.create();
+		System.out.println( "done defining netcdf" );
 
 
-/*
-		ArrayFloat A = new ArrayFloat.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength() );
-		// map.put( "whoot", A );
-*/
+
 		int t = 0;
 		while ( rs.next() ) {  
 			for( int lat = 0; lat < latDim.getLength(); ++lat )
@@ -845,45 +863,33 @@ class Timeseries1
 
 
 				for ( int i = 1 ; i <= numColumns ; i++ ) {
-					// System.out.print( "" + m.getColumnName(i ) + ", ");
-					// System.out.print( "" + m.getColumnClassName( i ) );
 
-					// apply convention that var names are upper cased
 					String variableName = m.getColumnName(i); 
 					Class clazz = Class.forName( m.getColumnClassName( i ) );
 
 					if( map.containsKey( variableName )) { 
 
 						if (clazz.equals(Float.class)) {
-							// System.out.println( "it's a float" );
-							// add our array into the mappings
 							ArrayFloat.D3 A = (ArrayFloat.D3) map.get( variableName); 
-							// how expensive is this action? 
 							Index ima = A.getIndex();
 							Object object = rs.getObject(variableName);
 							if( rs.getObject(variableName) != null) {
-								float value = (float) object; 
-								// System.out.println( "name " + variableName + " value " + value );
-								A.setFloat( ima.set(t, lat,lon), value );
+								A.setFloat( ima.set(t, lat,lon), (float) object);
 							} 
 							else 
 							{
+								// missing...
 								// System.out.println( "name " + variableName + " null" );
 							}
 						}
 					}	
 				}
-/*
-				float value = (float) rs.getObject("TEMP" ); 
-				System.out.println( "value is " + value );
-				// is there something surfice 
-				// A.setFloat( ima.set(t, lat,lon), (double) (t));
-				A.setFloat( ima.set(t, lat,lon), value );
-*/
+
 				++t;
 			}
 		}
 
+		System.out.println( "done extracting data" );
 
 		// then we need aq final loop ....
 
@@ -903,6 +909,7 @@ class Timeseries1
 			}
 		}
 
+		System.out.println( "done writing data" );
 
 //		int [] origin = new int[3];
 //		writer.write("temperature", origin, A);
