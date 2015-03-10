@@ -775,7 +775,7 @@ class Timeseries1
 		String filename = "testWrite.nc";
 		NetcdfFileWriteable writer = NetcdfFileWriteable.createNew(filename, false);
 		// add dimensions
-		Dimension timeDim = writer.addDimension("time", count + 2 ); // writer.addUnlimitedDimension("time");
+		Dimension timeDim = writer.addDimension("time", count  ); // writer.addUnlimitedDimension("time");
 		Dimension latDim = writer.addDimension("lat", 1);
 		Dimension lonDim = writer.addDimension("lon", 1);
 
@@ -802,6 +802,7 @@ class Timeseries1
 			for( int lat = 0; lat < latDim.getLength(); ++lat )
 			for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
 
+				// should our indexing be at 1 ? 
 
 				A.setDouble( ima.set(t, lat,lon), (double) (t));
 				++t;
@@ -812,7 +813,10 @@ class Timeseries1
 		writer.write("temperature", origin, A);
 
 
-		// 
+
+		System.out.println( "t is " + t );
+
+		writer.close();
 
 /*
 		for( int t = 0; t < timeDim.getLength(); ++t )
