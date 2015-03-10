@@ -851,14 +851,20 @@ class Timeseries1
 
 			if( Pattern.compile(".*quality_control$" ).matcher( variableName) .matches()) 
 			{
+				if( clazz != String.class ) {
+					throw new RuntimeException( "Expected QC var to be JDBC string" );
+				}
+				
 				System.out.println( "QC - " + variableName );
+				// postgres varchar(1), JDBC string, but should be treated as netcdf byte
+				MyType t = new MyType( variableName, Byte.class, new Byte( (byte)0xff ) ); 
+				typeMappings.put( variableName, t );
 			}
 
 			// if( Pattern.compile("^\\p{upper}+.*" ).matcher( variableName) .matches()) 
 			// if( Pattern.compile("\\p{upper}+.*" ).matcher( variableName) .matches()) 
-			else if( Pattern.compile("^[A-Z]+.*" ).matcher( variableName) .matches()) 
+			else if( Pattern.compile("^[A-Z]+.*" ).matcher( variableName).matches()) 
 			{
-
 				System.out.println( "upper - " + variableName );
 
 				if( clazz.equals(Float.class)) {
@@ -866,17 +872,7 @@ class Timeseries1
 					MyType t = new MyType( variableName, clazz, new Float( 999999. ) ); 
 					typeMappings.put( variableName, t );
 				}
-
-
 			}
-
-
-
-			if( Character.isUpperCase(variableName.charAt(0))) {
-
-
-
-			}	
 		}
 
 
@@ -958,10 +954,8 @@ class Timeseries1
 							if( object != null) {
 								A.setFloat( ima.set(t, lat,lon), (float) object);
 							} 
-							else 
-							{
-								System.out.println( "name " + variableName + " recording fill value " );
-								A.setFloat( ima.set(t, lat,lon), (float)type.fillValue );
+							else {
+								A.setFloat( ima.set(t, lat,lon), (float)type.fillValue);
 							}
 						}
 					}
