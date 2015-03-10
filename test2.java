@@ -775,7 +775,7 @@ class Timeseries1
 		String filename = "testWrite.nc";
 		NetcdfFileWriteable writer = NetcdfFileWriteable.createNew(filename, false);
 		// add dimensions
-		Dimension timeDim = writer.addDimension("time", count ); // writer.addUnlimitedDimension("time");
+		Dimension timeDim = writer.addDimension("time", count + 2 ); // writer.addUnlimitedDimension("time");
 		Dimension latDim = writer.addDimension("lat", 1);
 		Dimension lonDim = writer.addDimension("lon", 1);
 
@@ -788,7 +788,12 @@ class Timeseries1
 		dims.add( lonDim);
 		writer.addVariable("temperature", DataType.DOUBLE, dims); // what about the data ????
 
-		ArrayDouble A = new ArrayDouble.D3(latDim.getLength(), lonDim.getLength(), timeDim.getLength() );
+
+		// I don't want a file, so why is it not possible to put it in 'data mode' explicitly.
+		// why isn't there some
+		writer.create();
+
+		ArrayDouble A = new ArrayDouble.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength() );
 		Index ima = A.getIndex();
 
 		int t = 0;
@@ -798,13 +803,16 @@ class Timeseries1
 			for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
 
 
-				A.setDouble(ima.set(lat,lon,t), (double) (t));
+				A.setDouble( ima.set(t, lat,lon), (double) (t));
 				++t;
 			}
 		}
 
 		int [] origin = new int[3];
 		writer.write("temperature", origin, A);
+
+
+		// 
 
 /*
 		for( int t = 0; t < timeDim.getLength(); ++t )
