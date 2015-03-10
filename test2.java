@@ -841,9 +841,9 @@ class Timeseries1
 
 			if( Character.isUpperCase(variableName.charAt(0))) {
 
-				
 				if( clazz.equals(Float.class)) {
-					MyType t = new MyType( variableName, clazz, null); 
+					// should this really be being instantiated here...
+					MyType t = new MyType( variableName, clazz, new Float( 999999. ) ); 
 					typeMappings.put( variableName, t );
 				}
 			}	
@@ -930,8 +930,8 @@ class Timeseries1
 							} 
 							else 
 							{
-								// missing...
-								// System.out.println( "name " + variableName + " null" );
+								System.out.println( "name " + variableName + " recording fill value " );
+								A.setFloat( ima.set(t, lat,lon), (float)type.fillValue );
 							}
 						}
 					}
