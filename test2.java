@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.BufferedInputStream;
 
 import java.util.ArrayList; //io.BufferedInputStream;
+//import java.util.ArrayDouble; //io.BufferedInputStream;
 
 
 import java.sql.*;
@@ -33,7 +34,7 @@ import ucar.nc2.Dimension;
 import ucar.ma2.DataType; 
 import ucar.ma2.Array;
 
-
+import ucar.ma2.ArrayDouble;
 
 //import java.util.StringTokenizer;
 
@@ -716,7 +717,20 @@ class Timeseries1
 		// we can query the count independently of querying all the values...
 		
 		// we're going to have to close all this stuff,
-						
+		long count = 0;
+		{
+			// We know how many values we are going to deal with, so let's encode rather than use an unlimited dimension 
+			String query = "SELECT count(1) FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id); 
+			PreparedStatement stmt = conn.prepareStatement( query ); 
+			// stmt.setFetchSize(1000);
+			ResultSet rs = stmt.executeQuery();
+			rs.next() ; 
+			count = (long) rs.getObject(1); 
+		}
+	
+		System.out.println( "count " + count );
+
+				
 		// sql stuff
 		// need to encode the additional parameter...
 		String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
@@ -759,27 +773,30 @@ class Timeseries1
 		String filename = "testWrite.nc";
 		NetcdfFileWriteable writer = NetcdfFileWriteable.createNew(filename, false);
 		// add dimensions
+		Dimension timeDim = writer.addUnlimitedDimension("time");
 		Dimension latDim = writer.addDimension("lat", 1);
 		Dimension lonDim = writer.addDimension("lon", 1);
-		Dimension timeDim = writer.addUnlimitedDimension("time");
 
 		// time unlimited ...
 		// need time,
 		// define Variable
 		ArrayList dims = new ArrayList();
-
 		dims.add( timeDim);
 		dims.add( latDim);
 		dims.add( lonDim);
-		writer.addVariable("temperature", DataType.DOUBLE, dims);
+		writer.addVariable("temperature", DataType.DOUBLE, dims); // what about the data ????
+
+
+		ArrayDouble A = new ArrayDouble.D2(latDim.getLength(), lonDim.getLength());
 	
 
-		int count = 0;
+		int count2 = 0;
 		while ( rs.next() ) {  
-			++count;
+			++count2;
 		}
 
-		System.out.println( "count " + count );
+
+		System.out.println( "count2 " + count2 );
 	}
 
 
