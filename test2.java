@@ -35,6 +35,7 @@ import ucar.ma2.DataType;
 import ucar.ma2.Array;
 
 import ucar.ma2.ArrayDouble;
+import ucar.ma2.ArrayFloat;
 
 import ucar.ma2.Index;
 
@@ -729,6 +730,9 @@ class Timeseries1
 			rs.next() ; 
 			count = (int)(long) rs.getObject(1); 
 		}
+
+
+
 	
 		System.out.println( "count " + count );
 
@@ -786,25 +790,41 @@ class Timeseries1
 		dims.add( timeDim);
 		dims.add( latDim);
 		dims.add( lonDim);
-		writer.addVariable("temperature", DataType.DOUBLE, dims); // what about the data ????
+		writer.addVariable("temperature", DataType.FLOAT, dims); // what about the data ????
 
+		// we're going to have to specialize all this for the different types
+		// and loop it...
+		// uggh.
+
+		// we have to write the TIME, LAT, LON arrays as well...
 
 		// I don't want a file, so why is it not possible to put it in 'data mode' explicitly.
 		// why isn't there some
 		writer.create();
 
-		ArrayDouble A = new ArrayDouble.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength() );
+		// we need to do this for all vars...
+		// and work within the context of the loop over the record set,
+
+		// need a kind of mapping, from parameter that we will process....
+		// then we instantiate all the arrays.
+		// do we really want to do it keeping all the arrays open?  
+		
+
+		ArrayFloat A = new ArrayFloat.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength() );
 		Index ima = A.getIndex();
 
 		int t = 0;
 		while ( rs.next() ) {  
-
 			for( int lat = 0; lat < latDim.getLength(); ++lat )
 			for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
 
-				// should our indexing be at 1 ? 
+				float value = (float)(float) rs.getObject("TEMP" ); 
+	
+				System.out.println( "value is " + value );
 
-				A.setDouble( ima.set(t, lat,lon), (double) (t));
+				// is there something surfice 
+				// A.setFloat( ima.set(t, lat,lon), (double) (t));
+				A.setFloat( ima.set(t, lat,lon), value );
 				++t;
 			}
 		}
@@ -818,18 +838,9 @@ class Timeseries1
 
 		writer.close();
 
-/*
-		for( int t = 0; t < timeDim.getLength(); ++t )
-		{
-			A.setDouble(ima.set(lat,lon,t), (double) (lat));
-		}
+		// Ok, we need to query the actual timeseries table to get the actual geometry to be
+		// able to encode the values. 
 
-		while ( rs.next() ) {  
-			++count2;
-		}
-
-		System.out.println( "count2 " + count2 );
-*/
 	}
 
 
