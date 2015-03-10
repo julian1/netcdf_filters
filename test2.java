@@ -13,6 +13,9 @@ import java.io.BufferedInputStream;
 import java.util.ArrayList; //io.BufferedInputStream;
 //import java.util.ArrayDouble; //io.BufferedInputStream;
 
+import java.util.HashMap; //io.BufferedInputStream;
+import java.util.Map; //io.BufferedInputStream;
+
 
 import java.sql.*;
 
@@ -643,6 +646,29 @@ class Timeseries3
 }
 
 
+
+class X
+{
+	// Map from parameter name to Array object
+	public Map<String, Object> map;  
+
+	// We'll need the meta typings so we can cast the right value 
+
+	public X() 	{
+		map	= new HashMap<String, Object>();
+	}
+
+
+	// create the structures
+
+//		ArrayFloat A = new ArrayFloat.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength() );
+		// how expensive is this action? 
+	
+
+}
+
+
+
 class Timeseries1
 {
 	Parser parser;				// change name to expressionParser or SelectionParser
@@ -753,88 +779,136 @@ class Timeseries1
 		// eg. can take the result set....
 		// or else to the init() and f() action ?
 
-		ResultSetMetaData m = rs.getMetaData();
-		int numColumns = m.getColumnCount();
-		for ( int i = 1 ; i <= numColumns ; i++ ) {
-			System.out.print( "" + m.getColumnName(i ) + ", ");
-			System.out.print( "" + m.getColumnClassName( i ) );
-			System.out.println( "" );
-		}
-
-		
-/*		int rowCount = 0;
-		// ResultSet rs = ps.executeQuery();
-		if (rs.last()) {
-		  rowCount = rs.getRow();
-		  rs.beforeFirst(); // not rs.first() because the rs.next() below will move on, missing the first element
-		}
-		System.out.print( "rowCount " + rowCount  );
-		while (rs.next()) {
-		  // do your standard per row stuff
-		}
-*/
-
 
 		// netcdf stuff
 		String filename = "testWrite.nc";
 		NetcdfFileWriteable writer = NetcdfFileWriteable.createNew(filename, false);
+
 		// add dimensions
 		Dimension timeDim = writer.addDimension("time", count  ); // writer.addUnlimitedDimension("time");
 		Dimension latDim = writer.addDimension("lat", 1);
 		Dimension lonDim = writer.addDimension("lon", 1);
 
-		// time unlimited ...
-		// need time,
-		// define Variable
+		// time unlimited ...  // need time, // define Variable
 		ArrayList dims = new ArrayList();
 		dims.add( timeDim);
 		dims.add( latDim);
 		dims.add( lonDim);
-		writer.addVariable("temperature", DataType.FLOAT, dims); // what about the data ????
 
-		// we're going to have to specialize all this for the different types
-		// and loop it...
-		// uggh.
+		// we want to populate the vars	
 
-		// we have to write the TIME, LAT, LON arrays as well...
+		// now we loop the main attributes 
+		ResultSetMetaData m = rs.getMetaData();
+		int numColumns = m.getColumnCount();
 
-		// I don't want a file, so why is it not possible to put it in 'data mode' explicitly.
-		// why isn't there some
+
+		// 
+		Map<String, Object> map = new HashMap<String, Object>();
+
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+			System.out.print( "" + m.getColumnName(i ) + ", ");
+			System.out.print( "" + m.getColumnClassName( i ) );
+
+			// apply convention that var names are upper cased
+			String variableName = m.getColumnName(i ); 
+
+			if( Character.isUpperCase(variableName.charAt(0))) {
+
+				System.out.print( "UPPER" );
+
+				Class clazz = Class.forName( m.getColumnClassName( i ) );
+
+				if (clazz.equals(Float.class)) {
+					System.out.print( "it's a float" );
+					// add our array into the mappings
+					map.put( variableName,  new ArrayFloat.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength() ));
+					// add the var to definition
+					writer.addVariable( variableName, DataType.FLOAT, dims);
+				}
+			}
+			System.out.println( "" );
+//			writer.addVariable("temperature", DataType.FLOAT, dims); // what about the data ????
+		}
+
+
 		writer.create();
 
-		// we need to do this for all vars...
-		// and work within the context of the loop over the record set,
 
-		// need a kind of mapping, from parameter that we will process....
-		// then we instantiate all the arrays.
-		// do we really want to do it keeping all the arrays open?  
-		
-
+/*
 		ArrayFloat A = new ArrayFloat.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength() );
-		Index ima = A.getIndex();
-
+		// map.put( "whoot", A );
+*/
 		int t = 0;
 		while ( rs.next() ) {  
 			for( int lat = 0; lat < latDim.getLength(); ++lat )
 			for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
 
-				float value = (float)(float) rs.getObject("TEMP" ); 
-	
-				System.out.println( "value is " + value );
 
+				for ( int i = 1 ; i <= numColumns ; i++ ) {
+					// System.out.print( "" + m.getColumnName(i ) + ", ");
+					// System.out.print( "" + m.getColumnClassName( i ) );
+
+					// apply convention that var names are upper cased
+					String variableName = m.getColumnName(i); 
+					if( map.containsKey( variableName )) { 
+
+						Class clazz = Class.forName( m.getColumnClassName( i ) );
+
+						if (clazz.equals(Float.class)) {
+							System.out.println( "it's a float" );
+							// add our array into the mappings
+							ArrayFloat.D3 A = (ArrayFloat.D3) map.get( variableName); 
+							// how expensive is this action? 
+							Index ima = A.getIndex();
+							Object object = rs.getObject(variableName);
+							if( rs.getObject(variableName) != null) {
+								float value = (float) object; 
+								System.out.println( "name " + variableName + " value " + value );
+								A.setFloat( ima.set(t, lat,lon), value );
+							} 
+							else 
+							{
+								System.out.println( "name " + variableName + " null" );
+							}
+						}
+					}	
+				}
+/*
+				float value = (float) rs.getObject("TEMP" ); 
+				System.out.println( "value is " + value );
 				// is there something surfice 
 				// A.setFloat( ima.set(t, lat,lon), (double) (t));
 				A.setFloat( ima.set(t, lat,lon), value );
+*/
 				++t;
 			}
 		}
 
-		int [] origin = new int[3];
-		writer.write("temperature", origin, A);
+
+		// then we need aq final loop ....
 
 
 
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+
+			String variableName = m.getColumnName(i); 
+			if( map.containsKey( variableName )) { 
+
+				Class clazz = Class.forName( m.getColumnClassName( i ) );
+				if (clazz.equals(Float.class)) {
+					int [] origin = new int[3];
+					ArrayFloat.D3 A = (ArrayFloat.D3) map.get(variableName); 
+					writer.write(variableName, origin, A);
+				}
+			}
+		}
+
+
+//		int [] origin = new int[3];
+//		writer.write("temperature", origin, A);
 		System.out.println( "t is " + t );
+
+/**/
 
 		writer.close();
 
