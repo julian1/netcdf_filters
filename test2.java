@@ -648,25 +648,31 @@ class Timeseries3
 
 
 
-class X
+
+
+class MyType
 {
-	// Map from parameter name to Array object
-	public Map<String, Object> map;  
+	// should be stored in a map...
 
-	// We'll need the meta typings so we can cast the right value 
-
-	public X() 	{
-		map	= new HashMap<String, Object>();
+	// schema name, table name
+	public MyType(String columnName,  Class  targetType, Object fillValue )
+	{
+		this.columnName = columnName; 
+		this.targetType = targetType; 
+		this.fillValue = fillValue; 
 	}
 
 
-	// create the structures
+	public final String columnName; 
 
-//		ArrayFloat A = new ArrayFloat.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength() );
-		// how expensive is this action? 
-	
+	public final Class  targetType; // to encode in FLOAT actually as Java.
+	// rather than using the sql type
+	// Object	data;
 
+	public final Object fillValue;
 }
+
+
 
 
 
@@ -725,6 +731,10 @@ class Timeseries1
 		featureInstances = stmt.executeQuery();
 
 		System.out.println( "done determining feature instances " );
+
+
+		// should determine our target types here
+
 	}
 
 
@@ -795,6 +805,8 @@ class Timeseries1
 		String filename = "testWrite.nc";
 		NetcdfFileWriteable writer = NetcdfFileWriteable.createNew(filename, false);
 
+		// we have to encode these values as well.
+
 		// add dimensions
 		Dimension timeDim = writer.addDimension("TIME", count  ); // writer.addUnlimitedDimension("time");
 		Dimension latDim = writer.addDimension("LATITUDE", 1);
@@ -814,9 +826,35 @@ class Timeseries1
 
 		System.out.println( "beginnning extract mappings" );
 
+
+
+		Map<String, MyType > typeMappings = new HashMap<String, MyType>();
+
+		// convention
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+
+			String variableName = m.getColumnName(i); 
+			Class clazz = Class.forName(m.getColumnClassName(i));
+
+			// need clazz handling...
+
+			if( Character.isUpperCase(variableName.charAt(0))) {
+
+				MyType t = new MyType( variableName, clazz, null); 
+				typeMappings.put( variableName, t );
+			}	
+		}
+
+
 		// we'll construct a set of mappings
 		// change name array_mappings ? or something
 		Map<String, Object> map = new HashMap<String, Object>();
+
+
+
+
+
+
 
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
 
