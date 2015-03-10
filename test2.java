@@ -957,12 +957,15 @@ class Timeseries1
 
 					String variableName = m.getColumnName(i); 
 					MyType type = typeMappings.get( variableName );
+					Object object = rs.getObject(variableName);
+
 					if( type != null ) { 
 						if (type.targetType.equals(Float.class)) {
-							ArrayFloat.D3 A = (ArrayFloat.D3) map.get( variableName); 
+							ArrayFloat.D3 A = (ArrayFloat.D3) map.get(variableName); 
 							Index ima = A.getIndex();
-							Object object = rs.getObject(variableName);
 							if( object != null) {
+								// we could make the type be responsible for all this stuff, 
+								// except passing the dimensions in is problematic.
 								A.setFloat( ima.set(t, lat,lon), (float) object);
 							} 
 							else {
@@ -970,8 +973,14 @@ class Timeseries1
 							}
 						}
 						else if (type.targetType.equals(Byte.class)) {
-		
-
+							ArrayByte.D3 A = (ArrayByte.D3) map.get(variableName); 
+							Index ima = A.getIndex();
+							if( object != null) {
+								A.setByte( ima.set(t, lat,lon), (Byte) object);
+							} 
+							else {
+								A.setByte( ima.set(t, lat,lon), (Byte)type.fillValue);
+							}
 						}	
 						else {
 							// runtime exception
