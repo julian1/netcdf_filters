@@ -796,9 +796,9 @@ class Timeseries1
 		NetcdfFileWriteable writer = NetcdfFileWriteable.createNew(filename, false);
 
 		// add dimensions
-		Dimension timeDim = writer.addDimension("time", count  ); // writer.addUnlimitedDimension("time");
-		Dimension latDim = writer.addDimension("lat", 1);
-		Dimension lonDim = writer.addDimension("lon", 1);
+		Dimension timeDim = writer.addDimension("TIME", count  ); // writer.addUnlimitedDimension("time");
+		Dimension latDim = writer.addDimension("LATITUDE", 1);
+		Dimension lonDim = writer.addDimension("LONGITUDE", 1);
 
 		// time unlimited ...  // need time, // define Variable
 		ArrayList dims = new ArrayList();
@@ -919,9 +919,10 @@ class Timeseries1
 				else if ( clazz.equals(String.class)) {
 					ArrayList<String> A = (ArrayList<String> ) map.get( variableName);
 
+					// what about nulls...
+
 					if( A.size() > 0 ) {					
-						//Array data = Array.factory( String.class, new int [] {1,1,count }, A.toArray() new int[] {1,2,3});
-						Array data = Array.factory( String.class, new int [] {count, 1,1  }, A.toArray() );
+						Array data = Array.factory( String.class, new int [] {count, 1,1 }, A.toArray() );
 						System.out.println( "" + variableName + " length " + A.size()  );
 						writer.writeStringData(variableName, data ); 
 					}
