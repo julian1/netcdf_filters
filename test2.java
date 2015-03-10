@@ -946,12 +946,11 @@ class Timeseries1
 		System.out.println( "done defining netcdf" );
 
 
-
+		// t,lat,lon are always indexes - so we should be able to delegate to the thing...
 		int t = 0;
 		while ( rs.next() ) {  
 			for( int lat = 0; lat < latDim.getLength(); ++lat )
 			for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
-
 
 				for ( int i = 1 ; i <= numColumns ; i++ ) {
 
@@ -976,7 +975,10 @@ class Timeseries1
 							ArrayByte.D3 A = (ArrayByte.D3) map.get(variableName); 
 							Index ima = A.getIndex();
 							if( object != null) {
-								A.setByte( ima.set(t, lat,lon), (Byte) object);
+								// handle coercion from jdbc string to byte 
+								String s = (String) object; 
+								Byte ch =  s.getBytes()[0];//.getAt( 0);
+								A.setByte( ima.set(t, lat,lon), ch );
 							} 
 							else {
 								A.setByte( ima.set(t, lat,lon), (Byte)type.fillValue);
@@ -986,36 +988,6 @@ class Timeseries1
 							// runtime exception
 						}
 					}
-
-
-/*					Class clazz = Class.forName( m.getColumnClassName( i ) );
-
-					if( map.containsKey( variableName )) { 
-
-						if (clazz.equals(Float.class)) {
-							ArrayFloat.D3 A = (ArrayFloat.D3) map.get( variableName); 
-							Index ima = A.getIndex();
-							Object object = rs.getObject(variableName);
-							if( object != null) {
-								A.setFloat( ima.set(t, lat,lon), (float) object);
-							} 
-							else 
-							{
-								// missing...
-								// System.out.println( "name " + variableName + " null" );
-							}
-						}
-						else if ( clazz.equals(String.class)) {
-							ArrayList<String> A = (ArrayList<String> ) map.get( variableName);
-							Object object = rs.getObject(variableName);
-							if( object != null) {
-								A.add( (String) object );
-							}
-						}
-					}	
-*/
-
-
 				}
 
 				++t;
@@ -1030,16 +1002,29 @@ class Timeseries1
 
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
 
+			// Class clazz = Class.forName(m.getColumnClassName( i ));
 			String variableName = m.getColumnName(i); 
-			Class clazz = Class.forName(m.getColumnClassName( i ));
+			MyType type = typeMappings.get( variableName );
 
-			if( map.containsKey( variableName )) { 
-				if (clazz.equals(Float.class)) {
+	
+			if( type != null ) { 
+
+				if (type.targetType.equals(Float.class)) {
+				// if (clazz.equals(Float.class)) {
 					int [] origin = new int[3];
 					ArrayFloat.D3 A = (ArrayFloat.D3) map.get(variableName); 
 					writer.write(variableName, origin, A);
 				}
 
+			}	
+
+/*			if( map.containsKey( variableName )) { 
+				if (clazz.equals(Float.class)) {
+					int [] origin = new int[3];
+					ArrayFloat.D3 A = (ArrayFloat.D3) map.get(variableName); 
+					writer.write(variableName, origin, A);
+				}
+*/
 /*				else if ( clazz.equals(String.class)) {
 					ArrayList<String> A = (ArrayList<String> ) map.get( variableName);
 
@@ -1052,7 +1037,6 @@ class Timeseries1
 					}
 				}
 */
-			}
 		}
 
 		System.out.println( "done writing data" );
