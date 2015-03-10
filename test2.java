@@ -39,6 +39,7 @@ import ucar.ma2.Array;
 
 import ucar.ma2.ArrayDouble;
 import ucar.ma2.ArrayFloat;
+import ucar.ma2.ArrayByte;
 //import ucar.ma2.ArrayString;
 
 import ucar.ma2.Index;
@@ -908,11 +909,10 @@ class Timeseries1
 					// add the var to definition
 					writer.addVariable(variableName, DataType.FLOAT, dims);
 				}
-
 				else if (t.targetType.equals(Byte.class)) {
-
 					System.out.print( "whoo a byte "  );
-				
+					map.put(variableName, new ArrayByte.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength()));
+					writer.addVariable(variableName, DataType.BYTE, dims);
 				}
 			}
 
@@ -969,6 +969,13 @@ class Timeseries1
 								A.setFloat( ima.set(t, lat,lon), (float)type.fillValue);
 							}
 						}
+						else if (type.targetType.equals(Byte.class)) {
+		
+
+						}	
+						else {
+							// runtime exception
+						}
 					}
 
 
@@ -1010,7 +1017,7 @@ class Timeseries1
 
 		// then we need aq final loop ....
 
-
+		// write the actual data
 
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
 
@@ -1023,7 +1030,8 @@ class Timeseries1
 					ArrayFloat.D3 A = (ArrayFloat.D3) map.get(variableName); 
 					writer.write(variableName, origin, A);
 				}
-				else if ( clazz.equals(String.class)) {
+
+/*				else if ( clazz.equals(String.class)) {
 					ArrayList<String> A = (ArrayList<String> ) map.get( variableName);
 
 					// what about nulls...
@@ -1034,6 +1042,7 @@ class Timeseries1
 						writer.writeStringData(variableName, data ); 
 					}
 				}
+*/
 			}
 		}
 
