@@ -36,6 +36,8 @@ import ucar.ma2.Array;
 
 import ucar.ma2.ArrayDouble;
 
+import ucar.ma2.Index;
+
 //import java.util.StringTokenizer;
 
 // string tokenizer isn't going to work because may not be strings.
@@ -781,21 +783,41 @@ class Timeseries1
 		// need time,
 		// define Variable
 		ArrayList dims = new ArrayList();
+		dims.add( timeDim);
 		dims.add( latDim);
 		dims.add( lonDim);
-		dims.add( timeDim);
 		writer.addVariable("temperature", DataType.DOUBLE, dims); // what about the data ????
 
 		ArrayDouble A = new ArrayDouble.D3(latDim.getLength(), lonDim.getLength(), timeDim.getLength() );
-	
+		Index ima = A.getIndex();
 
-		int count2 = 0;
+		int t = 0;
+		while ( rs.next() ) {  
+
+			for( int lat = 0; lat < latDim.getLength(); ++lat )
+			for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
+
+
+				A.setDouble(ima.set(lat,lon,t), (double) (t));
+				++t;
+			}
+		}
+
+		int [] origin = new int[3];
+		writer.write("temperature", origin, A);
+
+/*
+		for( int t = 0; t < timeDim.getLength(); ++t )
+		{
+			A.setDouble(ima.set(lat,lon,t), (double) (lat));
+		}
+
 		while ( rs.next() ) {  
 			++count2;
 		}
 
-
 		System.out.println( "count2 " + count2 );
+*/
 	}
 
 
