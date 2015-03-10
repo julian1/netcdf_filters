@@ -830,7 +830,8 @@ class Timeseries1
 
 		Map<String, MyType > typeMappings = new HashMap<String, MyType>();
 
-		// convention
+		// establish how we're going to perform the mapping 
+		// using a few convensions
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
 
 			String variableName = m.getColumnName(i); 
@@ -839,7 +840,6 @@ class Timeseries1
 			// need clazz handling...
 
 			if( Character.isUpperCase(variableName.charAt(0))) {
-
 				MyType t = new MyType( variableName, clazz, null); 
 				typeMappings.put( variableName, t );
 			}	
@@ -853,7 +853,10 @@ class Timeseries1
 
 
 
-
+/*
+		for( MyType t : typeMappings ) { 
+		}
+*/
 
 
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
@@ -862,12 +865,17 @@ class Timeseries1
 			// System.out.print( "" + m.getColumnClassName( i ) );
 
 			String variableName = m.getColumnName(i); 
-			Class clazz = Class.forName(m.getColumnClassName(i));
+			MyType t = typeMappings.get( variableName );
+			if( t != null ) { 
+				if (t.targetType.equals(Float.class)) {
+					// add our array into the mappings
+					map.put(variableName, new ArrayFloat.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength()));
+					// add the var to definition
+					writer.addVariable(variableName, DataType.FLOAT, dims);
+				}
+			}
 
-			System.out.println( " name " + variableName + " type " + clazz);
-
-
-
+/*
 			// convention that var names are upper cased
 			if( Character.isUpperCase(variableName.charAt(0))) {
 				if (clazz.equals(Float.class)) {
@@ -889,6 +897,7 @@ class Timeseries1
 					writer.addStringVariable( variableName, dims, 1 ); 
 				}
 			}
+*/
 		}
 
 
@@ -906,7 +915,25 @@ class Timeseries1
 				for ( int i = 1 ; i <= numColumns ; i++ ) {
 
 					String variableName = m.getColumnName(i); 
-					Class clazz = Class.forName( m.getColumnClassName( i ) );
+					MyType type = typeMappings.get( variableName );
+					if( type != null ) { 
+						if (type.targetType.equals(Float.class)) {
+							ArrayFloat.D3 A = (ArrayFloat.D3) map.get( variableName); 
+							Index ima = A.getIndex();
+							Object object = rs.getObject(variableName);
+							if( object != null) {
+								A.setFloat( ima.set(t, lat,lon), (float) object);
+							} 
+							else 
+							{
+								// missing...
+								// System.out.println( "name " + variableName + " null" );
+							}
+						}
+					}
+
+
+/*					Class clazz = Class.forName( m.getColumnClassName( i ) );
 
 					if( map.containsKey( variableName )) { 
 
@@ -931,6 +958,9 @@ class Timeseries1
 							}
 						}
 					}	
+*/
+
+
 				}
 
 				++t;
