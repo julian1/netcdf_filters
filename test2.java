@@ -43,6 +43,12 @@ import ucar.ma2.ArrayFloat;
 
 import ucar.ma2.Index;
 
+
+
+import java.util.regex.Pattern ; 
+import java.util.regex.Matcher; 
+
+
 //import java.util.StringTokenizer;
 
 // string tokenizer isn't going to work because may not be strings.
@@ -652,6 +658,9 @@ class Timeseries3
 
 class MyType
 {
+	// fill in with some default values, then over-ride with explicit configuration
+
+
 	// should be stored in a map...
 
 	// schema name, table name
@@ -839,13 +848,34 @@ class Timeseries1
 
 			// need clazz handling...
 
-			if( Character.isUpperCase(variableName.charAt(0))) {
+
+			if( Pattern.compile(".*quality_control$" ).matcher( variableName) .matches()) 
+			{
+				System.out.println( "QC - " + variableName );
+			}
+
+			// if( Pattern.compile("^\\p{upper}+.*" ).matcher( variableName) .matches()) 
+			// if( Pattern.compile("\\p{upper}+.*" ).matcher( variableName) .matches()) 
+			else if( Pattern.compile("^[A-Z]+.*" ).matcher( variableName) .matches()) 
+			{
+
+				System.out.println( "upper - " + variableName );
 
 				if( clazz.equals(Float.class)) {
 					// should this really be being instantiated here...
 					MyType t = new MyType( variableName, clazz, new Float( 999999. ) ); 
 					typeMappings.put( variableName, t );
 				}
+
+
+			}
+
+
+
+			if( Character.isUpperCase(variableName.charAt(0))) {
+
+
+
 			}	
 		}
 
