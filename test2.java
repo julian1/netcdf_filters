@@ -717,7 +717,7 @@ class Timeseries1
 		// we can query the count independently of querying all the values...
 		
 		// we're going to have to close all this stuff,
-		long count = 0;
+		int count = 0;
 		{
 			// We know how many values we are going to deal with, so let's encode rather than use an unlimited dimension 
 			String query = "SELECT count(1) FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id); 
@@ -725,7 +725,7 @@ class Timeseries1
 			// stmt.setFetchSize(1000);
 			ResultSet rs = stmt.executeQuery();
 			rs.next() ; 
-			count = (long) rs.getObject(1); 
+			count = (int)(long) rs.getObject(1); 
 		}
 	
 		System.out.println( "count " + count );
@@ -773,7 +773,7 @@ class Timeseries1
 		String filename = "testWrite.nc";
 		NetcdfFileWriteable writer = NetcdfFileWriteable.createNew(filename, false);
 		// add dimensions
-		Dimension timeDim = writer.addUnlimitedDimension("time");
+		Dimension timeDim = writer.addDimension("time", count ); // writer.addUnlimitedDimension("time");
 		Dimension latDim = writer.addDimension("lat", 1);
 		Dimension lonDim = writer.addDimension("lon", 1);
 
@@ -781,13 +781,12 @@ class Timeseries1
 		// need time,
 		// define Variable
 		ArrayList dims = new ArrayList();
-		dims.add( timeDim);
 		dims.add( latDim);
 		dims.add( lonDim);
+		dims.add( timeDim);
 		writer.addVariable("temperature", DataType.DOUBLE, dims); // what about the data ????
 
-
-		ArrayDouble A = new ArrayDouble.D2(latDim.getLength(), lonDim.getLength());
+		ArrayDouble A = new ArrayDouble.D3(latDim.getLength(), lonDim.getLength(), timeDim.getLength() );
 	
 
 		int count2 = 0;
