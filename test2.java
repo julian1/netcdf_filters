@@ -801,6 +801,53 @@ class Timeseries1
 		System.out.println( "* done doing query" );
 
 
+		// now we loop the main attributes 
+		ResultSetMetaData m = rs.getMetaData();
+		int numColumns = m.getColumnCount();
+
+		System.out.println( "beginnning extract mappings" );
+
+
+
+		Map<String, MyType > typeMappings = new HashMap<String, MyType>();
+
+		// Establish conversions according to convention
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+
+			String variableName = m.getColumnName(i); 
+			Class clazz = Class.forName(m.getColumnClassName(i));
+
+			// need clazz handling...
+
+			if( Pattern.compile(".*quality_control$" ).matcher( variableName) .matches()) 
+			{
+				// postgres varchar(1), JDBC string, but should be treated as netcdf byte
+				if( clazz != String.class ) {
+					throw new RuntimeException( "Expected QC var to be JDBC string" );
+				}
+				
+				System.out.println( "QC - " + variableName );
+				MyType t = new MyType( variableName, Byte.class, new Byte( (byte)0xff ) ); 
+				typeMappings.put( variableName, t );
+			}
+
+			// if( Pattern.compile("^\\p{upper}+.*" ).matcher( variableName) .matches()) 
+			// if( Pattern.compile("\\p{upper}+.*" ).matcher( variableName) .matches()) 
+			else if( Pattern.compile("^[A-Z]+.*" ).matcher( variableName).matches()) 
+			{
+				System.out.println( "upper - " + variableName );
+				if( clazz.equals(Float.class)) {
+					// should this really be being instantiated here...
+					MyType t = new MyType(variableName, clazz, new Float( 999999. )); 
+					typeMappings.put( variableName, t );
+				}
+			}
+		}
+
+
+
+
+
 		// we're going to need to query the metadata... to perform our sql -> netcdf field mappings.
 
 		// however we should do the name mapping we should actually delegate this to a strategy class ...
@@ -829,52 +876,6 @@ class Timeseries1
 
 		// we want to populate the vars	
 
-		// now we loop the main attributes 
-		ResultSetMetaData m = rs.getMetaData();
-		int numColumns = m.getColumnCount();
-
-		System.out.println( "beginnning extract mappings" );
-
-
-
-		Map<String, MyType > typeMappings = new HashMap<String, MyType>();
-
-		// establish how we're going to perform the mapping 
-		// using a few convensions
-		for ( int i = 1 ; i <= numColumns ; i++ ) {
-
-			String variableName = m.getColumnName(i); 
-			Class clazz = Class.forName(m.getColumnClassName(i));
-
-			// need clazz handling...
-
-
-			if( Pattern.compile(".*quality_control$" ).matcher( variableName) .matches()) 
-			{
-				if( clazz != String.class ) {
-					throw new RuntimeException( "Expected QC var to be JDBC string" );
-				}
-				
-				System.out.println( "QC - " + variableName );
-				// postgres varchar(1), JDBC string, but should be treated as netcdf byte
-				MyType t = new MyType( variableName, Byte.class, new Byte( (byte)0xff ) ); 
-				typeMappings.put( variableName, t );
-			}
-
-			// if( Pattern.compile("^\\p{upper}+.*" ).matcher( variableName) .matches()) 
-			// if( Pattern.compile("\\p{upper}+.*" ).matcher( variableName) .matches()) 
-			else if( Pattern.compile("^[A-Z]+.*" ).matcher( variableName).matches()) 
-			{
-				System.out.println( "upper - " + variableName );
-
-				if( clazz.equals(Float.class)) {
-					// should this really be being instantiated here...
-					MyType t = new MyType( variableName, clazz, new Float( 999999. ) ); 
-					typeMappings.put( variableName, t );
-				}
-			}
-		}
-
 
 		// we'll construct a set of mappings
 		// change name array_mappings ? or something
@@ -902,6 +903,12 @@ class Timeseries1
 					map.put(variableName, new ArrayFloat.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength()));
 					// add the var to definition
 					writer.addVariable(variableName, DataType.FLOAT, dims);
+				}
+
+				else if (t.targetType.equals(Byte.class)) {
+
+					System.out.print( "whoo a byte "  );
+				
 				}
 			}
 
