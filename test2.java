@@ -660,6 +660,8 @@ class MyType
 {
 	// fill in with some default values, then over-ride with explicit configuration
 
+	// rather than doing clazz testing. 
+	// could we use a visitor for this stuff
 
 	// should be stored in a map...
 
@@ -818,6 +820,8 @@ class Timeseries1
 			Class clazz = Class.forName(m.getColumnClassName(i));
 
 			// need clazz handling...
+
+			// geom, TIME we should ignore...
 
 			if( Pattern.compile(".*quality_control$" ).matcher( variableName) .matches()) 
 			{
