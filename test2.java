@@ -840,8 +840,12 @@ class Timeseries1
 			// need clazz handling...
 
 			if( Character.isUpperCase(variableName.charAt(0))) {
-				MyType t = new MyType( variableName, clazz, null); 
-				typeMappings.put( variableName, t );
+
+				
+				if( clazz.equals(Float.class)) {
+					MyType t = new MyType( variableName, clazz, null); 
+					typeMappings.put( variableName, t );
+				}
 			}	
 		}
 
