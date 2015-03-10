@@ -840,12 +840,15 @@ class Timeseries1
 				}
 				else if ( clazz.equals(String.class)) {
 
+
 					// ok, i think that we have to just stuff all the strings in there, then analyze
 					// them for max length... which will thus be handled var by var, or for eac file generated.
 				
-
 					// map.put(variableName, new ArrayString.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength()));
 					// writer.addVariable(variableName, DataType.STRING, dims);
+					map.put(variableName, new ArrayList<String> ( ));
+					// this is horrible.  we really need to do it at the end, where we can see the max string size;
+					writer.addStringVariable( variableName, dims, 1 ); 
 				}
 			}
 		}
@@ -873,13 +876,20 @@ class Timeseries1
 							ArrayFloat.D3 A = (ArrayFloat.D3) map.get( variableName); 
 							Index ima = A.getIndex();
 							Object object = rs.getObject(variableName);
-							if( rs.getObject(variableName) != null) {
+							if( object != null) {
 								A.setFloat( ima.set(t, lat,lon), (float) object);
 							} 
 							else 
 							{
 								// missing...
 								// System.out.println( "name " + variableName + " null" );
+							}
+						}
+						else if ( clazz.equals(String.class)) {
+							ArrayList<String> A = (ArrayList<String> ) map.get( variableName);
+							Object object = rs.getObject(variableName);
+							if( object != null) {
+								A.add( (String) object );
 							}
 						}
 					}	
@@ -905,6 +915,14 @@ class Timeseries1
 					int [] origin = new int[3];
 					ArrayFloat.D3 A = (ArrayFloat.D3) map.get(variableName); 
 					writer.write(variableName, origin, A);
+				}
+				else if ( clazz.equals(String.class)) {
+					ArrayList<String> A = (ArrayList<String> ) map.get( variableName);
+					
+
+					System.out.println( "" + variableName + " length " + A.size()  );
+
+				//	writer.writeStringData(variableName, Array values)
 				}
 			}
 		}
