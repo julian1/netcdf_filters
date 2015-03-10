@@ -791,9 +791,9 @@ class Timeseries1
 
 		// time unlimited ...  // need time, // define Variable
 		ArrayList dims = new ArrayList();
-		dims.add( timeDim);
-		dims.add( latDim);
-		dims.add( lonDim);
+		dims.add(timeDim);
+		dims.add(latDim);
+		dims.add(lonDim);
 
 		// we want to populate the vars	
 
@@ -802,21 +802,21 @@ class Timeseries1
 		int numColumns = m.getColumnCount();
 
 
-		// 
+		// we'll construct a set of mappings
+
 		Map<String, Object> map = new HashMap<String, Object>();
 
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
 			System.out.print( "" + m.getColumnName(i ) + ", ");
 			System.out.print( "" + m.getColumnClassName( i ) );
 
-			// apply convention that var names are upper cased
 			String variableName = m.getColumnName(i ); 
+			Class clazz = Class.forName( m.getColumnClassName( i ) );
 
+			// apply convention that var names are upper cased
 			if( Character.isUpperCase(variableName.charAt(0))) {
 
 				System.out.print( "UPPER" );
-
-				Class clazz = Class.forName( m.getColumnClassName( i ) );
 
 				if (clazz.equals(Float.class)) {
 					System.out.print( "it's a float" );
@@ -850,12 +850,12 @@ class Timeseries1
 
 					// apply convention that var names are upper cased
 					String variableName = m.getColumnName(i); 
+					Class clazz = Class.forName( m.getColumnClassName( i ) );
+
 					if( map.containsKey( variableName )) { 
 
-						Class clazz = Class.forName( m.getColumnClassName( i ) );
-
 						if (clazz.equals(Float.class)) {
-							System.out.println( "it's a float" );
+							// System.out.println( "it's a float" );
 							// add our array into the mappings
 							ArrayFloat.D3 A = (ArrayFloat.D3) map.get( variableName); 
 							// how expensive is this action? 
@@ -863,12 +863,12 @@ class Timeseries1
 							Object object = rs.getObject(variableName);
 							if( rs.getObject(variableName) != null) {
 								float value = (float) object; 
-								System.out.println( "name " + variableName + " value " + value );
+								// System.out.println( "name " + variableName + " value " + value );
 								A.setFloat( ima.set(t, lat,lon), value );
 							} 
 							else 
 							{
-								System.out.println( "name " + variableName + " null" );
+								// System.out.println( "name " + variableName + " null" );
 							}
 						}
 					}	
@@ -892,9 +892,9 @@ class Timeseries1
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
 
 			String variableName = m.getColumnName(i); 
-			if( map.containsKey( variableName )) { 
+			Class clazz = Class.forName(m.getColumnClassName( i ));
 
-				Class clazz = Class.forName( m.getColumnClassName( i ) );
+			if( map.containsKey( variableName )) { 
 				if (clazz.equals(Float.class)) {
 					int [] origin = new int[3];
 					ArrayFloat.D3 A = (ArrayFloat.D3) map.get(variableName); 
