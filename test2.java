@@ -720,10 +720,8 @@ class FloatD3 implements X
 		this.variableName = variableName; 
 		this.fillValue = fillValue; 
 		this.dims = dims;
-
 		this.A = null; 
-
-		}
+	}
 
 	final NetcdfFileWriteable writer; 
 	final String variableName; 
@@ -750,8 +748,8 @@ class FloatD3 implements X
 			A.setFloat( ima.set(a, b, c), fillValue);
 		}
 	}
-
 	// fill in the name and the fillvalue
+	// change name to write?
 
 	public void finish() throws Exception
 	{
@@ -889,42 +887,7 @@ class Timeseries1
 
 
 
-		Map<String, MyType > typeMappings = new HashMap<String, MyType>();
-
-		// Establish conversions according to convention
-		for ( int i = 1 ; i <= numColumns ; i++ ) {
-
-			String variableName = m.getColumnName(i); 
-			Class clazz = Class.forName(m.getColumnClassName(i));
-
-			// need clazz handling...
-
-			// geom, TIME we should ignore...
-
-			if( Pattern.compile(".*quality_control$" ).matcher( variableName) .matches()) 
-			{
-				// postgres varchar(1), JDBC string, but should be treated as netcdf byte
-				if( clazz != String.class ) {
-					throw new RuntimeException( "Expected QC var to be JDBC string" );
-				}
-				
-				System.out.println( "QC - " + variableName );
-				MyType t = new MyType( variableName, Byte.class, new Byte( (byte)0xff ) ); 
-				typeMappings.put( variableName, t );
-			}
-
-			// if( Pattern.compile("^\\p{upper}+.*" ).matcher( variableName) .matches()) 
-			// if( Pattern.compile("\\p{upper}+.*" ).matcher( variableName) .matches()) 
-			else if( Pattern.compile("^[A-Z]+.*" ).matcher( variableName).matches()) 
-			{
-				System.out.println( "upper - " + variableName );
-				if( clazz.equals(Float.class)) {
-					// should this really be being instantiated here...
-					MyType t = new MyType(variableName, clazz, new Float( 999999. )); 
-					typeMappings.put( variableName, t );
-				}
-			}
-		}
+		// Map<String, MyType > typeMappings = new HashMap<String, MyType>();
 
 
 
@@ -956,6 +919,47 @@ class Timeseries1
 		dims.add(latDim);
 		dims.add(lonDim);
 
+
+		Map<String, X> typeMappings = new HashMap<String, X>();
+
+		// Establish conversions according to convention
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+
+			String variableName = m.getColumnName(i); 
+			Class clazz = Class.forName(m.getColumnClassName(i));
+
+			// need clazz handling...
+
+			// geom, TIME we should ignore...
+
+			if( Pattern.compile(".*quality_control$" ).matcher( variableName) .matches()) 
+			{
+				// postgres varchar(1), JDBC string, but should be treated as netcdf byte
+				if( clazz != String.class ) {
+					throw new RuntimeException( "Expected QC var to be JDBC string" );
+				}
+				
+				System.out.println( "QC - " + variableName );
+//				MyType t = new MyType( variableName, Byte.class, new Byte( (byte)0xff ) ); 
+//				typeMappings.put( variableName, t );
+			}
+
+			// if( Pattern.compile("^\\p{upper}+.*" ).matcher( variableName) .matches()) 
+			// if( Pattern.compile("\\p{upper}+.*" ).matcher( variableName) .matches()) 
+			else if( Pattern.compile("^[A-Z]+.*" ).matcher( variableName).matches()) 
+			{
+				System.out.println( "upper - " + variableName );
+				if( clazz.equals(Float.class)) {
+					// should this really be being instantiated here...
+					// MyType t = new MyType(variableName, clazz, new Float( 999999. )); 
+					// typeMappings.put( variableName, t );
+
+					typeMappings.put( variableName,  new FloatD3( writer , variableName, new Float( 999999. ), dims  ));
+				}
+			}
+		}
+
+
 //		Object j = dims.get( 0).getLength();
 
 		// we want to populate the vars	
@@ -969,10 +973,6 @@ class Timeseries1
 
 
 /*
-		for( MyType t : typeMappings ) { 
-		}
-*/
-
 
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
 
@@ -994,12 +994,18 @@ class Timeseries1
 					writer.addVariable(variableName, DataType.BYTE, dims);
 				}
 			}
+		}
+*/
 
-
+		for ( X value : typeMappings.values()) {
+			value.define();
 		}
 
 
 		writer.create();
+
+
+
 		System.out.println( "done defining netcdf" );
 
 
@@ -1012,9 +1018,10 @@ class Timeseries1
 				for ( int i = 1 ; i <= numColumns ; i++ ) {
 
 					String variableName = m.getColumnName(i); 
-					MyType type = typeMappings.get( variableName );
+				//	MyType type = typeMappings.get( variableName );
 					Object object = rs.getObject(variableName);
 
+/*
 					if( type != null ) { 
 						if (type.targetType.equals(Float.class)) {
 							ArrayFloat.D3 A = (ArrayFloat.D3) map.get(variableName); 
@@ -1045,6 +1052,7 @@ class Timeseries1
 							// runtime exception
 						}
 					}
+*/
 				}
 
 				++t;
@@ -1056,7 +1064,7 @@ class Timeseries1
 		// then we need aq final loop ....
 
 		// write the actual data
-
+/*
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
 
 			// Class clazz = Class.forName(m.getColumnClassName( i ));
@@ -1079,9 +1087,15 @@ class Timeseries1
 					writer.write(variableName, origin, A);
 				}
 			}	
-
-
 		}
+*/
+
+
+		for ( X value : typeMappings.values()) {
+			value.finish();
+		}
+
+
 
 		System.out.println( "done writing data" );
 
