@@ -1040,32 +1040,20 @@ class Timeseries1
 		while ( rs.next() ) {  
 			for( int lat = 0; lat < latDim.getLength(); ++lat )
 			for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
-
 				for ( int i = 1 ; i <= numColumns ; i++ ) {
-
-					String variableName = m.getColumnName(i); 
-					X type = typeMappings.get( variableName );
-					if( type != null ) { 
-						Object object = rs.getObject( i);
-						type.addValue( t, lat, lon, object );
-					}
-
+					typeMappings.get(m.getColumnName(i)).addValue( t, lat, lon, rs.getObject( i));
 				}
-
 				++t;
 			}
 		}
 
 		System.out.println( "done extracting data" );
 
-
 		for ( X value : typeMappings.values()) {
 			value.finish();
 		}
 
-
 		System.out.println( "done writing data" );
-
 		System.out.println( "t is " + t );
 
 		writer.close();
