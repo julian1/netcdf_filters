@@ -699,6 +699,28 @@ interface X
 }
 
 
+
+class Ignore implements X
+{
+	public Ignore( ) 
+	{ }
+
+	public void define()
+	{
+	}
+
+	public void addValue( int a, int b, int c, Object object )  // change name d0,d1 etc
+	{
+	}
+
+	public void finish() throws Exception
+	{
+	}
+}
+
+
+
+
 class FloatD3 implements X
 {
 	// abstraction that handles both data for type float, and definining the parameters 
@@ -938,10 +960,6 @@ class Timeseries1
 
 		// Map<String, MyType > typeMappings = new HashMap<String, MyType>();
 
-
-
-
-
 		// we're going to need to query the metadata... to perform our sql -> netcdf field mappings.
 
 		// however we should do the name mapping we should actually delegate this to a strategy class ...
@@ -974,88 +992,49 @@ class Timeseries1
 		// Establish conversions according to convention
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
 
-			String variableName = m.getColumnName(i); 
+			String columnName = m.getColumnName(i); 
 			Class clazz = Class.forName(m.getColumnClassName(i));
 
 			// need clazz handling...
 
 			// geom, TIME we should ignore...
 
-			if( Pattern.compile(".*quality_control$" ).matcher( variableName) .matches()) 
+			X type = null; 
+
+			if( Pattern.compile(".*quality_control$" ).matcher( columnName) .matches()) 
 			{
 				// postgres varchar(1), JDBC string, but should be treated as netcdf byte
 				if( clazz != String.class ) {
 					throw new RuntimeException( "Expected QC var to be JDBC string" );
 				}
-				
-				System.out.println( "QC - " + variableName );
-//				MyType t = new MyType( variableName, Byte.class, new Byte( (byte)0xff ) ); 
-//				typeMappings.put( variableName, t );
-
-				typeMappings.put( variableName, new ByteD3( writer, variableName, dims , (byte)0xff ));
+				System.out.println( "QC - " + columnName );
+				type = new ByteD3( writer, columnName, dims , (byte)0xff );
 			}
 
-			// if( Pattern.compile("^\\p{upper}+.*" ).matcher( variableName) .matches()) 
-			// if( Pattern.compile("\\p{upper}+.*" ).matcher( variableName) .matches()) 
-			else if( Pattern.compile("^[A-Z]+.*" ).matcher( variableName).matches()) 
+			else if( Pattern.compile("^[A-Z]+.*" ).matcher( columnName).matches()) 
 			{
-				System.out.println( "upper - " + variableName );
+				System.out.println( "upper - " + columnName );
 				if( clazz.equals(Float.class)) {
-					// should this really be being instantiated here...
-					// MyType t = new MyType(variableName, clazz, new Float( 999999. )); 
-					// typeMappings.put( variableName, t );
 
-					typeMappings.put( variableName, new FloatD3( writer, variableName, dims , (float)999999.  ));
+					type = new FloatD3( writer, columnName, dims , (float)999999.  );
 				}
+				// other...
+
+			} 
+
+			if ( type == null ){
+				type = new Ignore(); 
 			}
+
+			typeMappings.put( columnName, type);
 		}
 
-
-//		Object j = dims.get( 0).getLength();
-
-		// we want to populate the vars	
-
-
-		// we'll construct a set of mappings
-		// change name array_mappings ? or something
-//		Map<String, Object> map = new HashMap<String, Object>();
-
-
-
-
-/*
-
-		for ( int i = 1 ; i <= numColumns ; i++ ) {
-
-			// System.out.print( "" + m.getColumnName(i ) + ", ");
-			// System.out.print( "" + m.getColumnClassName( i ) );
-
-			String variableName = m.getColumnName(i); 
-			MyType t = typeMappings.get( variableName );
-			if( t != null ) { 
-				if (t.targetType.equals(Float.class)) {
-					// add our array into the mappings
-					map.put(variableName, new ArrayFloat.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength()));
-					// add the var to definition
-					writer.addVariable(variableName, DataType.FLOAT, dims);
-				}
-				else if (t.targetType.equals(Byte.class)) {
-					System.out.print( "whoo a byte "  );
-					map.put(variableName, new ArrayByte.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength()));
-					writer.addVariable(variableName, DataType.BYTE, dims);
-				}
-			}
-		}
-*/
 
 		for ( X value : typeMappings.values()) {
 			value.define();
 		}
 
-
 		writer.create();
-
-
 
 		System.out.println( "done defining netcdf" );
 
@@ -1074,38 +1053,7 @@ class Timeseries1
 						Object object = rs.getObject(variableName);
 						type.addValue( t, lat, lon, object );
 					}
-/*
-					if( type != null ) { 
-						if (type.targetType.equals(Float.class)) {
-							ArrayFloat.D3 A = (ArrayFloat.D3) map.get(variableName); 
-							Index ima = A.getIndex();
-							if( object != null) {
-								// we could make the type be responsible for all this stuff, 
-								// except passing the dimensions in is problematic.
-								A.setFloat( ima.set(t, lat,lon), (float) object);
-							} 
-							else {
-								A.setFloat( ima.set(t, lat,lon), (float)type.fillValue);
-							}
-						}
-						else if (type.targetType.equals(Byte.class)) {
-							ArrayByte.D3 A = (ArrayByte.D3) map.get(variableName); 
-							Index ima = A.getIndex();
-							if( object != null) {
-								// handle coercion from jdbc string to byte 
-								String s = (String) object; 
-								Byte ch =  s.getBytes()[0];
-								A.setByte( ima.set(t, lat,lon), ch );
-							} 
-							else {
-								A.setByte( ima.set(t, lat,lon), (Byte)type.fillValue);
-							}
-						}	
-						else {
-							// runtime exception
-						}
-					}
-*/
+
 				}
 
 				++t;
@@ -1114,54 +1062,17 @@ class Timeseries1
 
 		System.out.println( "done extracting data" );
 
-		// then we need aq final loop ....
-
-		// write the actual data
-/*
-		for ( int i = 1 ; i <= numColumns ; i++ ) {
-
-			// Class clazz = Class.forName(m.getColumnClassName( i ));
-			String variableName = m.getColumnName(i); 
-			MyType type = typeMappings.get( variableName );
-
-	
-			if( type != null ) { 
-
-				if (type.targetType.equals(Float.class)) {
-				// if (clazz.equals(Float.class)) {
-					int [] origin = new int[3];
-					ArrayFloat.D3 A = (ArrayFloat.D3) map.get(variableName); 
-					writer.write(variableName, origin, A);
-				}
-
-				if (type.targetType.equals(Byte.class)) {
-					int [] origin = new int[3];
-					ArrayByte.D3 A = (ArrayByte.D3) map.get(variableName); 
-					writer.write(variableName, origin, A);
-				}
-			}	
-		}
-*/
-
 
 		for ( X value : typeMappings.values()) {
 			value.finish();
 		}
 
 
-
 		System.out.println( "done writing data" );
 
-//		int [] origin = new int[3];
-//		writer.write("temperature", origin, A);
 		System.out.println( "t is " + t );
 
-/**/
-
 		writer.close();
-
-		// Ok, we need to query the actual timeseries table to get the actual geometry to be
-		// able to encode the values. 
 
 	}
 
