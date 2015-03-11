@@ -873,6 +873,63 @@ class EncoderFloatD3 implements EncoderD3
 
 
 
+class EncoderFloatD1 implements EncoderD1
+{
+	public EncoderFloatD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, float fillValue  /* could delegate for other attributes */ )
+	{
+		this.writer = writer;
+		this.variableName = variableName; 
+		this.fillValue = fillValue; 
+		this.dims = dims;
+		this.A = null; 
+		if( dims.size() != 1 ) {
+			throw new RuntimeException( "Expected only 1 dimension" );
+		}
+	}
+
+	// column name should only be in the mapper. 
+	final NetcdfFileWriteable writer; 
+	final String variableName; 
+	final float fillValue;
+	final ArrayList<Dimension> dims;
+	ArrayFloat.D1 A;
+
+	public void define()
+	{
+		// assumes writer is in define mode
+		writer.addVariable(variableName, DataType.FLOAT, dims);
+		this.A = new ArrayFloat.D1( dims.get(0).getLength() );
+	}
+
+	public void addValue( int a, Object object )
+	{
+		Index ima = A.getIndex();
+		if( object == null) {
+			A.setFloat( ima.set(a), fillValue);
+		}
+		else if( object instanceof Float ) {
+			A.setFloat( ima.set(a), (float) object);
+		} 
+		else {
+			throw new RuntimeException( "Opps" );
+		}
+	}
+
+	public void finish() throws Exception
+	{
+		int [] origin = new int[1];
+		writer.write(variableName, origin, A);
+	}
+}
+
+
+
+
+
+
+
+
+
 class EncoderByteD3 implements EncoderD3
 {
 	public EncoderByteD3( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, byte fillValue   )
@@ -990,9 +1047,15 @@ class ConventionEncodeStrategy implements EncodeStrategy
 			// we've set it to take all the dimensions
 			ArrayList<Dimension> d = new ArrayList<Dimension>();
 			d.add( dims.get( 0) );
-
 			type = new EncoderTimestampD1( writer, columnName, d , (float) 99999.  );
 		}
+		if( columnName.equals("LATITUDE"))
+		{
+			ArrayList<Dimension> d = new ArrayList<Dimension>();
+			d.add( dims.get( 1) );
+			type = new EncoderFloatD1( writer, columnName, d, (float)999999. );
+		}
+
 		else if( Pattern.compile(".*quality_control$" ).matcher( columnName) .matches()) 
 		{
 			// postgres varchar(1), JDBC string, but should be treated as netcdf byte
@@ -1185,15 +1248,9 @@ class Timeseries1
 			PreparedStatement stmt = conn.prepareStatement( query ); 
 			// stmt.setFetchSize(1000);
 			ResultSet rs = stmt.executeQuery();
-			rs.next() ; 
+			rs.next(); 
 			count = (int)(long) rs.getObject(1); 
 		}
-
-
-		System.out.println( "done getting count" );
-		System.out.println( "count " + count );
-		System.out.println( "* doing query" );
-
 
 
 		System.out.println( "creating writer" );
@@ -1225,36 +1282,9 @@ class Timeseries1
 		Map<String, EncoderD1> encodersD1 = new HashMap<String, EncoderD1>();
 
 
-		doDefinitionStuff( conn, "anmn_ts.measurement", encoders, encodersD3, encodersD1 , encoderStrategy  ); 
+		doDefinitionStuff( conn, "anmn_ts.timeseries", encoders, encodersD3, encodersD1 , encoderStrategy  ); 
+//		doDefinitionStuff( conn, "anmn_ts.measurement", encoders, encodersD3, encodersD1 , encoderStrategy  ); 
 	
-/*
-		// Establish conversions according to convention
-		for ( int i = 1 ; i <= numColumns ; i++ ) {
-			String columnName = m.getColumnName(i); 
-
-			// SHOULD IGNORE TIME, geometry ?
-			// actually it's possible the encoder strategy can handle this...
-			// but instead of using all dims it uses only the TIME dimension...
-
-			// issue is that we're going to be calling it multiple times over????
-			Class clazz = Class.forName(m.getColumnClassName(i));
-			// System.out.println( "beginnning extract mappings" );
-			// organize our encoders
-			Encoder encoder = encoderStrategy.getEncoder( columnName, clazz ); 
-			if( encoder != null ) { 
-
-				encoders.put( columnName, encoder );
-
-				if( encoder instanceof EncoderD3)
-					encodersD3.put( columnName, (EncoderD3) encoder ); 
-				else if ( encoder instanceof EncoderD1)
-					encodersD1.put( columnName, (EncoderD1)encoder ); 
-				else {
-					throw new RuntimeException( "Unknown Encoder type for column '" + columnName + "'" );
-				}				
-			}
-		}
-*/
 
 		// define
 		for ( Encoder encoder: encoders.values()) {
