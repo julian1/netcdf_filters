@@ -695,10 +695,28 @@ interface Encoder
 	// theoretically this object could also preserve the index
 	// if we give it a concept of the name, then it can also define the netcdf.
 
-	public void define(); 
+	public void define();  // change name to start(); ?
+
+	// like sax
 	public void addValue( int a, int b, int c, Object o ) ; 
+	public void addValue( int a, Object object );  // over 1 dimension 
 	public void finish( ) throws Exception ; 
 }
+
+
+interface Encoder3d extends Encoder
+{
+	// change name VarEncoder
+
+	// name is provided by map lookup
+	// theoretically this object could also preserve the index
+	// if we give it a concept of the name, then it can also define the netcdf.
+
+
+	public void start( ) throws Exception ; 
+}
+
+
 
 
 
@@ -711,9 +729,14 @@ class EncoderIgnore implements Encoder
 	{
 	}
 
-	public void addValue( int a, int b, int c, Object object )  // change name d0,d1 etc
+	public void addValue( int a, int b, int c, Object object )  // over 3 dimensions change name d0,d1 etc
 	{
 	}
+
+	public void addValue( int a, Object object )  // over 1 dimension 
+	{
+	}
+
 
 	public void finish() throws Exception
 	{
@@ -721,11 +744,33 @@ class EncoderIgnore implements Encoder
 }
 
 
-// 
+// do we have different types of encoder based on the number of dimensions it handles
+// or do we have different methods 
+
+// IMPORTANT - I THINK THIS IS CORRECT...
+// And we'll need to shuffle them into the right type
+// although we want t
+// 3d encoder, 1d encoder, scalar encoder
+// with different types, we can do the calling at different times. 
+
+// so specialize the encoder interface... for Encoder1d, Encoder3d, EncoderScalar 
+
+
+// And very important 
+// we can do the same thing on the timeseries table....
 
 
 class EncoderTimestampD1 implements Encoder
 {
+	/*
+		we either 
+			- abstract the indexing ... and use same method call...
+			- or specialize the encoder again...
+
+		TIMESERIES 3d always t,lat,lon
+	*/
+
+
 	// abstraction that handles both data for type float, and definining the parameters 
 	// try to keep details about the dimensions out of this, and instead just encode the dimension lengths.
 	// do we want it to 
@@ -734,20 +779,17 @@ class EncoderTimestampD1 implements Encoder
 	// and try to do the 1950 conversion.
 
 	// do we define the netcdf???
-	public EncoderTimestampD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, float fillValue  /* could delegate for other attributes */ )
+	public EncoderTimestampD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, float fillValue )
 	{
-		// important - maybe we should be explicit about the dimensions...
-		// eg. the convention should establish these details. 
-		// really not sure that we should be exposing this triple indexing.
-
-		// OR WHY NOT ABSTRACT THE INDEXING... SO WE CAN PASS IT OVER THE SAME ENCODER STRATEGY VALUE...
-		// actually we can just test lat == 0 and lon == 0 hold values
-
 		this.writer = writer;
 		this.variableName = variableName; 
 		this.fillValue = fillValue; 
 		this.dims = dims;
 		this.A = null; 
+
+		if( dims.size() != 1 ) {
+			throw new RuntimeException( "Expected only 1 dimension" );
+		}
 	}
 
 	// column name should only be in the mapper. 
@@ -757,37 +799,32 @@ class EncoderTimestampD1 implements Encoder
 	final ArrayList<Dimension> dims;
 	ArrayFloat.D1 A;
 
+
+	// OK, i think that we want to be passing in the dimensions at the start...
 	public void define()
 	{
-		// we've set it to take all the dimensions
-		ArrayList<Dimension> d = new ArrayList<Dimension>();
-		d.add( dims.get( 0) );
-
 		// assumes writer is in define mode
-		writer.addVariable(variableName, DataType.FLOAT, d );
-		this.A = new ArrayFloat.D1( dims.get(0).getLength() );//, dims.get(1).getLength(), dims.get(2).getLength());
+		writer.addVariable(variableName, DataType.FLOAT, dims );
+		this.A = new ArrayFloat.D1( dims.get(0).getLength() );
 	}
 
 	public void addValue( int t, int lat, int lon, Object object )  // change name d0,d1 etc
+	{ }
+
+	public void addValue( int t, Object object )  // over 1 dimension 
 	{
-
-		System.out.println( "lat " + lat +  " lon " + lon + " t " + t  ); 
-
-		// This crap shouldn't even compile....
-		if( lat == 0 && lon == 0 ) {
-
-			Index ima = A.getIndex();
-			if( object == null) {
-				A.setFloat( ima.set(t), fillValue);
-			}
-			else if( object instanceof java.sql.Timestamp ) {
-				A.setFloat( ima.set(t), (float) t );
-			} 
-			else {
-				throw new RuntimeException( "Opps" );
-			}
+		Index ima = A.getIndex();
+		if( object == null) {
+			A.setFloat( ima.set(t), fillValue);
+		}
+		else if( object instanceof java.sql.Timestamp ) {
+			A.setFloat( ima.set(t), (float) t );
+		} 
+		else {
+			throw new RuntimeException( "Opps" );
 		}
 	}
+
 	// fill in the name and the fillvalue
 	// change name to write?
 
@@ -847,6 +884,12 @@ class EncoderFloatD3 implements Encoder
 			throw new RuntimeException( "Opps" );
 		}
 	}
+
+	public void addValue( int a, Object object )  // over 1 dimension 
+	{
+	}
+
+
 	// fill in the name and the fillvalue
 	// change name to write?
 
@@ -905,6 +948,13 @@ class EncoderByteD3 implements Encoder
 			throw new RuntimeException( "Opps" );
 		}
 	}
+
+	public void addValue( int a, Object object )  // over 1 dimension 
+	{
+	}
+
+
+
 	// fill in the name and the fillvalue
 	// change name to write?
 
@@ -959,7 +1009,14 @@ class ConventionEncodeStrategy implements EncodeStrategy
 				throw new RuntimeException( "Expected TIME var to be JDBC Timestamp" );
 			}
 
-			type = new EncoderTimestampD1( writer, columnName, dims /* not right */, (float) 99999.  );
+
+			// should lookup the dimension by name
+			// we've set it to take all the dimensions
+			ArrayList<Dimension> d = new ArrayList<Dimension>();
+			d.add( dims.get( 0) );
+
+
+			type = new EncoderTimestampD1( writer, columnName, d , (float) 99999.  );
 
 
 			System.out.println ( "WHOOT ** got time " );
@@ -1166,12 +1223,21 @@ class Timeseries1
 		while ( rs.next() ) {  
 			for( int lat = 0; lat < latDim.getLength(); ++lat )
 			for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
+				// 3d values
 				for ( int i = 1 ; i <= numColumns ; i++ ) {
 					encoders.get(m.getColumnName(i)).addValue( time, lat, lon, rs.getObject( i));
 				}
-				++time;
 			}
+
+			// 1d values
+			for ( int i = 1 ; i <= numColumns ; i++ ) {
+				encoders.get(m.getColumnName(i)).addValue( time, rs.getObject( i));
+			}
+			++time;
 		}
+
+		// scalars (need measurements )
+
 
 		// write to netcdf
 		for ( Encoder encoder: encoders.values()) {
