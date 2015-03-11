@@ -707,7 +707,7 @@ class FloatD3 implements X
 	// do we want it to 
 
 	// do we define the netcdf???
-	public FloatD3( NetcdfFileWriteable writer , String variableName, ArrayList<Dimension> dims, float fillValue  /* could delegate for other attributes */ )
+	public FloatD3( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, float fillValue  /* could delegate for other attributes */ )
 	{
 		this.writer = writer;
 		this.variableName = variableName; 
@@ -758,7 +758,7 @@ class FloatD3 implements X
 
 class ByteD3 implements X
 {
-	public ByteD3( NetcdfFileWriteable writer , String variableName, ArrayList<Dimension> dims, byte fillValue   )
+	public ByteD3( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, byte fillValue   )
 	{
 		this.writer = writer;
 		this.variableName = variableName; 
@@ -787,7 +787,11 @@ class ByteD3 implements X
 		if( object == null) {
 			A.setByte( ima.set(a, b, c), fillValue);
 		}
-		else if( object instanceof String && ((String)object).length() == 1) {
+		else if(object instanceof Byte)
+		{
+			A.setByte( ima.set(a, b, c), (byte) object);
+		}
+		else if(object instanceof String && ((String)object).length() == 1) {
 			// coerce string with length 1 to byte
 			String s = (String) object; 
 			Byte ch =  s.getBytes()[0];
@@ -1014,7 +1018,7 @@ class Timeseries1
 
 		// we'll construct a set of mappings
 		// change name array_mappings ? or something
-		Map<String, Object> map = new HashMap<String, Object>();
+//		Map<String, Object> map = new HashMap<String, Object>();
 
 
 
