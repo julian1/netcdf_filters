@@ -836,7 +836,7 @@ class ByteD3 implements X
 
 
 
-interface DecodeStrategy
+interface EncodeStrategy
 {
 	// it's both a decode and encode strategy . 
 
@@ -844,9 +844,9 @@ interface DecodeStrategy
 }
 
 
-class TestDecodeStrategy implements DecodeStrategy
+class TestEncodeStrategy implements EncodeStrategy
 {
-	public TestDecodeStrategy( NetcdfFileWriteable writer, ArrayList<Dimension> dims ) 
+	public TestEncodeStrategy( NetcdfFileWriteable writer, ArrayList<Dimension> dims ) 
 	{ 
 		this.writer = writer;
 		this.dims = dims;
@@ -1039,47 +1039,15 @@ class Timeseries1
 		dims.add(latDim);
 		dims.add(lonDim);
 
-		DecodeStrategy decodeStrategy = new TestDecodeStrategy( writer, dims ); 
-
+		EncodeStrategy encodeStrategy = new TestEncodeStrategy( writer, dims ); 
 		Map<String, X> typeMappings = new HashMap<String, X>();
 
 		// Establish conversions according to convention
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
-
 			String columnName = m.getColumnName(i); 
 			Class clazz = Class.forName(m.getColumnClassName(i));
-
-			typeMappings.put( columnName, decodeStrategy.get( columnName, clazz )); 
-
-			// need clazz handling...
-
-			// geom, TIME we should ignore...
-/*
-			X type = null; 
-
-			if( Pattern.compile(".*quality_control$" ).matcher( columnName) .matches()) 
-			{
-				// postgres varchar(1), JDBC string, but should be treated as netcdf byte
-				if( clazz != String.class ) {
-					throw new RuntimeException( "Expected QC var to be JDBC string" );
-				}
-				type = new ByteD3( writer, columnName, dims , (byte)0xff );
-			}
-
-			else if( Pattern.compile("^[A-Z]+.*" ).matcher( columnName).matches()) 
-			{
-				System.out.println( "upper - " + columnName );
-				if( clazz.equals(Float.class)) {
-					type = new FloatD3( writer, columnName, dims , (float)999999.  );
-				}
-				// other...
-			} 
-			if ( type == null ){
-				type = new Ignore(); 
-			}
-
-			typeMappings.put( columnName, type);
-*/
+			X strategy = encodeStrategy.get( columnName, clazz ); 
+			typeMappings.put( columnName, strategy ); 
 		}
 
 
