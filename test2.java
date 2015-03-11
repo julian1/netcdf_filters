@@ -945,7 +945,7 @@ interface EncodeStrategy
 {
 	// it's both a decode and encode strategy . 
 
-	public Encoder get( String variableName, Class variableType ); 
+	public Encoder getEncoder( String variableName, Class variableType ); 
 }
 
 
@@ -965,7 +965,9 @@ class ConventionEncodeStrategy implements EncodeStrategy
 	final NetcdfFileWriteable writer ; 
 	final ArrayList<Dimension> dims; 
 
-	public Encoder get( String columnName, Class columnType )
+	// we might need to return a list, if a single column type can map 
+	// to multiple variables - eg. the_geometry and LATITUTDE AND LONGTITUDE...
+	public Encoder getEncoder( String columnName, Class columnType )
 	{
 		// delegate to configuration...
 		// otherwise apply convention rules
@@ -978,21 +980,18 @@ class ConventionEncodeStrategy implements EncodeStrategy
 
 		if( columnName.equals("TIME"))
 		{
+			System.out.println ( "WHOOT ** got time " );
+
 			if( columnType != Timestamp.class ) {
 				throw new RuntimeException( "Expected TIME var to be JDBC Timestamp" );
 			}
-
 
 			// should lookup the dimension by name
 			// we've set it to take all the dimensions
 			ArrayList<Dimension> d = new ArrayList<Dimension>();
 			d.add( dims.get( 0) );
 
-
 			type = new EncoderTimestampD1( writer, columnName, d , (float) 99999.  );
-
-
-			System.out.println ( "WHOOT ** got time " );
 		}
 		else if( Pattern.compile(".*quality_control$" ).matcher( columnName) .matches()) 
 		{
@@ -1004,7 +1003,7 @@ class ConventionEncodeStrategy implements EncodeStrategy
 		}
 		else if( Pattern.compile("^[A-Z]+.*" ).matcher( columnName).matches()) 
 		{
-			System.out.println( "upper - " + columnName );
+			System.out.println( "normal var - " + columnName );
 			if( columnType.equals(Float.class)) {
 				type = new EncoderFloatD3( writer, columnName, dims , (float)999999.  );
 			}
@@ -1088,6 +1087,76 @@ class Timeseries1
 	// we should definitely pass a writable here ...
 	// rather than instantiate it
 
+
+	public void doDefinitionStuff( Connection conn,
+		Map<String, Encoder> encoders, 
+		Map<String, EncoderD3> encodersD3, 
+		Map<String, EncoderD1> encodersD1 ,
+
+		EncodeStrategy encoderStrategy  
+		 ) throws Exception
+	{
+		String query = "SELECT * FROM anmn_ts.measurement limit 0"; 
+		PreparedStatement stmt = conn.prepareStatement( query ); 
+		ResultSet rs = stmt.executeQuery();
+
+		ResultSetMetaData m = rs.getMetaData();
+		int numColumns = m.getColumnCount();
+
+		// Establish conversions according to convention
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+			String columnName = m.getColumnName(i); 
+			// issue is that we're going to be calling it multiple times over????
+			Class clazz = Class.forName(m.getColumnClassName(i));
+			Encoder encoder = encoderStrategy.getEncoder( columnName, clazz ); 
+			if( encoder != null ) { 
+				encoders.put( columnName, encoder );
+
+				if( encoder instanceof EncoderD3)
+					encodersD3.put( columnName, (EncoderD3) encoder ); 
+				else if ( encoder instanceof EncoderD1)
+					encodersD1.put( columnName, (EncoderD1)encoder ); 
+				else {
+					throw new RuntimeException( "Unknown Encoder type for column '" + columnName + "'" );
+				}				
+			}
+		}
+
+		rs.close();
+	}
+
+/*
+	public void doMeasurements( Connection conn, long ts_id, String selection) throws Exception
+	{
+
+		// we have an issue of sequencing
+
+		// we're going to have to close all this stuff,
+		int count = 0;
+		{
+			// We know how many values we are going to deal with, so let's encode rather than use an unlimited dimension 
+			String query = "SELECT count(1) FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id); 
+			PreparedStatement stmt = conn.prepareStatement( query ); 
+			// stmt.setFetchSize(1000);
+			ResultSet rs = stmt.executeQuery();
+			rs.next() ; 
+			count = (int)(long) rs.getObject(1); 
+		}
+
+		// need to encode the additional parameter...
+		String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
+		PreparedStatement stmt = conn.prepareStatement( query ); 
+		stmt.setFetchSize(1000);
+		ResultSet rs = stmt.executeQuery();
+
+		// now we loop the main attributes 
+		ResultSetMetaData m = rs.getMetaData();
+		int numColumns = m.getColumnCount();
+
+		System.out.println( "beginnning extract mappings" );
+	}
+*/
+
 	public void get() throws Exception
 	{
 		// code organized so we only iterate over the recordset returned by the query once
@@ -1167,6 +1236,10 @@ class Timeseries1
 		Map<String, EncoderD3> encodersD3 = new HashMap<String, EncoderD3>();
 		Map<String, EncoderD1> encodersD1 = new HashMap<String, EncoderD1>();
 
+
+		doDefinitionStuff( conn, encoders, encodersD3, encodersD1 , encoderStrategy  ); 
+	
+/*
 		// Establish conversions according to convention
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
 			String columnName = m.getColumnName(i); 
@@ -1176,28 +1249,24 @@ class Timeseries1
 			// but instead of using all dims it uses only the TIME dimension...
 
 			// issue is that we're going to be calling it multiple times over????
-
-
 			Class clazz = Class.forName(m.getColumnClassName(i));
-
 			// System.out.println( "beginnning extract mappings" );
-
 			// organize our encoders
-			Encoder strategy = encoderStrategy.get( columnName, clazz ); 
-			if( strategy != null ) { 
+			Encoder encoder = encoderStrategy.getEncoder( columnName, clazz ); 
+			if( encoder != null ) { 
 
-				encoders.put( columnName, strategy );
+				encoders.put( columnName, encoder );
 
-				if( strategy instanceof EncoderD3)
-					encodersD3.put( columnName, (EncoderD3) strategy ); 
-				else if ( strategy instanceof EncoderD1)
-					encodersD1.put( columnName, (EncoderD1)strategy ); 
+				if( encoder instanceof EncoderD3)
+					encodersD3.put( columnName, (EncoderD3) encoder ); 
+				else if ( encoder instanceof EncoderD1)
+					encodersD1.put( columnName, (EncoderD1)encoder ); 
 				else {
-
 					throw new RuntimeException( "Unknown Encoder type for column '" + columnName + "'" );
 				}				
 			}
 		}
+*/
 
 		// define
 		for ( Encoder encoder: encoders.values()) {
@@ -1230,7 +1299,8 @@ class Timeseries1
 			++time;
 		}
 
-		// scalars (need measurements )
+		// scalars - should come from timeseries table .  (need measurements )
+		// and this is where we might need to return two strategies ...
 
 
 		// write to netcdf
