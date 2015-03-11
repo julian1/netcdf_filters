@@ -687,6 +687,79 @@ class MyType
 
 
 
+interface X
+{
+	// name is provided by map lookup
+	// theoretically this object could also preserve the index
+
+	// if we give it a concept of the name, then it can also define the netcdf.
+
+	public void addValue( int a, int b, int c, Object o ) ; 
+
+	// fill in the name and the fillvalue
+
+	public void finish( ) throws Exception ; 
+
+}
+
+class FloatD3 implements X
+{
+	// abstraction that sets up our array  
+	// try to keep details about the dimensions out of this, and instead just encode the dimension lengths.
+
+	// do we want it to 
+
+	// do we define the netcdf???
+	public FloatD3( NetcdfFileWriteable writer , String variableName, float fillValue, ArrayList<Dimension> dims )
+	{
+		this.writer = writer;
+		this.variableName = variableName; 
+		this.fillValue = fillValue; 
+		this.dims = dims;
+
+		this.A = new ArrayFloat.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
+		// this.A = null; 
+
+		// Kind of a big assumption that the writer is in define mode
+		writer.addVariable(variableName, DataType.FLOAT, dims);
+	}
+
+	final NetcdfFileWriteable writer; 
+	final String variableName; 
+	final float fillValue;
+	final ArrayList dims;
+	final ArrayFloat.D3 A;
+
+	public void addValue( int a, int b, int c, Object object )  // change name d0,d1 etc
+	{
+		Index ima = A.getIndex();
+		if( object != null) {
+			// we could make the type be responsible for all this stuff, 
+			// except passing the dimensions in is problematic.
+			A.setFloat( ima.set(a, b, c), (float) object);
+		} 
+		else {
+			A.setFloat( ima.set(a, b, c), fillValue);
+		}
+	}
+
+	// fill in the name and the fillvalue
+
+	public void finish() throws Exception
+	{
+		// assumes in data
+
+		int [] origin = new int[3];
+		// ArrayFloat.D3 A = (ArrayFloat.D3) map.get(variableName); 
+		writer.write(variableName, origin, A);
+	}
+
+
+}
+
+
+
+
 
 class Timeseries1
 {
@@ -874,10 +947,12 @@ class Timeseries1
 		Dimension lonDim = writer.addDimension("LONGITUDE", 1);
 
 		// time unlimited ...  // need time, // define Variable
-		ArrayList dims = new ArrayList();
+		ArrayList<Dimension> dims = new ArrayList<Dimension>();
 		dims.add(timeDim);
 		dims.add(latDim);
 		dims.add(lonDim);
+
+//		Object j = dims.get( 0).getLength();
 
 		// we want to populate the vars	
 
@@ -916,29 +991,7 @@ class Timeseries1
 				}
 			}
 
-/*
-			// convention that var names are upper cased
-			if( Character.isUpperCase(variableName.charAt(0))) {
-				if (clazz.equals(Float.class)) {
-					// add our array into the mappings
-					map.put(variableName, new ArrayFloat.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength()));
-					// add the var to definition
-					writer.addVariable(variableName, DataType.FLOAT, dims);
-				}
-				else if ( clazz.equals(String.class)) {
 
-
-					// ok, i think that we have to just stuff all the strings in there, then analyze
-					// them for max length... which will thus be handled var by var, or for eac file generated.
-				
-					// map.put(variableName, new ArrayString.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength()));
-					// writer.addVariable(variableName, DataType.STRING, dims);
-					map.put(variableName, new ArrayList<String> ( ));
-					// this is horrible.  we really need to do it at the end, where we can see the max string size;
-					writer.addStringVariable( variableName, dims, 1 ); 
-				}
-			}
-*/
 		}
 
 
@@ -977,7 +1030,7 @@ class Timeseries1
 							if( object != null) {
 								// handle coercion from jdbc string to byte 
 								String s = (String) object; 
-								Byte ch =  s.getBytes()[0];//.getAt( 0);
+								Byte ch =  s.getBytes()[0];
 								A.setByte( ima.set(t, lat,lon), ch );
 							} 
 							else {
@@ -1016,27 +1069,14 @@ class Timeseries1
 					writer.write(variableName, origin, A);
 				}
 
-			}	
-
-/*			if( map.containsKey( variableName )) { 
-				if (clazz.equals(Float.class)) {
+				if (type.targetType.equals(Byte.class)) {
 					int [] origin = new int[3];
-					ArrayFloat.D3 A = (ArrayFloat.D3) map.get(variableName); 
+					ArrayByte.D3 A = (ArrayByte.D3) map.get(variableName); 
 					writer.write(variableName, origin, A);
 				}
-*/
-/*				else if ( clazz.equals(String.class)) {
-					ArrayList<String> A = (ArrayList<String> ) map.get( variableName);
+			}	
 
-					// what about nulls...
 
-					if( A.size() > 0 ) {					
-						Array data = Array.factory( String.class, new int [] {count, 1,1 }, A.toArray() );
-						System.out.println( "" + variableName + " length " + A.size()  );
-						writer.writeStringData(variableName, data ); 
-					}
-				}
-*/
 		}
 
 		System.out.println( "done writing data" );
