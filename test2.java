@@ -691,30 +691,23 @@ interface X
 {
 	// name is provided by map lookup
 	// theoretically this object could also preserve the index
-
 	// if we give it a concept of the name, then it can also define the netcdf.
 
 	public void define(); 
-
 	public void addValue( int a, int b, int c, Object o ) ; 
-
-	// fill in the name and the fillvalue
-
 	public void finish( ) throws Exception ; 
-
-
 }
 
 
 class FloatD3 implements X
 {
-	// abstraction that sets up our array  
+	// abstraction that handles both data for type float, and definining the parameters 
 	// try to keep details about the dimensions out of this, and instead just encode the dimension lengths.
 
 	// do we want it to 
 
 	// do we define the netcdf???
-	public FloatD3( NetcdfFileWriteable writer , String variableName, float fillValue, ArrayList<Dimension> dims /* other attributes */ )
+	public FloatD3( NetcdfFileWriteable writer , String variableName, ArrayList<Dimension> dims, float fillValue  /* could delegate for other attributes */ )
 	{
 		this.writer = writer;
 		this.variableName = variableName; 
@@ -723,6 +716,7 @@ class FloatD3 implements X
 		this.A = null; 
 	}
 
+	// column name should only be in the mapper. 
 	final NetcdfFileWriteable writer; 
 	final String variableName; 
 	final float fillValue;
@@ -731,9 +725,9 @@ class FloatD3 implements X
 
 	public void define()
 	{
-		this.A = new ArrayFloat.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
 		// assumes writer is in define mode
 		writer.addVariable(variableName, DataType.FLOAT, dims);
+		this.A = new ArrayFloat.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
 	}
 
 	public void addValue( int a, int b, int c, Object object )  // change name d0,d1 etc
@@ -743,13 +737,64 @@ class FloatD3 implements X
 			A.setFloat( ima.set(a, b, c), fillValue);
 		}
 		else if( object instanceof Float ) {
-			// we could make the type be responsible for all this stuff, 
-			// except passing the dimensions in is problematic.
 			A.setFloat( ima.set(a, b, c), (float) object);
 		} 
 		else {
 			throw new RuntimeException( "Opps" );
-			// A.setFloat( ima.set(a, b, c), fillValue);
+		}
+	}
+	// fill in the name and the fillvalue
+	// change name to write?
+
+	public void finish() throws Exception
+	{
+		// assumes writer is in data mode
+		int [] origin = new int[3];
+		writer.write(variableName, origin, A);
+	}
+}
+
+
+
+class ByteD3 implements X
+{
+	public ByteD3( NetcdfFileWriteable writer , String variableName, ArrayList<Dimension> dims, byte fillValue   )
+	{
+		this.writer = writer;
+		this.variableName = variableName; 
+		this.fillValue = fillValue; 
+		this.dims = dims;
+		this.A = null; 
+	}
+
+	// column name should only be in the mapper. 
+	final NetcdfFileWriteable writer; 
+	final String variableName; 
+	final byte fillValue;
+	final ArrayList<Dimension> dims;
+	ArrayByte.D3 A;
+
+	public void define()
+	{
+		// assumes writer is in define mode
+		writer.addVariable(variableName, DataType.BYTE, dims);
+		this.A = new ArrayByte.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
+	}
+
+	public void addValue( int a, int b, int c, Object object )  // change name d0,d1 etc
+	{
+		Index ima = A.getIndex();
+		if( object == null) {
+			A.setByte( ima.set(a, b, c), fillValue);
+		}
+		else if( object instanceof String && ((String)object).length() == 1) {
+			// coerce string with length 1 to byte
+			String s = (String) object; 
+			Byte ch =  s.getBytes()[0];
+			A.setByte( ima.set(a, b, c), ch);
+		} 
+		else {
+			throw new RuntimeException( "Opps" );
 		}
 	}
 	// fill in the name and the fillvalue
@@ -863,11 +908,7 @@ class Timeseries1
 
 
 		System.out.println( "done getting count" );
-
-	
 		System.out.println( "count " + count );
-
-				
 		System.out.println( "* doing query" );
 
 		// sql stuff
@@ -946,6 +987,8 @@ class Timeseries1
 				System.out.println( "QC - " + variableName );
 //				MyType t = new MyType( variableName, Byte.class, new Byte( (byte)0xff ) ); 
 //				typeMappings.put( variableName, t );
+
+				typeMappings.put( variableName, new ByteD3( writer, variableName, dims , (byte)0xff ));
 			}
 
 			// if( Pattern.compile("^\\p{upper}+.*" ).matcher( variableName) .matches()) 
@@ -958,7 +1001,7 @@ class Timeseries1
 					// MyType t = new MyType(variableName, clazz, new Float( 999999. )); 
 					// typeMappings.put( variableName, t );
 
-					typeMappings.put( variableName,  new FloatD3( writer , variableName, new Float( 999999. ), dims  ));
+					typeMappings.put( variableName, new FloatD3( writer, variableName, dims , (float)999999.  ));
 				}
 			}
 		}
@@ -1022,11 +1065,8 @@ class Timeseries1
 				for ( int i = 1 ; i <= numColumns ; i++ ) {
 
 					String variableName = m.getColumnName(i); 
-				
 					X type = typeMappings.get( variableName );
-
 					if( type != null ) { 
-
 						Object object = rs.getObject(variableName);
 						type.addValue( t, lat, lon, object );
 					}
