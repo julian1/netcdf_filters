@@ -427,7 +427,7 @@ class PrettyPrinterVisitor implements Visitor
 
 
 
-class SelectionGenerationVisitor implements Visitor
+class PostgresGenerationVisitor implements Visitor
 {
 	// rename PGDialectSelectionGenerator
 
@@ -444,7 +444,7 @@ class SelectionGenerationVisitor implements Visitor
 
 	// ok, 
 
-	public SelectionGenerationVisitor( StringBuilder b )
+	public PostgresGenerationVisitor( StringBuilder b )
 	{
 		this.b = b;
 		this.df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -515,16 +515,16 @@ class SelectionGenerationVisitor implements Visitor
 
 
 
-interface ITranslate 
+interface IDialectTranslate 
 {
 	public String process( IExpression expr ) ;
 }
 
 
-class PostgresTranslate implements ITranslate 
+class PostgresDialectTranslate implements IDialectTranslate 
 {
 	// we have to have something to instantiate the specific visitor
-	public PostgresTranslate( ) 
+	public PostgresDialectTranslate( ) 
 	{
 		; // this.visitor = visitor; 
 	}
@@ -534,7 +534,7 @@ class PostgresTranslate implements ITranslate
 	{
 		// Should make it Postgres specific ?...
 		StringBuilder b = new StringBuilder();
-		 SelectionGenerationVisitor visitor = new SelectionGenerationVisitor( b);
+		PostgresGenerationVisitor visitor = new PostgresGenerationVisitor( b);
 		expr.accept( visitor );
 
 		// System.out.println( "expression is " + b.toString() );
@@ -575,10 +575,10 @@ class PostgresTranslate implements ITranslate
 class Timeseries2
 {
 	Parser parser;				
-	ITranslate translate ;		
+	IDialectTranslate translate ;		
 	Connection conn;
 
-	public Timeseries2( Parser parser, ITranslate translate, Connection conn ) {
+	public Timeseries2( Parser parser, IDialectTranslate translate, Connection conn ) {
 		this.parser = parser;
 		this.translate = translate; // sqlEncode.. dialect... specialization
 		this.conn = conn;
@@ -615,10 +615,10 @@ class Timeseries3
 	// to be streaming this will generate a netcdf with a pull model....
 
 	Parser parser;				
-	ITranslate translate ;		
+	IDialectTranslate translate ;		
 	Connection conn;
 
-	public Timeseries3( Parser parser, ITranslate translate, Connection conn ) {
+	public Timeseries3( Parser parser, IDialectTranslate translate, Connection conn ) {
 		this.parser = parser;
 		this.translate = translate; // sqlEncode.. dialect... specialization
 		this.conn = conn;
@@ -722,6 +722,86 @@ class EncoderIgnore implements Encoder
 
 
 // 
+
+
+class EncoderTimestampD1 implements Encoder
+{
+	// abstraction that handles both data for type float, and definining the parameters 
+	// try to keep details about the dimensions out of this, and instead just encode the dimension lengths.
+	// do we want it to 
+
+	// let's stick with float for the moment.
+	// and try to do the 1950 conversion.
+
+	// do we define the netcdf???
+	public EncoderTimestampD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, float fillValue  /* could delegate for other attributes */ )
+	{
+		// important - maybe we should be explicit about the dimensions...
+		// eg. the convention should establish these details. 
+		// really not sure that we should be exposing this triple indexing.
+
+		// OR WHY NOT ABSTRACT THE INDEXING... SO WE CAN PASS IT OVER THE SAME ENCODER STRATEGY VALUE...
+		// actually we can just test lat == 0 and lon == 0 hold values
+
+		this.writer = writer;
+		this.variableName = variableName; 
+		this.fillValue = fillValue; 
+		this.dims = dims;
+		this.A = null; 
+	}
+
+	// column name should only be in the mapper. 
+	final NetcdfFileWriteable writer; 
+	final String variableName; 
+	final float fillValue;
+	final ArrayList<Dimension> dims;
+	ArrayFloat.D1 A;
+
+	public void define()
+	{
+		// we've set it to take all the dimensions
+		ArrayList<Dimension> d = new ArrayList<Dimension>();
+		d.add( dims.get( 0) );
+
+		// assumes writer is in define mode
+		writer.addVariable(variableName, DataType.FLOAT, d );
+		this.A = new ArrayFloat.D1( dims.get(0).getLength() );//, dims.get(1).getLength(), dims.get(2).getLength());
+	}
+
+	public void addValue( int t, int lat, int lon, Object object )  // change name d0,d1 etc
+	{
+
+		System.out.println( "lat " + lat +  " lon " + lon + " t " + t  ); 
+
+		// This crap shouldn't even compile....
+		if( lat == 0 && lon == 0 ) {
+
+			Index ima = A.getIndex();
+			if( object == null) {
+				A.setFloat( ima.set(t), fillValue);
+			}
+			else if( object instanceof java.sql.Timestamp ) {
+				A.setFloat( ima.set(t), (float) t );
+			} 
+			else {
+				throw new RuntimeException( "Opps" );
+			}
+		}
+	}
+	// fill in the name and the fillvalue
+	// change name to write?
+
+	public void finish() throws Exception
+	{
+		// assumes writer is in data mode
+		int [] origin = new int[1];
+		writer.write(variableName, origin, A);
+	}
+}
+
+
+
+
 
 class EncoderFloatD3 implements Encoder
 {
@@ -846,9 +926,11 @@ interface EncodeStrategy
 }
 
 
-class TestEncodeStrategy implements EncodeStrategy
+class ConventionEncodeStrategy implements EncodeStrategy
 {
-	public TestEncodeStrategy( NetcdfFileWriteable writer, ArrayList<Dimension> dims ) 
+	// Convention over configuration, will delegate for configuration...
+
+	public ConventionEncodeStrategy( NetcdfFileWriteable writer, ArrayList<Dimension> dims ) 
 	{ 
 		this.writer = writer;
 		this.dims = dims;
@@ -862,11 +944,27 @@ class TestEncodeStrategy implements EncodeStrategy
 
 	public Encoder get( String columnName, Class columnType )
 	{
+		// delegate to configuration...
+		// otherwise apply convention rules
+
 		// it's the db column name and type
+
+		// System.out.println ( "name '" + columnName + "'  type '" + columnType + "'"  );
 
 		Encoder type = null; 
 
-		if( Pattern.compile(".*quality_control$" ).matcher( columnName) .matches()) 
+		if( columnName.equals("TIME"))
+		{
+			if( columnType != Timestamp.class ) {
+				throw new RuntimeException( "Expected TIME var to be JDBC Timestamp" );
+			}
+
+			type = new EncoderTimestampD1( writer, columnName, dims /* not right */, (float) 99999.  );
+
+
+			System.out.println ( "WHOOT ** got time " );
+		}
+		else if( Pattern.compile(".*quality_control$" ).matcher( columnName) .matches()) 
 		{
 			// postgres varchar(1), JDBC string, but should be treated as netcdf byte
 			if( columnType != String.class ) {
@@ -874,7 +972,6 @@ class TestEncodeStrategy implements EncodeStrategy
 			}
 			type = new EncoderByteD3( writer, columnName, dims , (byte)0xff );
 		}
-
 		else if( Pattern.compile("^[A-Z]+.*" ).matcher( columnName).matches()) 
 		{
 			System.out.println( "upper - " + columnName );
@@ -896,7 +993,7 @@ class TestEncodeStrategy implements EncodeStrategy
 class Timeseries1
 {
 	Parser parser;				// change name to expressionParser or SelectionParser
-	ITranslate translate ;		// will also load up the parameters?
+	IDialectTranslate translate ;		// will also load up the parameters?
 	Connection conn;
 	// Encoder
 	// Order criterion (actually a projection bit) 
@@ -908,7 +1005,7 @@ class Timeseries1
 	ResultSet featureInstances;
 
 
-	public Timeseries1( Parser parser, ITranslate translate, Connection conn ) {
+	public Timeseries1( Parser parser, IDialectTranslate translate, Connection conn ) {
 		// we need to inject the selector ...
 		// 
 		this.parser = parser;
@@ -1018,6 +1115,7 @@ class Timeseries1
 
 		// we have to encode these values as well.
 
+		// All, time series need this to be explicitly setup...
 		// add dimensions
 		Dimension timeDim = writer.addDimension("TIME", count); // writer.addUnlimitedDimension("time");
 		Dimension latDim = writer.addDimension("LATITUDE", 1);
@@ -1032,14 +1130,25 @@ class Timeseries1
 		// this needs to be abstracted ...
 
 		// we shouldn't be instantiating this thing here...
-		EncodeStrategy encodeStrategy = new TestEncodeStrategy( writer, dims ); 
+		EncodeStrategy encoderStrategy = new ConventionEncodeStrategy( writer, dims ); 
 		Map<String, Encoder> encoders = new HashMap<String, Encoder>();
 
 		// Establish conversions according to convention
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
 			String columnName = m.getColumnName(i); 
+
+			// SHOULD IGNORE TIME, geometry ?
+			// actually it's possible the encoder strategy can handle this...
+			// but instead of using all dims it uses only the TIME dimension...
+
+			// issue is that we're going to be calling it multiple times over????
+
+
 			Class clazz = Class.forName(m.getColumnClassName(i));
-			Encoder strategy = encodeStrategy.get( columnName, clazz ); 
+
+			// System.out.println( "beginnning extract mappings" );
+
+			Encoder strategy = encoderStrategy.get( columnName, clazz ); 
 			encoders.put( columnName, strategy ); 
 		}
 
@@ -1053,14 +1162,14 @@ class Timeseries1
 
 		// encode values
 		// t,lat,lon are always indexes - so we should be able to delegate to the thing...
-		int t = 0;
+		int time = 0;
 		while ( rs.next() ) {  
 			for( int lat = 0; lat < latDim.getLength(); ++lat )
 			for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
 				for ( int i = 1 ; i <= numColumns ; i++ ) {
-					encoders.get(m.getColumnName(i)).addValue( t, lat, lon, rs.getObject( i));
+					encoders.get(m.getColumnName(i)).addValue( time, lat, lon, rs.getObject( i));
 				}
-				++t;
+				++time;
 			}
 		}
 
@@ -1125,7 +1234,7 @@ public class test2 {
 	{
 		Parser parser = new Parser();
 
-		ITranslate translate = new  PostgresTranslate();
+		IDialectTranslate translate = new  PostgresDialectTranslate();
 
 		Connection conn = getConn();
 	
