@@ -1018,9 +1018,14 @@ class Timeseries1
 				for ( int i = 1 ; i <= numColumns ; i++ ) {
 
 					String variableName = m.getColumnName(i); 
-				//	MyType type = typeMappings.get( variableName );
-					Object object = rs.getObject(variableName);
+				
+					X type = typeMappings.get( variableName );
 
+					if( type != null ) { 
+
+						Object object = rs.getObject(variableName);
+						type.addValue( t, lat, lon, object );
+					}
 /*
 					if( type != null ) { 
 						if (type.targetType.equals(Float.class)) {
