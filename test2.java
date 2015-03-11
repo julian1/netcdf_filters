@@ -696,15 +696,11 @@ interface Encoder
 	// if we give it a concept of the name, then it can also define the netcdf.
 
 	public void define();  // change name to start(); ?
-
-	// like sax
-	public void addValue( int a, int b, int c, Object o ) ; 
-	public void addValue( int a, Object object );  // over 1 dimension 
 	public void finish( ) throws Exception ; 
 }
 
 
-interface Encoder3d extends Encoder
+interface EncoderD3 extends Encoder
 {
 	// change name VarEncoder
 
@@ -712,31 +708,27 @@ interface Encoder3d extends Encoder
 	// theoretically this object could also preserve the index
 	// if we give it a concept of the name, then it can also define the netcdf.
 
-
-	public void start( ) throws Exception ; 
+	public void addValue( int a, int b, int c, Object o ) ; 
 }
 
 
+interface EncoderD1 extends Encoder
+{
+	public void addValue( int a, Object object );  // over 1 dimension 
+}
 
 
 
 class EncoderIgnore implements Encoder
 {
+	// don't know that we will still use this.
+
 	public EncoderIgnore( ) 
 	{ }
 
 	public void define()
 	{
 	}
-
-	public void addValue( int a, int b, int c, Object object )  // over 3 dimensions change name d0,d1 etc
-	{
-	}
-
-	public void addValue( int a, Object object )  // over 1 dimension 
-	{
-	}
-
 
 	public void finish() throws Exception
 	{
@@ -760,7 +752,7 @@ class EncoderIgnore implements Encoder
 // we can do the same thing on the timeseries table....
 
 
-class EncoderTimestampD1 implements Encoder
+class EncoderTimestampD1 implements EncoderD1
 {
 	/*
 		we either 
@@ -840,7 +832,7 @@ class EncoderTimestampD1 implements Encoder
 
 
 
-class EncoderFloatD3 implements Encoder
+class EncoderFloatD3 implements EncoderD3
 {
 	// abstraction that handles both data for type float, and definining the parameters 
 	// try to keep details about the dimensions out of this, and instead just encode the dimension lengths.
@@ -885,11 +877,6 @@ class EncoderFloatD3 implements Encoder
 		}
 	}
 
-	public void addValue( int a, Object object )  // over 1 dimension 
-	{
-	}
-
-
 	// fill in the name and the fillvalue
 	// change name to write?
 
@@ -903,7 +890,7 @@ class EncoderFloatD3 implements Encoder
 
 
 
-class EncoderByteD3 implements Encoder
+class EncoderByteD3 implements EncoderD3
 {
 	public EncoderByteD3( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, byte fillValue   )
 	{
@@ -1188,7 +1175,10 @@ class Timeseries1
 
 		// we shouldn't be instantiating this thing here...
 		EncodeStrategy encoderStrategy = new ConventionEncodeStrategy( writer, dims ); 
+
 		Map<String, Encoder> encoders = new HashMap<String, Encoder>();
+		Map<String, EncoderD3> encodersD3 = new HashMap<String, EncoderD3>();
+		Map<String, EncoderD1> encodersD1 = new HashMap<String, EncoderD1>();
 
 		// Establish conversions according to convention
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
@@ -1205,8 +1195,18 @@ class Timeseries1
 
 			// System.out.println( "beginnning extract mappings" );
 
+			// organize our encoders
 			Encoder strategy = encoderStrategy.get( columnName, clazz ); 
-			encoders.put( columnName, strategy ); 
+
+			encoders.put( columnName, strategy );
+
+			if( strategy instanceof EncoderD3)
+				encodersD3.put( columnName, (EncoderD3) strategy ); 
+			else if ( strategy instanceof EncoderD1)
+				encodersD1.put( columnName, (EncoderD1)strategy ); 
+			else {
+
+			}				
 		}
 
 		// define
@@ -1225,13 +1225,17 @@ class Timeseries1
 			for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
 				// 3d values
 				for ( int i = 1 ; i <= numColumns ; i++ ) {
-					encoders.get(m.getColumnName(i)).addValue( time, lat, lon, rs.getObject( i));
+					EncoderD3 encoder = encodersD3.get(m.getColumnName(i)); 
+					if( encoder != null) 
+						encoder.addValue( time, lat, lon, rs.getObject( i));
 				}
 			}
 
 			// 1d values
 			for ( int i = 1 ; i <= numColumns ; i++ ) {
-				encoders.get(m.getColumnName(i)).addValue( time, rs.getObject( i));
+				EncoderD1 encoder = encodersD1.get(m.getColumnName(i)); 
+				if( encoder != null) 
+					encoder.addValue( time, rs.getObject( i));
 			}
 			++time;
 		}
