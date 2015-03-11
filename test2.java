@@ -908,8 +908,11 @@ class EncoderFloatD1 implements EncoderD1
 		else if( object instanceof Float ) {
 			A.setFloat( ima.set(a), (float) object);
 		} 
+		else if( object instanceof Double ) {
+			A.setFloat( ima.set(a), (float)(double) object);
+		} 
 		else {
-			throw new RuntimeException( "Opps" );
+			throw new RuntimeException( "Failed to convert for variable '" + variableName + "' value is " );
 		}
 	}
 
@@ -1026,9 +1029,7 @@ class ConventionEncodeStrategy implements EncodeStrategy
 	{
 		// delegate to configuration...
 		// otherwise apply convention rules
-
 		// it's the db column name and type
-
 		// System.out.println ( "name '" + columnName + "'  type '" + columnType + "'"  );
 
 		Encoder type = null; 
@@ -1191,34 +1192,57 @@ class Timeseries1
 	}
 
 /*
-	public void doMeasurements( Connection conn, long ts_id, String selection) throws Exception
+	public void populateMeasurements( 
+		String selection,
+		long ts_id,
+		Map<String, Encoder> encoders, 
+		Map<String, EncoderD3> encodersD3, 
+		Map<String, EncoderD1> encodersD1 ,
+
+		Dimension latDim, 
+		Dimension lonDim
+	)throws Exception
+
 	{
-
-		// we have an issue of sequencing
-
-		// we're going to have to close all this stuff,
-		int count = 0;
-		{
-			// We know how many values we are going to deal with, so let's encode rather than use an unlimited dimension 
-			String query = "SELECT count(1) FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id); 
-			PreparedStatement stmt = conn.prepareStatement( query ); 
-			// stmt.setFetchSize(1000);
-			ResultSet rs = stmt.executeQuery();
-			rs.next() ; 
-			count = (int)(long) rs.getObject(1); 
-		}
-
+		// sql stuff
 		// need to encode the additional parameter...
 		String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
+		//PreparedStatement stmt = conn.prepareStatement( query,  ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 		PreparedStatement stmt = conn.prepareStatement( query ); 
 		stmt.setFetchSize(1000);
 		ResultSet rs = stmt.executeQuery();
+
+
+		System.out.println( "* done doing query" );
 
 		// now we loop the main attributes 
 		ResultSetMetaData m = rs.getMetaData();
 		int numColumns = m.getColumnCount();
 
 		System.out.println( "beginnning extract mappings" );
+
+		// encode values
+		// t,lat,lon are always indexes - so we should be able to delegate to the thing...
+		int time = 0;
+		while ( rs.next() ) {  
+			for( int lat = 0; lat < latDim.getLength(); ++lat )
+			for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
+				// 3d values
+				for ( int i = 1 ; i <= numColumns ; i++ ) {
+					EncoderD3 encoder = encodersD3.get(m.getColumnName(i)); 
+					if( encoder != null) 
+						encoder.addValue( time, lat, lon, rs.getObject( i));
+				}
+			}
+
+			// 1d values
+			for ( int i = 1 ; i <= numColumns ; i++ ) {
+				EncoderD1 encoder = encodersD1.get(m.getColumnName(i)); 
+				if( encoder != null) 
+					encoder.addValue( time, rs.getObject( i));
+			}
+			++time;
+		}
 	}
 */
 
@@ -1292,48 +1316,70 @@ class Timeseries1
 		// finish netcdf definition
 		writer.create();
 
+/*
+		// measurement data	
+		{
+			// sql stuff
+			// need to encode the additional parameter...
+			String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
+			PreparedStatement stmt = conn.prepareStatement( query ); 
+			stmt.setFetchSize(1000);
+			ResultSet rs = stmt.executeQuery();
 
-
-		// sql stuff
-		// need to encode the additional parameter...
-		String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
-		//PreparedStatement stmt = conn.prepareStatement( query,  ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-		PreparedStatement stmt = conn.prepareStatement( query ); 
-		stmt.setFetchSize(1000);
-		ResultSet rs = stmt.executeQuery();
-
-		System.out.println( "* done doing query" );
-
-		// now we loop the main attributes 
-		ResultSetMetaData m = rs.getMetaData();
-		int numColumns = m.getColumnCount();
-
-		System.out.println( "beginnning extract mappings" );
-
-
-
-		// encode values
-		// t,lat,lon are always indexes - so we should be able to delegate to the thing...
-		int time = 0;
-		while ( rs.next() ) {  
-			for( int lat = 0; lat < latDim.getLength(); ++lat )
-			for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
-				// 3d values
-				for ( int i = 1 ; i <= numColumns ; i++ ) {
-					EncoderD3 encoder = encodersD3.get(m.getColumnName(i)); 
-					if( encoder != null) 
-						encoder.addValue( time, lat, lon, rs.getObject( i));
+			// now we loop the main attributes 
+			ResultSetMetaData m = rs.getMetaData();
+			int numColumns = m.getColumnCount();
+			// encode values t,lat,lon are always indexes - so we should be able to delegate to the thing...
+			int time = 0;
+			while ( rs.next() ) {  
+				for( int lat = 0; lat < latDim.getLength(); ++lat )
+				for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
+					// 3d values
+					for ( int i = 1 ; i <= numColumns ; i++ ) {
+						EncoderD3 encoder = encodersD3.get(m.getColumnName(i)); 
+						if( encoder != null) 
+							encoder.addValue( time, lat, lon, rs.getObject( i));
+					}
 				}
-			}
 
+				// 1d values
+				for ( int i = 1 ; i <= numColumns ; i++ ) {
+					EncoderD1 encoder = encodersD1.get(m.getColumnName(i)); 
+					if( encoder != null) 
+						encoder.addValue( time, rs.getObject( i));
+				}
+				++time;
+			}
+		}
+*/
+
+		// timeseries data	
+		{
+			// sql stuff
+			// need to encode the additional parameter...
+			String query = "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id); 
+			PreparedStatement stmt = conn.prepareStatement( query ); 
+			stmt.setFetchSize(1000);
+			ResultSet rs = stmt.executeQuery();
+
+			// now we loop the main attributes 
+			ResultSetMetaData m = rs.getMetaData();
+			int numColumns = m.getColumnCount();
+
+			rs.next(); 
 			// 1d values
 			for ( int i = 1 ; i <= numColumns ; i++ ) {
 				EncoderD1 encoder = encodersD1.get(m.getColumnName(i)); 
 				if( encoder != null) 
-					encoder.addValue( time, rs.getObject( i));
+					encoder.addValue( 0, rs.getObject( i));
 			}
-			++time;
 		}
+
+
+
+
+
+
 
 		// scalars - should come from timeseries table .  (need measurements )
 		// and this is where we might need to return two strategies ...
