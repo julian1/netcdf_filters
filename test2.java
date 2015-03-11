@@ -1088,7 +1088,11 @@ class Timeseries1
 	// rather than instantiate it
 
 
-	public void doDefinitionStuff( Connection conn,
+	public void doDefinitionStuff( 
+		Connection conn,
+	
+		String table,	
+
 		Map<String, Encoder> encoders, 
 		Map<String, EncoderD3> encodersD3, 
 		Map<String, EncoderD1> encodersD1 ,
@@ -1096,7 +1100,7 @@ class Timeseries1
 		EncodeStrategy encoderStrategy  
 		 ) throws Exception
 	{
-		String query = "SELECT * FROM anmn_ts.measurement limit 0"; 
+		String query = "SELECT * FROM " + table + " limit 0"; 
 		PreparedStatement stmt = conn.prepareStatement( query ); 
 		ResultSet rs = stmt.executeQuery();
 
@@ -1190,22 +1194,6 @@ class Timeseries1
 		System.out.println( "count " + count );
 		System.out.println( "* doing query" );
 
-		// sql stuff
-		// need to encode the additional parameter...
-		String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
-		//PreparedStatement stmt = conn.prepareStatement( query,  ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-		PreparedStatement stmt = conn.prepareStatement( query ); 
-		stmt.setFetchSize(1000);
-		ResultSet rs = stmt.executeQuery();
-
-		System.out.println( "* done doing query" );
-
-		// now we loop the main attributes 
-		ResultSetMetaData m = rs.getMetaData();
-		int numColumns = m.getColumnCount();
-
-		System.out.println( "beginnning extract mappings" );
-
 
 
 		System.out.println( "creating writer" );
@@ -1237,7 +1225,7 @@ class Timeseries1
 		Map<String, EncoderD1> encodersD1 = new HashMap<String, EncoderD1>();
 
 
-		doDefinitionStuff( conn, encoders, encodersD3, encodersD1 , encoderStrategy  ); 
+		doDefinitionStuff( conn, "anmn_ts.measurement", encoders, encodersD3, encodersD1 , encoderStrategy  ); 
 	
 /*
 		// Establish conversions according to convention
@@ -1275,6 +1263,26 @@ class Timeseries1
 
 		// finish netcdf definition
 		writer.create();
+
+
+
+		// sql stuff
+		// need to encode the additional parameter...
+		String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
+		//PreparedStatement stmt = conn.prepareStatement( query,  ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+		PreparedStatement stmt = conn.prepareStatement( query ); 
+		stmt.setFetchSize(1000);
+		ResultSet rs = stmt.executeQuery();
+
+		System.out.println( "* done doing query" );
+
+		// now we loop the main attributes 
+		ResultSetMetaData m = rs.getMetaData();
+		int numColumns = m.getColumnCount();
+
+		System.out.println( "beginnning extract mappings" );
+
+
 
 		// encode values
 		// t,lat,lon are always indexes - so we should be able to delegate to the thing...
