@@ -694,13 +694,17 @@ interface X
 
 	// if we give it a concept of the name, then it can also define the netcdf.
 
+	public void define(); 
+
 	public void addValue( int a, int b, int c, Object o ) ; 
 
 	// fill in the name and the fillvalue
 
 	public void finish( ) throws Exception ; 
 
+
 }
+
 
 class FloatD3 implements X
 {
@@ -710,25 +714,29 @@ class FloatD3 implements X
 	// do we want it to 
 
 	// do we define the netcdf???
-	public FloatD3( NetcdfFileWriteable writer , String variableName, float fillValue, ArrayList<Dimension> dims )
+	public FloatD3( NetcdfFileWriteable writer , String variableName, float fillValue, ArrayList<Dimension> dims /* other attributes */ )
 	{
 		this.writer = writer;
 		this.variableName = variableName; 
 		this.fillValue = fillValue; 
 		this.dims = dims;
 
-		this.A = new ArrayFloat.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
-		// this.A = null; 
+		this.A = null; 
 
-		// Kind of a big assumption that the writer is in define mode
-		writer.addVariable(variableName, DataType.FLOAT, dims);
-	}
+		}
 
 	final NetcdfFileWriteable writer; 
 	final String variableName; 
 	final float fillValue;
-	final ArrayList dims;
-	final ArrayFloat.D3 A;
+	final ArrayList<Dimension> dims;
+	ArrayFloat.D3 A;
+
+	public void define()
+	{
+		this.A = new ArrayFloat.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
+		// Kind of a big assumption that the writer is in define mode
+		writer.addVariable(variableName, DataType.FLOAT, dims);
+	}
 
 	public void addValue( int a, int b, int c, Object object )  // change name d0,d1 etc
 	{
@@ -747,14 +755,10 @@ class FloatD3 implements X
 
 	public void finish() throws Exception
 	{
-		// assumes in data
-
+		// assumes writer is in data mode
 		int [] origin = new int[3];
-		// ArrayFloat.D3 A = (ArrayFloat.D3) map.get(variableName); 
 		writer.write(variableName, origin, A);
 	}
-
-
 }
 
 
