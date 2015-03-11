@@ -719,7 +719,7 @@ class Ignore implements X
 }
 
 
-
+// 
 
 class FloatD3 implements X
 {
@@ -814,10 +814,10 @@ class ByteD3 implements X
 			A.setByte( ima.set(a, b, c), (byte) object);
 		}
 		else if(object instanceof String && ((String)object).length() == 1) {
-			// coerce string with length 1 to byte
+			// coerce string of length 1 to byte
 			String s = (String) object; 
-			Byte ch =  s.getBytes()[0];
-			A.setByte( ima.set(a, b, c), ch);
+			Byte ch = s.getBytes()[0];
+			A.setByte(ima.set(a, b, c), ch);
 		} 
 		else {
 			throw new RuntimeException( "Opps" );
@@ -835,6 +835,59 @@ class ByteD3 implements X
 }
 
 
+
+interface DecodeStrategy
+{
+	// it's both a decode and encode strategy . 
+
+	public X get( String variableName, Class variableType ); 
+}
+
+
+class TestDecodeStrategy implements DecodeStrategy
+{
+	public TestDecodeStrategy( NetcdfFileWriteable writer, ArrayList<Dimension> dims ) 
+	{ 
+		this.writer = writer;
+		this.dims = dims;
+		// we need to pass both the writer and dims.... 
+		// which is p
+		// well we can abstract the instantiation of this thing ...
+	} 
+
+	final NetcdfFileWriteable writer ; 
+	final ArrayList<Dimension> dims; 
+
+	public X get( String columnName, Class columnType )
+	{
+		// it's the db column name and type
+
+		X type = null; 
+
+		if( Pattern.compile(".*quality_control$" ).matcher( columnName) .matches()) 
+		{
+			// postgres varchar(1), JDBC string, but should be treated as netcdf byte
+			if( columnType != String.class ) {
+				throw new RuntimeException( "Expected QC var to be JDBC string" );
+			}
+			type = new ByteD3( writer, columnName, dims , (byte)0xff );
+		}
+
+		else if( Pattern.compile("^[A-Z]+.*" ).matcher( columnName).matches()) 
+		{
+			System.out.println( "upper - " + columnName );
+			if( columnType.equals(Float.class)) {
+				type = new FloatD3( writer, columnName, dims , (float)999999.  );
+			}
+			// other...
+		} 
+		if ( type == null ){
+			type = new Ignore(); 
+		}
+
+		return type;
+	}
+}
 
 
 
@@ -976,7 +1029,7 @@ class Timeseries1
 		// we have to encode these values as well.
 
 		// add dimensions
-		Dimension timeDim = writer.addDimension("TIME", count  ); // writer.addUnlimitedDimension("time");
+		Dimension timeDim = writer.addDimension("TIME", count); // writer.addUnlimitedDimension("time");
 		Dimension latDim = writer.addDimension("LATITUDE", 1);
 		Dimension lonDim = writer.addDimension("LONGITUDE", 1);
 
@@ -986,6 +1039,7 @@ class Timeseries1
 		dims.add(latDim);
 		dims.add(lonDim);
 
+		DecodeStrategy decodeStrategy = new TestDecodeStrategy( writer, dims ); 
 
 		Map<String, X> typeMappings = new HashMap<String, X>();
 
@@ -995,10 +1049,12 @@ class Timeseries1
 			String columnName = m.getColumnName(i); 
 			Class clazz = Class.forName(m.getColumnClassName(i));
 
+			typeMappings.put( columnName, decodeStrategy.get( columnName, clazz )); 
+
 			// need clazz handling...
 
 			// geom, TIME we should ignore...
-
+/*
 			X type = null; 
 
 			if( Pattern.compile(".*quality_control$" ).matcher( columnName) .matches()) 
@@ -1023,6 +1079,7 @@ class Timeseries1
 			}
 
 			typeMappings.put( columnName, type);
+*/
 		}
 
 
