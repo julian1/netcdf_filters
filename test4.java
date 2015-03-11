@@ -8,7 +8,8 @@
 
 	unset CLASSPATH
 	javac test4.java  -cp .:netcdfAll-4.2.jar
-	java -classpath '.:netcdfAll-4.2.jar' test4 
+	java -classpath .:netcdfAll-4.2.jar test4
+
 
 */
 
@@ -44,6 +45,7 @@ public class test4
  ncfile.addVariable("temperature", DataType.DOUBLE, dims);
  ncfile.addVariableAttribute("temperature", "units", "K");
 
+	// this is an array attribute not an actual data array 
    // add a 1D attribute of length 3
  Array data = Array.factory( int.class, new int [] {3}, new int[] {1,2,3});
  ncfile.addVariableAttribute("temperature", "scale", data);
