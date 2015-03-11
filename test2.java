@@ -887,7 +887,6 @@ class EncoderFloatD1 implements EncoderD1
 		}
 	}
 
-	// column name should only be in the mapper. 
 	final NetcdfFileWriteable writer; 
 	final String variableName; 
 	final float fillValue;
@@ -896,7 +895,6 @@ class EncoderFloatD1 implements EncoderD1
 
 	public void define()
 	{
-		// assumes writer is in define mode
 		writer.addVariable(variableName, DataType.FLOAT, dims);
 		this.A = new ArrayFloat.D1( dims.get(0).getLength() );
 	}
@@ -1049,7 +1047,7 @@ class ConventionEncodeStrategy implements EncodeStrategy
 			d.add( dims.get( 0) );
 			type = new EncoderTimestampD1( writer, columnName, d , (float) 99999.  );
 		}
-		if( columnName.equals("LATITUDE"))
+		else if( columnName.equals("LATITUDE") || columnName.equals("LONGITUDE"))
 		{
 			ArrayList<Dimension> d = new ArrayList<Dimension>();
 			d.add( dims.get( 1) );
