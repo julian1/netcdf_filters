@@ -1078,10 +1078,6 @@ class ConventionEncodeStrategy implements EncodeStrategy
 		{
 			System.out.println ( "WHOOT ** got time " );
 
-			if( columnType != Timestamp.class ) {
-				throw new RuntimeException( "Expected TIME var to be JDBC Timestamp" );
-			}
-
 			// should lookup the dimension by name
 			// we've set it to take all the dimensions
 			ArrayList<Dimension> d = new ArrayList<Dimension>();
@@ -1102,18 +1098,12 @@ class ConventionEncodeStrategy implements EncodeStrategy
 		}
 		else if( columnName.equals("LATITUDE_quality_control"))
 		{
-			if( columnType != String.class ) {
-				throw new RuntimeException( "Expected QC var to be JDBC string");
-			}
 			ArrayList<Dimension> d = new ArrayList<Dimension>();
 			d.add( dims.get( 1) );
 			type = new EncoderByteD1( writer, columnName, d, (byte)0xff );
 		}
 		else if( columnName.equals("LONGITUDE_quality_control"))
 		{
-			if( columnType != String.class ) {
-				throw new RuntimeException( "Expected QC var to be JDBC string");
-			}
 			ArrayList<Dimension> d = new ArrayList<Dimension>();
 			d.add( dims.get( 2) );
 			type = new EncoderByteD1( writer, columnName, d, (byte)0xff );
@@ -1122,15 +1112,15 @@ class ConventionEncodeStrategy implements EncodeStrategy
 		else if( Pattern.compile(".*quality_control$" ).matcher( columnName) .matches()) 
 		{
 			// postgres varchar(1), JDBC string, but should be treated as netcdf byte
-			if( columnType != String.class ) {
-				throw new RuntimeException( "Expected QC var to be JDBC string" );
-			}
 			type = new EncoderByteD3( writer, columnName, dims , (byte)0xff );
 		}
 		else if( Pattern.compile("^[A-Z]+.*" ).matcher( columnName).matches()) 
 		{
 			System.out.println( "normal var - " + columnName );
 			if( columnType.equals(Float.class)) {
+				type = new EncoderFloatD3( writer, columnName, dims , (float)999999.  );
+			}
+			else if( columnType.equals(Double.class)) {
 				type = new EncoderFloatD3( writer, columnName, dims , (float)999999.  );
 			}
 			// other...
