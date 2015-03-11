@@ -1,8 +1,53 @@
 
+Strategies
+
+	Timeseries1
+	- do a distinct on instance table, and then separate queries for each instance ordering by time 
+	- begins instantly
+	- 30 secs. 
+
+	Timeseries2
+	- join both tables and do a single query order by ts_id, time 
+	- 23sec - nothing for 22secs then everything.
+
+	Timeseries3
+	- just the measurements table without join order by ts_id, time 
+	- nothing then everything in 10 secs 
+
+
+
+-----------
+
+- USE SPRING 'LIKE' TO DRIVE THE CONFIGURATION . 
+not if in geoserver.
+
+
+VERY IMPORTANT
+- the configuration - can actually specify all the different classes that go together to
+make up the decoder, projector, filter, encoder etc. to get full control
+
+much like a spring configuration. 
+
+----
+
+CQL ref
+http://svemir.co/2012/08/16/introduction-to-cql-and-geoserver-implementation/
+
+Craig's document
+https://github.com/aodn/internal_discussions/wiki/Generating-NetCDF-Files-From-the-Database--WIP
+
+netcdf example
+https://github.com/four2five/SciHadoop/blob/master/tools/src/edu/ucsc/srl/tools/NetcdfFileGenerator.java
+
+
+2012-01-01T00:00:00Z
+
+
 We might have an issue with trying to identify the index of the parameter that's
 going to get substituted.
 
 Token (string) token  (parameter)
+
 
 -------
 Need to move the library into the library path.
