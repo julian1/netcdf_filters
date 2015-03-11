@@ -1039,7 +1039,7 @@ class EncoderByteD3 implements EncoderD3
 
 
 
-interface EncodeStrategy
+interface EncodingStrategy
 {
 	// it's both a decode and encode strategy . 
 
@@ -1047,11 +1047,11 @@ interface EncodeStrategy
 }
 
 
-class ConventionEncodeStrategy implements EncodeStrategy
+class ConventionEncodingStrategy implements EncodingStrategy
 {
 	// Convention over configuration, will delegate for configuration...
 
-	public ConventionEncodeStrategy( NetcdfFileWriteable writer, ArrayList<Dimension> dims ) 
+	public ConventionEncodingStrategy( NetcdfFileWriteable writer, ArrayList<Dimension> dims ) 
 	{ 
 		this.writer = writer;
 		this.dims = dims;
@@ -1111,7 +1111,6 @@ class ConventionEncodeStrategy implements EncodeStrategy
 
 		else if( Pattern.compile(".*quality_control$" ).matcher( columnName) .matches()) 
 		{
-			// postgres varchar(1), JDBC string, but should be treated as netcdf byte
 			type = new EncoderByteD3( writer, columnName, dims , (byte)0xff );
 		}
 		else if( Pattern.compile("^[A-Z]+.*" ).matcher( columnName).matches()) 
@@ -1213,7 +1212,7 @@ class Timeseries1
 		Map<String, EncoderD3> encodersD3, 
 		Map<String, EncoderD1> encodersD1 ,
 
-		EncodeStrategy encoderStrategy  
+		EncodingStrategy encodingStrategy  
 		 ) throws Exception
 	{
 		String query = "SELECT * FROM " + table + " limit 0"; 
@@ -1228,7 +1227,7 @@ class Timeseries1
 			String columnName = m.getColumnName(i); 
 			// issue is that we're going to be calling it multiple times over????
 			Class clazz = Class.forName(m.getColumnClassName(i));
-			Encoder encoder = encoderStrategy.getEncoder( columnName, clazz ); 
+			Encoder encoder = encodingStrategy.getEncoder( columnName, clazz ); 
 			if( encoder != null ) { 
 				encoders.put( columnName, encoder );
 
@@ -1297,15 +1296,15 @@ class Timeseries1
 		// this needs to be abstracted ...
 
 		// we shouldn't be instantiating this thing here...
-		EncodeStrategy encoderStrategy = new ConventionEncodeStrategy( writer, dims ); 
+		EncodingStrategy encodingStrategy = new ConventionEncodingStrategy( writer, dims ); 
 
 		Map<String, Encoder> encoders = new HashMap<String, Encoder>();
 		Map<String, EncoderD3> encodersD3 = new HashMap<String, EncoderD3>();
 		Map<String, EncoderD1> encodersD1 = new HashMap<String, EncoderD1>();
 
 
-		doDefinitionStuff( conn, "anmn_ts.timeseries", encoders, encodersD3, encodersD1 , encoderStrategy  ); 
-//		doDefinitionStuff( conn, "anmn_ts.measurement", encoders, encodersD3, encodersD1 , encoderStrategy  ); 
+		doDefinitionStuff( conn, "anmn_ts.timeseries", encoders, encodersD3, encodersD1 , encodingStrategy  ); 
+		doDefinitionStuff( conn, "anmn_ts.measurement", encoders, encodersD3, encodersD1 , encodingStrategy  ); 
 	
 
 		// define
@@ -1318,7 +1317,7 @@ class Timeseries1
 
 
 		// measurement data	
-		if( false )
+		if( true )
 		{
 			// sql stuff
 			// need to encode the additional parameter...
