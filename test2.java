@@ -855,13 +855,13 @@ class EncoderFloatD3 implements EncoderD3
 		else if( object instanceof Float ) {
 			A.setFloat( ima.set(a, b, c), (float) object);
 		} 
+		else if( object instanceof Double ) {
+			A.setFloat( ima.set(a, b, c), (float)(double) object);
+		} 
 		else {
 			throw new RuntimeException( "Opps" );
 		}
 	}
-
-	// fill in the name and the fillvalue
-	// change name to write?
 
 	public void finish() throws Exception
 	{
@@ -912,7 +912,7 @@ class EncoderFloatD1 implements EncoderD1
 			A.setFloat( ima.set(a), (float)(double) object);
 		} 
 		else {
-			throw new RuntimeException( "Failed to convert for variable '" + variableName + "' value is " );
+			throw new RuntimeException( "Failed to convert type for variable '" + variableName + "'" );
 		}
 	}
 
@@ -924,10 +924,59 @@ class EncoderFloatD1 implements EncoderD1
 }
 
 
+class EncoderByteD1 implements EncoderD1
+{
+	public EncoderByteD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, float fillValue  /* could delegate for other attributes */ )
+	{
+		this.writer = writer;
+		this.variableName = variableName; 
+		this.fillValue = fillValue; 
+		this.dims = dims;
+		this.A = null; 
+		if( dims.size() != 1 ) {
+			throw new RuntimeException( "Expected only 1 dimension" );
+		}
+	}
 
+	final NetcdfFileWriteable writer; 
+	final String variableName; 
+	final float fillValue;
+	final ArrayList<Dimension> dims;
+	ArrayFloat.D1 A;
 
+	public void define()
+	{
+		writer.addVariable(variableName, DataType.BYTE, dims);
+		this.A = new ArrayFloat.D1( dims.get(0).getLength() );
+	}
 
+	public void addValue( int a, Object object )
+	{
+		Index ima = A.getIndex();
+		if( object == null) {
+			A.setFloat( ima.set(a), fillValue);
+		}
+		else if(object instanceof Byte)
+		{
+			A.setByte( ima.set(a), (byte) object);
+		}
+		else if(object instanceof String && ((String)object).length() == 1) {
+			// coerce string of length 1 to byte
+			String s = (String) object; 
+			Byte ch = s.getBytes()[0];
+			A.setByte(ima.set(a), ch);
+		} 
+		else {
+			throw new RuntimeException( "Failed to convert type for variable '" + variableName + "'" );
+		}
+	}
 
+	public void finish() throws Exception
+	{
+		int [] origin = new int[1];
+		writer.write(variableName, origin, A);
+	}
+}
 
 
 
@@ -979,15 +1028,6 @@ class EncoderByteD3 implements EncoderD3
 			throw new RuntimeException( "Opps" );
 		}
 	}
-
-	public void addValue( int a, Object object )  // over 1 dimension 
-	{
-	}
-
-
-
-	// fill in the name and the fillvalue
-	// change name to write?
 
 	public void finish() throws Exception
 	{
@@ -1048,11 +1088,35 @@ class ConventionEncodeStrategy implements EncodeStrategy
 			d.add( dims.get( 0) );
 			type = new EncoderTimestampD1( writer, columnName, d , (float) 99999.  );
 		}
-		else if( columnName.equals("LATITUDE") || columnName.equals("LONGITUDE"))
+		else if( columnName.equals("LATITUDE"))
 		{
 			ArrayList<Dimension> d = new ArrayList<Dimension>();
 			d.add( dims.get( 1) );
-			type = new EncoderFloatD1( writer, columnName, d, (float)999999. );
+			type = new EncoderFloatD1( writer, columnName, d, (float)999999.);
+		}
+		else if( columnName.equals("LONGITUDE"))
+		{
+			ArrayList<Dimension> d = new ArrayList<Dimension>();
+			d.add( dims.get( 2) );
+			type = new EncoderFloatD1( writer, columnName, d, (float)999999.);
+		}
+		else if( columnName.equals("LATITUDE_quality_control"))
+		{
+			if( columnType != String.class ) {
+				throw new RuntimeException( "Expected QC var to be JDBC string");
+			}
+			ArrayList<Dimension> d = new ArrayList<Dimension>();
+			d.add( dims.get( 1) );
+			type = new EncoderByteD1( writer, columnName, d, (byte)0xff );
+		}
+		else if( columnName.equals("LONGITUDE_quality_control"))
+		{
+			if( columnType != String.class ) {
+				throw new RuntimeException( "Expected QC var to be JDBC string");
+			}
+			ArrayList<Dimension> d = new ArrayList<Dimension>();
+			d.add( dims.get( 2) );
+			type = new EncoderByteD1( writer, columnName, d, (byte)0xff );
 		}
 
 		else if( Pattern.compile(".*quality_control$" ).matcher( columnName) .matches()) 
@@ -1191,60 +1255,6 @@ class Timeseries1
 		rs.close();
 	}
 
-/*
-	public void populateMeasurements( 
-		String selection,
-		long ts_id,
-		Map<String, Encoder> encoders, 
-		Map<String, EncoderD3> encodersD3, 
-		Map<String, EncoderD1> encodersD1 ,
-
-		Dimension latDim, 
-		Dimension lonDim
-	)throws Exception
-
-	{
-		// sql stuff
-		// need to encode the additional parameter...
-		String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
-		//PreparedStatement stmt = conn.prepareStatement( query,  ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-		PreparedStatement stmt = conn.prepareStatement( query ); 
-		stmt.setFetchSize(1000);
-		ResultSet rs = stmt.executeQuery();
-
-
-		System.out.println( "* done doing query" );
-
-		// now we loop the main attributes 
-		ResultSetMetaData m = rs.getMetaData();
-		int numColumns = m.getColumnCount();
-
-		System.out.println( "beginnning extract mappings" );
-
-		// encode values
-		// t,lat,lon are always indexes - so we should be able to delegate to the thing...
-		int time = 0;
-		while ( rs.next() ) {  
-			for( int lat = 0; lat < latDim.getLength(); ++lat )
-			for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
-				// 3d values
-				for ( int i = 1 ; i <= numColumns ; i++ ) {
-					EncoderD3 encoder = encodersD3.get(m.getColumnName(i)); 
-					if( encoder != null) 
-						encoder.addValue( time, lat, lon, rs.getObject( i));
-				}
-			}
-
-			// 1d values
-			for ( int i = 1 ; i <= numColumns ; i++ ) {
-				EncoderD1 encoder = encodersD1.get(m.getColumnName(i)); 
-				if( encoder != null) 
-					encoder.addValue( time, rs.getObject( i));
-			}
-			++time;
-		}
-	}
-*/
 
 	public void get() throws Exception
 	{
@@ -1316,8 +1326,9 @@ class Timeseries1
 		// finish netcdf definition
 		writer.create();
 
-/*
+
 		// measurement data	
+		if( false )
 		{
 			// sql stuff
 			// need to encode the additional parameter...
@@ -1351,7 +1362,6 @@ class Timeseries1
 				++time;
 			}
 		}
-*/
 
 		// timeseries data	
 		{
@@ -1370,22 +1380,12 @@ class Timeseries1
 			// 1d values
 			for ( int i = 1 ; i <= numColumns ; i++ ) {
 				EncoderD1 encoder = encodersD1.get(m.getColumnName(i)); 
-				if( encoder != null) 
-					encoder.addValue( 0, rs.getObject( i));
+				if( encoder != null ) 
+					encoder.addValue(0, rs.getObject(i));
 			}
 		}
 
-
-
-
-
-
-
-		// scalars - should come from timeseries table .  (need measurements )
-		// and this is where we might need to return two strategies ...
-
-
-		// write to netcdf
+		// write values to netcdf
 		for ( Encoder encoder: encoders.values()) {
 			encoder.finish();
 		}
