@@ -732,20 +732,24 @@ class FloatD3 implements X
 	public void define()
 	{
 		this.A = new ArrayFloat.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
-		// Kind of a big assumption that the writer is in define mode
+		// assumes writer is in define mode
 		writer.addVariable(variableName, DataType.FLOAT, dims);
 	}
 
 	public void addValue( int a, int b, int c, Object object )  // change name d0,d1 etc
 	{
 		Index ima = A.getIndex();
-		if( object != null) {
+		if( object == null) {
+			A.setFloat( ima.set(a, b, c), fillValue);
+		}
+		else if( object instanceof Float ) {
 			// we could make the type be responsible for all this stuff, 
 			// except passing the dimensions in is problematic.
 			A.setFloat( ima.set(a, b, c), (float) object);
 		} 
 		else {
-			A.setFloat( ima.set(a, b, c), fillValue);
+			throw new RuntimeException( "Opps" );
+			// A.setFloat( ima.set(a, b, c), fillValue);
 		}
 	}
 	// fill in the name and the fillvalue
