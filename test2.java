@@ -687,8 +687,10 @@ class MyType
 
 
 
-interface X
+interface Encoder
 {
+	// change name VarEncoder
+
 	// name is provided by map lookup
 	// theoretically this object could also preserve the index
 	// if we give it a concept of the name, then it can also define the netcdf.
@@ -700,9 +702,9 @@ interface X
 
 
 
-class Ignore implements X
+class EncoderIgnore implements Encoder
 {
-	public Ignore( ) 
+	public EncoderIgnore( ) 
 	{ }
 
 	public void define()
@@ -721,7 +723,7 @@ class Ignore implements X
 
 // 
 
-class FloatD3 implements X
+class EncoderFloatD3 implements Encoder
 {
 	// abstraction that handles both data for type float, and definining the parameters 
 	// try to keep details about the dimensions out of this, and instead just encode the dimension lengths.
@@ -729,7 +731,7 @@ class FloatD3 implements X
 	// do we want it to 
 
 	// do we define the netcdf???
-	public FloatD3( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, float fillValue  /* could delegate for other attributes */ )
+	public EncoderFloatD3( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, float fillValue  /* could delegate for other attributes */ )
 	{
 		this.writer = writer;
 		this.variableName = variableName; 
@@ -778,9 +780,9 @@ class FloatD3 implements X
 
 
 
-class ByteD3 implements X
+class EncoderByteD3 implements Encoder
 {
-	public ByteD3( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, byte fillValue   )
+	public EncoderByteD3( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, byte fillValue   )
 	{
 		this.writer = writer;
 		this.variableName = variableName; 
@@ -840,7 +842,7 @@ interface EncodeStrategy
 {
 	// it's both a decode and encode strategy . 
 
-	public X get( String variableName, Class variableType ); 
+	public Encoder get( String variableName, Class variableType ); 
 }
 
 
@@ -858,11 +860,11 @@ class TestEncodeStrategy implements EncodeStrategy
 	final NetcdfFileWriteable writer ; 
 	final ArrayList<Dimension> dims; 
 
-	public X get( String columnName, Class columnType )
+	public Encoder get( String columnName, Class columnType )
 	{
 		// it's the db column name and type
 
-		X type = null; 
+		Encoder type = null; 
 
 		if( Pattern.compile(".*quality_control$" ).matcher( columnName) .matches()) 
 		{
@@ -870,19 +872,19 @@ class TestEncodeStrategy implements EncodeStrategy
 			if( columnType != String.class ) {
 				throw new RuntimeException( "Expected QC var to be JDBC string" );
 			}
-			type = new ByteD3( writer, columnName, dims , (byte)0xff );
+			type = new EncoderByteD3( writer, columnName, dims , (byte)0xff );
 		}
 
 		else if( Pattern.compile("^[A-Z]+.*" ).matcher( columnName).matches()) 
 		{
 			System.out.println( "upper - " + columnName );
 			if( columnType.equals(Float.class)) {
-				type = new FloatD3( writer, columnName, dims , (float)999999.  );
+				type = new EncoderFloatD3( writer, columnName, dims , (float)999999.  );
 			}
 			// other...
 		} 
 		if ( type == null ){
-			type = new Ignore(); 
+			type = new EncoderIgnore(); 
 		}
 
 		return type;
@@ -954,8 +956,9 @@ class Timeseries1
 
 
 	// we need the query or the selection to be exposed, so we can formulate
-	
 	// like a fold, with an init and transform
+	// we should definitely pass a writable here ...
+	// rather than instantiate it
 
 	public void get() throws Exception
 	{
@@ -995,13 +998,10 @@ class Timeseries1
 		String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
 		//PreparedStatement stmt = conn.prepareStatement( query,  ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 		PreparedStatement stmt = conn.prepareStatement( query ); 
-
 		stmt.setFetchSize(1000);
 		ResultSet rs = stmt.executeQuery();
 
-
 		System.out.println( "* done doing query" );
-
 
 		// now we loop the main attributes 
 		ResultSetMetaData m = rs.getMetaData();
@@ -1009,16 +1009,6 @@ class Timeseries1
 
 		System.out.println( "beginnning extract mappings" );
 
-
-
-		// Map<String, MyType > typeMappings = new HashMap<String, MyType>();
-
-		// we're going to need to query the metadata... to perform our sql -> netcdf field mappings.
-
-		// however we should do the name mapping we should actually delegate this to a strategy class ...
-		// that can instantiate ...
-		// eg. can take the result set....
-		// or else to the init() and f() action ?
 
 
 		System.out.println( "creating writer" );
@@ -1039,90 +1029,53 @@ class Timeseries1
 		dims.add(latDim);
 		dims.add(lonDim);
 
+		// this needs to be abstracted ...
+
+		// we shouldn't be instantiating this thing here...
 		EncodeStrategy encodeStrategy = new TestEncodeStrategy( writer, dims ); 
-		Map<String, X> typeMappings = new HashMap<String, X>();
+		Map<String, Encoder> encoders = new HashMap<String, Encoder>();
 
 		// Establish conversions according to convention
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
 			String columnName = m.getColumnName(i); 
 			Class clazz = Class.forName(m.getColumnClassName(i));
-			X strategy = encodeStrategy.get( columnName, clazz ); 
-			typeMappings.put( columnName, strategy ); 
+			Encoder strategy = encodeStrategy.get( columnName, clazz ); 
+			encoders.put( columnName, strategy ); 
 		}
 
-
-		for ( X value : typeMappings.values()) {
-			value.define();
+		// define
+		for ( Encoder encoder: encoders.values()) {
+			encoder.define();
 		}
 
+		// finish netcdf definition
 		writer.create();
 
-		System.out.println( "done defining netcdf" );
-
-
+		// encode values
 		// t,lat,lon are always indexes - so we should be able to delegate to the thing...
 		int t = 0;
 		while ( rs.next() ) {  
 			for( int lat = 0; lat < latDim.getLength(); ++lat )
 			for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
 				for ( int i = 1 ; i <= numColumns ; i++ ) {
-					typeMappings.get(m.getColumnName(i)).addValue( t, lat, lon, rs.getObject( i));
+					encoders.get(m.getColumnName(i)).addValue( t, lat, lon, rs.getObject( i));
 				}
 				++t;
 			}
 		}
 
-		System.out.println( "done extracting data" );
-
-		for ( X value : typeMappings.values()) {
-			value.finish();
+		// write to netcdf
+		for ( Encoder encoder: encoders.values()) {
+			encoder.finish();
 		}
 
 		System.out.println( "done writing data" );
-		System.out.println( "t is " + t );
 
+		// close
 		writer.close();
-
 	}
 
 
-	public void run() throws Exception
-	{
-/*
-		int count = 0;
-		while ( rs.next() ) {  
-
-			long ts_id = (long) rs.getObject(1); 
-
-			String query2 = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
-			System.out.println( "whoot " + query2 ) ; 
-			PreparedStatement stmt2 = conn.prepareStatement( query2 );
-			stmt2.setFetchSize(1000);
-			ResultSet rs2 = stmt2.executeQuery();
-
-			while ( rs2.next() ) {  
-				++count;
-			}
-		}
-		System.out.println( "count " + count );
-		// what is the easiest way to extract? probably by just selecting the values that we want 
-		//// lat,lon...
-		String filename = "testWrite.nc";
-		NetcdfFileWriteable ncfile = NetcdfFileWriteable.createNew(filename, false);
-		// add dimensions
-		Dimension latDim = ncfile.addDimension("lat", 1);
-		Dimension lonDim = ncfile.addDimension("lon", 1);
-		// define Variable
-		ArrayList dims = new ArrayList();
-
-		dims.add( latDim);
-		dims.add( lonDim);
-		ncfile.addVariable("temperature", DataType.DOUBLE, dims);
-		// ncfile.addVariableAttribute("temperature", "units", "K");
-
-		System.out.println( "whoot did some netcdf stuff" );
-*/
-	}
 }
 
 
