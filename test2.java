@@ -719,23 +719,6 @@ interface EncoderD1 extends Encoder
 
 
 
-class EncoderIgnore implements Encoder
-{
-	// don't know that we will still use this.
-
-	public EncoderIgnore( ) 
-	{ }
-
-	public void define()
-	{
-	}
-
-	public void finish() throws Exception
-	{
-	}
-}
-
-
 // do we have different types of encoder based on the number of dimensions it handles
 // or do we have different methods 
 
@@ -800,9 +783,6 @@ class EncoderTimestampD1 implements EncoderD1
 		this.A = new ArrayFloat.D1( dims.get(0).getLength() );
 	}
 
-	public void addValue( int t, int lat, int lon, Object object )  // change name d0,d1 etc
-	{ }
-
 	public void addValue( int t, Object object )  // over 1 dimension 
 	{
 		Index ima = A.getIndex();
@@ -847,6 +827,9 @@ class EncoderFloatD3 implements EncoderD3
 		this.fillValue = fillValue; 
 		this.dims = dims;
 		this.A = null; 
+		if( dims.size() != 3 ) {
+			throw new RuntimeException( "Expected only 1 dimension" );
+		}
 	}
 
 	// column name should only be in the mapper. 
@@ -899,6 +882,9 @@ class EncoderByteD3 implements EncoderD3
 		this.fillValue = fillValue; 
 		this.dims = dims;
 		this.A = null; 
+		if( dims.size() != 3 ) {
+			throw new RuntimeException( "Expected only 1 dimension" );
+		}
 	}
 
 	// column name should only be in the mapper. 
@@ -1023,11 +1009,12 @@ class ConventionEncodeStrategy implements EncodeStrategy
 				type = new EncoderFloatD3( writer, columnName, dims , (float)999999.  );
 			}
 			// other...
-		} 
+		}
+/*
 		if ( type == null ){
 			type = new EncoderIgnore(); 
 		}
-
+*/
 		return type;
 	}
 }
@@ -1197,16 +1184,19 @@ class Timeseries1
 
 			// organize our encoders
 			Encoder strategy = encoderStrategy.get( columnName, clazz ); 
+			if( strategy != null ) { 
 
-			encoders.put( columnName, strategy );
+				encoders.put( columnName, strategy );
 
-			if( strategy instanceof EncoderD3)
-				encodersD3.put( columnName, (EncoderD3) strategy ); 
-			else if ( strategy instanceof EncoderD1)
-				encodersD1.put( columnName, (EncoderD1)strategy ); 
-			else {
+				if( strategy instanceof EncoderD3)
+					encodersD3.put( columnName, (EncoderD3) strategy ); 
+				else if ( strategy instanceof EncoderD1)
+					encodersD1.put( columnName, (EncoderD1)strategy ); 
+				else {
 
-			}				
+					throw new RuntimeException( "Unknown Encoder type for column '" + columnName + "'" );
+				}				
+			}
 		}
 
 		// define
