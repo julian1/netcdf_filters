@@ -1007,7 +1007,6 @@ class Timeseries1
 				if( clazz != String.class ) {
 					throw new RuntimeException( "Expected QC var to be JDBC string" );
 				}
-				System.out.println( "QC - " + columnName );
 				type = new ByteD3( writer, columnName, dims , (byte)0xff );
 			}
 
@@ -1015,13 +1014,10 @@ class Timeseries1
 			{
 				System.out.println( "upper - " + columnName );
 				if( clazz.equals(Float.class)) {
-
 					type = new FloatD3( writer, columnName, dims , (float)999999.  );
 				}
 				// other...
-
 			} 
-
 			if ( type == null ){
 				type = new Ignore(); 
 			}
@@ -1050,7 +1046,7 @@ class Timeseries1
 					String variableName = m.getColumnName(i); 
 					X type = typeMappings.get( variableName );
 					if( type != null ) { 
-						Object object = rs.getObject(variableName);
+						Object object = rs.getObject( i);
 						type.addValue( t, lat, lon, object );
 					}
 
