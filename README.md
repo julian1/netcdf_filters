@@ -1,4 +1,15 @@
 
+Important - the convention class could be used to populate a gui with the encoding types.
+	name (uppercase), type. etc.
+	
+----
+
+- lookup dimension by name rather than index in the convensions
+- date encode since 1950
+- sql parametization
+- try on other CF type - trajectory 
+
+----
 prototype demonstrate end-to-end filter to subset netcdf generation, with streaming 
 on prod data.
 

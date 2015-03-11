@@ -1086,6 +1086,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 		}
 		else if( columnName.equals("LATITUDE"))
 		{
+			// need to look these up, by name
 			ArrayList<Dimension> d = new ArrayList<Dimension>();
 			d.add( dims.get( 1) );
 			type = new EncoderFloatD1( writer, columnName, d, (float)999999.);
@@ -1117,10 +1118,10 @@ class ConventionEncodingStrategy implements EncodingStrategy
 		{
 			System.out.println( "normal var - " + columnName );
 			if( columnType.equals(Float.class)) {
-				type = new EncoderFloatD3( writer, columnName, dims , (float)999999.  );
+				type = new EncoderFloatD3( writer, columnName, dims , (float)999999. );
 			}
 			else if( columnType.equals(Double.class)) {
-				type = new EncoderFloatD3( writer, columnName, dims , (float)999999.  );
+				type = new EncoderFloatD3( writer, columnName, dims , (float)999999. );
 			}
 			// other...
 		}
