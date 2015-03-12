@@ -890,12 +890,12 @@ class EncoderFloatD3 implements EncoderD3
 
 class EncoderFloatD1 implements EncoderD1
 {
-	public EncoderFloatD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, float fillValue  /* could delegate for other attributes */ )
+	public EncoderFloatD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, 	Map<String, Object> attributes )
 	{
 		this.writer = writer;
 		this.variableName = variableName; 
-		this.fillValue = fillValue; 
 		this.dims = dims;
+		this.attributes = attributes;
 		this.A = null; 
 		if( dims.size() != 1 ) {
 			throw new RuntimeException( "Expected only 1 dimension" );
@@ -904,8 +904,8 @@ class EncoderFloatD1 implements EncoderD1
 
 	final NetcdfFileWriteable writer; 
 	final String variableName; 
-	final float fillValue;
 	final ArrayList<Dimension> dims;
+	Map<String, Object> attributes; 
 	ArrayFloat.D1 A;
 
 	public void define()
@@ -918,7 +918,7 @@ class EncoderFloatD1 implements EncoderD1
 	{
 		Index ima = A.getIndex();
 		if( object == null) {
-			A.setFloat( ima.set(a), fillValue);
+			A.setFloat( ima.set(a), (float) attributes.get( "_FillValue" ));
 		}
 		else if( object instanceof Float ) {
 			A.setFloat( ima.set(a), (float) object);
@@ -1109,13 +1109,21 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			// need to look these up, by name
 			ArrayList<Dimension> d = new ArrayList<Dimension>();
 			d.add( dims.get( 1) );
-			type = new EncoderFloatD1( writer, columnName, d, (float)999999.);
+
+			Map<String, Object> attributes = new HashMap<String, Object>();
+			attributes.put( "_FillValue", (float) 999999. ); 
+
+			type = new EncoderFloatD1( writer, columnName, d, attributes);
 		}
 		else if( columnName.equals("LONGITUDE"))
 		{
 			ArrayList<Dimension> d = new ArrayList<Dimension>();
 			d.add( dims.get( 2) );
-			type = new EncoderFloatD1( writer, columnName, d, (float)999999.);
+
+			Map<String, Object> attributes = new HashMap<String, Object>();
+			attributes.put( "_FillValue", (float) 999999. ); 
+
+			type = new EncoderFloatD1( writer, columnName, d, attributes);
 		}
 		else if( columnName.equals("LATITUDE_quality_control"))
 		{
