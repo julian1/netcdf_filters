@@ -935,6 +935,8 @@ class EncoderFloatD1 implements EncoderD1
 	{
 		int [] origin = new int[1];
 		writer.write(variableName, origin, A);
+
+		// and write the attribute values ...
 	}
 }
 

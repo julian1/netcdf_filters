@@ -14,10 +14,11 @@ prototype demonstrate end-to-end filter to subset netcdf generation, with stream
 on prod data.
 
 WHAT'S DONE
-- subset expression parser/ 
-- postgres dialect rewriter
+- sequencing the definition, and data writing phases of netcdf generation 
+- basic subset expression parser/ 
+- postgres dialect rewriter instance
 - netcdf encoder
-- convention/ config strategy
+- localized convention/ config strategy
 - experimented with a couple of query approaches favor time to start streaming, total time etc. 
 
 
