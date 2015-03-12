@@ -1,4 +1,9 @@
 
+IMportant
+	- do we want to encode the name in the attributes rather than pass explicitly...
+
+
+----
 Important - the convention class could be used to populate a gui with the encoding types.
 	name (uppercase), type. etc.
 	
@@ -24,6 +29,16 @@ WHAT'S DONE
 
 ---
 TODO
+
+- get dates correctly encoded  (to enable verificiation of filter date range)
+- pass table as paraemter
+- actually write the required attributes
+- write multiple files (and get the writable instantiation working ) (pass at the time). 
+
+- make a tomcat service
+
+
+
 - add support to parser/expr for geometry for spatial constraint choice
 - factor encoder strategy chooser - so it's not instantiated, or else use property setters instead of constructor for the writer. 
 - postgres - parametize query parameters, rather than use text
