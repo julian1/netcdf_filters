@@ -49,3 +49,8 @@ TODO
 - zip the file stream
 - factor into classes
 - command-line driven
+
+
+REFS
+http://www.unidata.ucar.edu/software/thredds/current/netcdf-java/tutorial/NetcdfFileWriteable.html
+

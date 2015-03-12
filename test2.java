@@ -782,6 +782,11 @@ class EncoderTimestampD1 implements EncoderD1
 	{
 		// assumes writer is in define mode
 		writer.addVariable(variableName, DataType.FLOAT, dims );
+
+		for( Map.Entry< String, Object> entry : attributes.entrySet() ) { 
+			writer.addVariableAttribute( variableName, entry.getKey(), entry.getValue().toString() ); 
+		}
+
 		this.A = new ArrayFloat.D1( dims.get(0).getLength() );
 	}
 
@@ -903,7 +908,7 @@ class EncoderFloatD1 implements EncoderD1
 	final NetcdfFileWriteable writer; 
 	final String variableName; 
 	final ArrayList<Dimension> dims;
-	Map<String, Object> attributes; 
+	final Map<String, Object> attributes; 
 	ArrayFloat.D1 A;
 
 	public void define()
@@ -956,7 +961,7 @@ class EncoderByteD1 implements EncoderD1
 	final NetcdfFileWriteable writer; 
 	final String variableName; 
 	final ArrayList<Dimension> dims;
-	Map<String, Object> attributes ; 
+	final Map<String, Object> attributes ; 
 
 	ArrayFloat.D1 A;
 
