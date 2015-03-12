@@ -754,12 +754,14 @@ class EncoderTimestampD1 implements EncoderD1
 	// and try to do the 1950 conversion.
 
 	// do we define the netcdf???
-	public EncoderTimestampD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, float fillValue )
+	public EncoderTimestampD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes )
 	{
 		this.writer = writer;
 		this.variableName = variableName; 
-		this.fillValue = fillValue; 
+		//this.fillValue = fillValue; 
 		this.dims = dims;
+		this.attributes = attributes; 
+
 		this.A = null; 
 
 		if( dims.size() != 1 ) {
@@ -770,8 +772,10 @@ class EncoderTimestampD1 implements EncoderD1
 	// column name should only be in the mapper. 
 	final NetcdfFileWriteable writer; 
 	final String variableName; 
-	final float fillValue;
+	// final float fillValue;
 	final ArrayList<Dimension> dims;
+	final Map<String, Object> attributes; 
+
 	ArrayFloat.D1 A;
 
 
@@ -785,16 +789,27 @@ class EncoderTimestampD1 implements EncoderD1
 
 	public void addValue( int t, Object object )  // over 1 dimension 
 	{
-		Index ima = A.getIndex();
-		if( object == null) {
-			A.setFloat( ima.set(t), fillValue);
+		// this needs to be changes
+		if( attributes.get("units").equals( "days since 1950-01-01 00:00:00 UTC" ))
+		{
+			// System.out.println( "*** whoot it's a date " );
+			Index ima = A.getIndex();
+			if( object == null) {
+				A.setFloat( ima.set(t), (float) attributes.get( "_FillValue" ));
+			}
+			else if( object instanceof java.sql.Timestamp ) {
+				A.setFloat( ima.set(t), (float) t );
+			} 
+			else {
+				throw new RuntimeException( "Not a timestamp" );
+			}
 		}
-		else if( object instanceof java.sql.Timestamp ) {
-			A.setFloat( ima.set(t), (float) t );
-		} 
 		else {
-			throw new RuntimeException( "Opps" );
+			// only limited case
+			throw new RuntimeException( "Bad date unit" );
 		}
+
+
 	}
 
 	// fill in the name and the fillvalue
@@ -1082,7 +1097,12 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			// we've set it to take all the dimensions
 			ArrayList<Dimension> d = new ArrayList<Dimension>();
 			d.add( dims.get( 0) );
-			type = new EncoderTimestampD1( writer, columnName, d , (float) 99999.  );
+
+			Map<String, Object> attributes = new HashMap<String, Object>();
+			attributes.put( "units", "days since 1950-01-01 00:00:00 UTC" );
+			attributes.put( "_FillValue", (float) 999999. ); 
+
+			type = new EncoderTimestampD1( writer, columnName, d , attributes);
 		}
 		else if( columnName.equals("LATITUDE"))
 		{
