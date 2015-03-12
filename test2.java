@@ -963,7 +963,6 @@ class EncoderByteD1 implements EncoderD1
 	final String variableName; 
 	final ArrayList<Dimension> dims;
 	final Map<String, Object> attributes ; 
-
 	ArrayFloat.D1 A;
 
 	public void define()
@@ -1024,7 +1023,6 @@ class EncoderByteD3 implements EncoderD3
 	final String variableName; 
 	final ArrayList<Dimension> dims;
 	final Map<String, Object> attributes;
-
 	ArrayByte.D3 A;
 
 	public void define()
@@ -1096,15 +1094,23 @@ class ConventionEncodingStrategy implements EncodingStrategy
 	// to multiple variables - eg. the_geometry and LATITUTDE AND LONGTITUDE...
 	public Encoder getEncoder( String columnName, Class columnType )
 	{
+		// class is an attempt to try to guess heuristically, how to encode. 
+		// we can populate. 
+
 		// delegate to configuration...
 		// otherwise apply convention rules
 		// it's the db column name and type
 		// System.out.println ( "name '" + columnName + "'  type '" + columnType + "'"  );
 
-		Encoder type = null; 
+		// think that we need to fill this in with SAX...
+		// then we query for what we want.
+
+		Encoder encoder = null; 
 
 		if( columnName.equals("TIME"))
 		{
+			// in main table, but is a dimension.
+
 			System.out.println ( "WHOOT ** got time " );
 
 			// should lookup the dimension by name
@@ -1116,8 +1122,11 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			attributes.put( "units", "days since 1950-01-01 00:00:00 UTC" );
 			attributes.put( "_FillValue", (float) 999999. ); 
 
-			type = new EncoderTimestampD1( writer, columnName, d , attributes);
+			encoder = new EncoderTimestampD1( writer, columnName, d , attributes);
 		}
+	
+		// 
+
 		else if( columnName.equals("LATITUDE"))
 		{
 			// need to look these up, by name
@@ -1127,7 +1136,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.put( "_FillValue", (float) 999999. ); 
 
-			type = new EncoderFloatD1( writer, columnName, d, attributes);
+			encoder = new EncoderFloatD1( writer, columnName, d, attributes);
 		}
 		else if( columnName.equals("LONGITUDE"))
 		{
@@ -1137,7 +1146,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.put( "_FillValue", (float) 999999. ); 
 
-			type = new EncoderFloatD1( writer, columnName, d, attributes);
+			encoder = new EncoderFloatD1( writer, columnName, d, attributes);
 		}
 		else if( columnName.equals("LATITUDE_quality_control"))
 		{
@@ -1147,7 +1156,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.put( "_FillValue", (byte) 0xff ); 
 		
-			type = new EncoderByteD1( writer, columnName, d, attributes ); //(byte)0xff );
+			encoder = new EncoderByteD1( writer, columnName, d, attributes ); //(byte)0xff );
 		}
 		else if( columnName.equals("LONGITUDE_quality_control"))
 		{
@@ -1157,37 +1166,37 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.put( "_FillValue", (byte) 0xff ); 
 	
-			type = new EncoderByteD1( writer, columnName, d, attributes );
+			encoder = new EncoderByteD1( writer, columnName, d, attributes );
 		}
+
+
 
 		else if( Pattern.compile(".*quality_control$" ).matcher( columnName) .matches()) 
 		{
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.put( "_FillValue", (byte) 0xff ); 
 	
-			type = new EncoderByteD3( writer, columnName, dims , attributes );
+			encoder = new EncoderByteD3( writer, columnName, dims , attributes );
 		}
 		else if( Pattern.compile("^[A-Z]+.*" ).matcher( columnName).matches()) 
 		{
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.put( "_FillValue", (float) 999999. ); 
 
-
 			System.out.println( "normal var - " + columnName );
 			if( columnType.equals(Float.class)
 				||	columnType.equals(Double.class)
 			) {
-
-				type = new EncoderFloatD3( writer, columnName, dims , attributes );
+				encoder = new EncoderFloatD3( writer, columnName, dims , attributes );
 			}
 			// other...
 		}
 /*
-		if ( type == null ){
-			type = new EncoderIgnore(); 
+		if ( encoder == null ){
+			encoder = new EncoderIgnore(); 
 		}
 */
-		return type;
+		return encoder;
 	}
 }
 

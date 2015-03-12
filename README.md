@@ -26,17 +26,19 @@ WHAT'S DONE
 - localized convention/ config strategy
 - experimented with a couple of query approaches favor time to start streaming, total time etc. 
 
+- done - write required attributes with strategy
 
 ---
 TODO
 
+- think we have to invert it, instead of trying to infer, use an explicit configuration.
+	- It's part of the task.
+	- meaning use spring.
+
 - get dates correctly encoded  (to enable verificiation of filter date range)
-- pass table as paraemter
-- actually write the required attributes
+- pass table as paraemter to encoder strategy (not sure)
 - write multiple files (and get the writable instantiation working ) (pass at the time). 
-
 - make a tomcat service
-
 
 
 - add support to parser/expr for geometry for spatial constraint choice
@@ -54,3 +56,6 @@ TODO
 REFS
 http://www.unidata.ucar.edu/software/thredds/current/netcdf-java/tutorial/NetcdfFileWriteable.html
 
+http://www.unidata.ucar.edu/software/netcdf/docs/BestPractices.html
+
+https://www.unidata.ucar.edu/software/netcdf/docs/netcdf/CDL-Data-Types.html
