@@ -780,13 +780,11 @@ class EncoderTimestampD1 implements EncoderD1
 	// OK, i think that we want to be passing in the dimensions at the start...
 	public void define()
 	{
-		// assumes writer is in define mode
 		writer.addVariable(variableName, DataType.FLOAT, dims );
 
-		for( Map.Entry< String, Object> entry : attributes.entrySet() ) { 
+		for( Map.Entry< String, Object> entry : attributes.entrySet()) { 
 			writer.addVariableAttribute( variableName, entry.getKey(), entry.getValue().toString() ); 
 		}
-
 		this.A = new ArrayFloat.D1( dims.get(0).getLength() );
 	}
 
@@ -811,10 +809,7 @@ class EncoderTimestampD1 implements EncoderD1
 			// only limited case
 			throw new RuntimeException( "Bad date unit" );
 		}
-
-
 	}
-
 
 	public void finish() throws Exception
 	{
@@ -859,6 +854,9 @@ class EncoderFloatD3 implements EncoderD3
 	{
 		// assumes writer is in define mode
 		writer.addVariable(variableName, DataType.FLOAT, dims);
+		for( Map.Entry< String, Object> entry : attributes.entrySet()) { 
+			writer.addVariableAttribute( variableName, entry.getKey(), entry.getValue().toString() ); 
+		}
 		this.A = new ArrayFloat.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
 	}
 
@@ -914,6 +912,9 @@ class EncoderFloatD1 implements EncoderD1
 	public void define()
 	{
 		writer.addVariable(variableName, DataType.FLOAT, dims);
+		for( Map.Entry< String, Object> entry : attributes.entrySet()) { 
+			writer.addVariableAttribute( variableName, entry.getKey(), entry.getValue().toString() ); 
+		}
 		this.A = new ArrayFloat.D1( dims.get(0).getLength() );
 	}
 
@@ -968,6 +969,9 @@ class EncoderByteD1 implements EncoderD1
 	public void define()
 	{
 		writer.addVariable(variableName, DataType.BYTE, dims);
+		for( Map.Entry< String, Object> entry : attributes.entrySet()) { 
+			writer.addVariableAttribute( variableName, entry.getKey(), entry.getValue().toString() ); 
+		}
 		this.A = new ArrayFloat.D1( dims.get(0).getLength() );
 	}
 
@@ -1003,12 +1007,12 @@ class EncoderByteD1 implements EncoderD1
 
 class EncoderByteD3 implements EncoderD3
 {
-	public EncoderByteD3( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, byte fillValue   )
+	public EncoderByteD3( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes )
 	{
 		this.writer = writer;
 		this.variableName = variableName; 
-		this.fillValue = fillValue; 
 		this.dims = dims;
+		this.attributes = attributes;
 		this.A = null; 
 		if( dims.size() != 3 ) {
 			throw new RuntimeException( "Expected only 1 dimension" );
@@ -1018,14 +1022,18 @@ class EncoderByteD3 implements EncoderD3
 	// column name should only be in the mapper. 
 	final NetcdfFileWriteable writer; 
 	final String variableName; 
-	final byte fillValue;
 	final ArrayList<Dimension> dims;
+	final Map<String, Object> attributes;
+
 	ArrayByte.D3 A;
 
 	public void define()
 	{
 		// assumes writer is in define mode
 		writer.addVariable(variableName, DataType.BYTE, dims);
+		for( Map.Entry< String, Object> entry : attributes.entrySet()) { 
+			writer.addVariableAttribute( variableName, entry.getKey(), entry.getValue().toString() ); 
+		}
 		this.A = new ArrayByte.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
 	}
 
@@ -1033,7 +1041,7 @@ class EncoderByteD3 implements EncoderD3
 	{
 		Index ima = A.getIndex();
 		if( object == null) {
-			A.setByte( ima.set(a, b, c), fillValue);
+			A.setFloat( ima.set(a, b, c), (byte) attributes.get( "_FillValue" ));
 		}
 		else if(object instanceof Byte)
 		{
@@ -1154,7 +1162,10 @@ class ConventionEncodingStrategy implements EncodingStrategy
 
 		else if( Pattern.compile(".*quality_control$" ).matcher( columnName) .matches()) 
 		{
-			type = new EncoderByteD3( writer, columnName, dims , (byte)0xff );
+			Map<String, Object> attributes = new HashMap<String, Object>();
+			attributes.put( "_FillValue", (byte) 0xff ); 
+	
+			type = new EncoderByteD3( writer, columnName, dims , attributes );
 		}
 		else if( Pattern.compile("^[A-Z]+.*" ).matcher( columnName).matches()) 
 		{
