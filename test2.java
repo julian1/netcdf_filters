@@ -900,7 +900,7 @@ class EncoderFloatD3 implements EncoderD3
 interface EncodeValue
 {
 
-	public void encode( Object A_, Index ima, Map<String, Object> attributes, Object value ); 
+	public void encode( Array A, Index ima, Map<String, Object> attributes, Object value ); 
 
 	public Class type(); 
 }
@@ -916,9 +916,9 @@ class EncodeFloatValue implements EncodeValue
 		return Float.class;
 	}
 
-	public void encode( Object A_, Index ima, Map<String, Object> attributes, Object object )
+	public void encode( Array A, Index ima, Map<String, Object> attributes, Object object )
 	{
-		ArrayFloat A = (ArrayFloat) A_;
+		// ArrayFloat A = (ArrayFloat) A_;
 
 		if( object == null) {
 			A.setFloat( ima, (float) attributes.get( "_FillValue" ));
@@ -946,10 +946,10 @@ class EncodeByteValue implements EncodeValue
 		return Byte.class;
 	}
 
-	public void encode( Object A_, Index ima, Map<String, Object> attributes, Object object )
+	public void encode( Array A, Index ima, Map<String, Object> attributes, Object object )
 	{
 		// ArrayByte A = (ArrayByte) A_;
-		Array A = (Array) A_;
+		// Array A = (Array) A_;
 
 		if( object == null) {
 			A.setByte( ima, (byte) attributes.get( "_FillValue" ));
