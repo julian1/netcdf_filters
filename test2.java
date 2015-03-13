@@ -936,11 +936,11 @@ class EncodeFloatValue implements EncodeValue
 }
 
 
-class EncoderFloatD1 implements EncoderD1
+class EncoderD1_ implements EncoderD1
 {
 	// IMPORTANT - we could encode the variable name as an attribute and avoid having to pass it.
 
-	public EncoderFloatD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes )
+	public EncoderD1_( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, EncodeValue encodeValue )
 	{
 		this.writer = writer;
 		this.variableName = variableName; 
@@ -951,7 +951,7 @@ class EncoderFloatD1 implements EncoderD1
 			throw new RuntimeException( "Expected only 1 dimension" );
 		}
 
-		this.encodeValue = new EncodeFloatValue();
+		this.encodeValue = encodeValue; // new EncodeFloatValue();
 	}
 
 	final NetcdfFileWriteable writer; 
@@ -1209,7 +1209,9 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.put( "_FillValue", (float) 999999. ); 
 
-			encoder = new EncoderFloatD1( writer, columnName, d, attributes);
+			EncodeValue encodeValue = new EncodeFloatValue();
+
+			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
 		}
 		else if( columnName.equals("LONGITUDE"))
 		{
@@ -1219,7 +1221,10 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.put( "_FillValue", (float) 999999. ); 
 
-			encoder = new EncoderFloatD1( writer, columnName, d, attributes);
+			EncodeValue encodeValue = new EncodeFloatValue();
+
+			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
+
 		}
 		else if( columnName.equals("LATITUDE_quality_control"))
 		{
