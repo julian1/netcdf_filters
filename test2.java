@@ -916,18 +916,18 @@ class EncodeFloatValue implements EncodeValue
 		return Float.class;
 	}
 
-	public void encode( Array A, Index ima, Map<String, Object> attributes, Object object )
+	public void encode( Array A, Index ima, Map<String, Object> attributes, Object value )
 	{
 		// ArrayFloat A = (ArrayFloat) A_;
 
-		if( object == null) {
+		if( value == null) {
 			A.setFloat( ima, (float) attributes.get( "_FillValue" ));
 		}
-		else if( object instanceof Float ) {
-			A.setFloat( ima, (float) object);
+		else if( value instanceof Float ) {
+			A.setFloat( ima, (float) value);
 		} 
-		else if( object instanceof Double ) {
-			A.setFloat( ima, (float)(double) object);
+		else if( value instanceof Double ) {
+			A.setFloat( ima, (float)(double) value);
 		} 
 		else {
 			throw new RuntimeException( "Failed to coerce type to float" );
@@ -946,21 +946,21 @@ class EncodeByteValue implements EncodeValue
 		return Byte.class;
 	}
 
-	public void encode( Array A, Index ima, Map<String, Object> attributes, Object object )
+	public void encode( Array A, Index ima, Map<String, Object> attributes, Object value )
 	{
 		// ArrayByte A = (ArrayByte) A_;
 		// Array A = (Array) A_;
 
-		if( object == null) {
+		if( value == null) {
 			A.setByte( ima, (byte) attributes.get( "_FillValue" ));
 		}
-		else if(object instanceof Byte)
+		else if(value instanceof Byte)
 		{
-			A.setByte( ima, (byte) object);
+			A.setByte( ima, (byte) value);
 		}
-		else if(object instanceof String && ((String)object).length() == 1) {
+		else if(value instanceof String && ((String)value).length() == 1) {
 			// coerce string of length 1 to byte
-			String s = (String) object; 
+			String s = (String) value; 
 			Byte ch = s.getBytes()[0];
 			A.setByte(ima, ch);
 		} 
