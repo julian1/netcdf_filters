@@ -1041,23 +1041,6 @@ class EncoderD3_ implements EncoderD3
 		encodeValue.encode( A, ima, attributes, value ); 
 	}
 
-/*	public void addValue( int a, int b, int c, Object object )  // change name d0,d1 etc
-	{
-		Index ima = A.getIndex();
-		if( object == null) {
-			A.setFloat( ima.set(a, b, c), (float) attributes.get( "_FillValue" ));
-		}
-		else if( object instanceof Float ) {
-			A.setFloat( ima.set(a, b, c), (float) object);
-		} 
-		else if( object instanceof Double ) {
-			A.setFloat( ima.set(a, b, c), (float)(double) object);
-		} 
-		else {
-			throw new RuntimeException( "Opps" );
-		}
-	}
-*/
 	public void finish() throws Exception
 	{
 		// assumes writer is in data mode
