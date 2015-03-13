@@ -842,12 +842,50 @@ interface EncodeValue
 	public Class type(); 
 }
 
+
+
+
+
+
+class EncodeTimestampValue implements EncodeValue
+{
+	public Class type()
+	{
+		return Float.class;
+	}
+
+	public void encode( Array A, Index ima, Map<String, Object> attributes, Object value )
+	{
+		// this needs to be changes
+		if( attributes.get("units").equals( "days since 1950-01-01 00:00:00 UTC" ))
+		{
+			// System.out.println( "*** whoot it's a date " );
+			// Index ima = A.getIndex();
+			if( value == null) {
+				A.setFloat( ima, (float) attributes.get( "_FillValue" ));
+			}
+			else if( value instanceof java.sql.Timestamp ) {
+				A.setFloat( ima, (float) 0. );
+			} 
+			else {
+				throw new RuntimeException( "Not a timestamp" );
+			}
+		}
+		else {
+			// only limited case
+			throw new RuntimeException( "Bad date unit" );
+		}
+	}
+}
+
+
+
 class EncodeFloatValue implements EncodeValue
 {
 	// value encoder
 	// abstract concept of dimension...
 
-	// assumption that the Object A is a float array
+	// change name to targetType 
 	public Class type()
 	{
 		return Float.class;
@@ -871,6 +909,7 @@ class EncodeFloatValue implements EncodeValue
 		}
 	}
 }
+
 
 class EncodeByteValue implements EncodeValue
 {
@@ -906,12 +945,6 @@ class EncodeByteValue implements EncodeValue
 		}
 	}
 }
-
-
-
-
-
-
 
 
 class EncoderD1_ implements EncoderD1
@@ -1110,7 +1143,15 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			attributes.put( "units", "days since 1950-01-01 00:00:00 UTC" );
 			attributes.put( "_FillValue", (float) 999999. ); 
 
-			encoder = new EncoderTimestampD1( writer, columnName, d , attributes);
+
+//			encoder = new EncoderTimestampD1( writer, columnName, d , attributes);
+
+
+			EncodeValue encodeValue = new EncodeTimestampValue(); 
+
+
+			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
+	
 		}
 	
 		// 
