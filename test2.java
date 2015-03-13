@@ -887,6 +887,50 @@ class EncoderFloatD3 implements EncoderD3
 
 
 
+
+// dimension strategy 
+// type strategy...
+// are orthogonal concerns
+
+// But the array is typed on both the type and the value... 
+
+
+
+
+interface EncodeValue
+{
+
+	public void encode( Object A_, Index ima, Map<String, Object> attributes, Object value ); 
+
+}
+
+class EncodeFloatValue implements EncodeValue
+{
+	// value encoder
+	// abstract concept of dimension...
+
+	// assumption that the Object A is a float array
+
+	public void encode( Object A_, Index ima, Map<String, Object> attributes, Object object )
+	{
+		ArrayFloat A = (ArrayFloat) A_;
+
+		if( object == null) {
+			A.setFloat( ima, (float) attributes.get( "_FillValue" ));
+		}
+		else if( object instanceof Float ) {
+			A.setFloat( ima, (float) object);
+		} 
+		else if( object instanceof Double ) {
+			A.setFloat( ima, (float)(double) object);
+		} 
+		else {
+			throw new RuntimeException( "Failed to coerce type" );
+		}
+	}
+}
+
+
 class EncoderFloatD1 implements EncoderD1
 {
 	// IMPORTANT - we could encode the variable name as an attribute and avoid having to pass it.
@@ -901,13 +945,21 @@ class EncoderFloatD1 implements EncoderD1
 		if( dims.size() != 1 ) {
 			throw new RuntimeException( "Expected only 1 dimension" );
 		}
+
+		this.encodeValue = new EncodeFloatValue();
 	}
 
 	final NetcdfFileWriteable writer; 
 	final String variableName; 
 	final ArrayList<Dimension> dims;
 	final Map<String, Object> attributes; 
-	ArrayFloat.D1 A;
+	// ArrayFloat.D1 A;
+
+	// for this class we want it typed on dimension but not the value 
+	// ArrayFloat	 A;
+	Array	 A;
+
+	final EncodeValue encodeValue;
 
 	public void define()
 	{
@@ -915,24 +967,34 @@ class EncoderFloatD1 implements EncoderD1
 		for( Map.Entry< String, Object> entry : attributes.entrySet()) { 
 			writer.addVariableAttribute( variableName, entry.getKey(), entry.getValue().toString() ); 
 		}
+
+		// this is typed on the value type and the dimension. which makes it very hard to pull apart.  
+		// but
+
+		// this is just hideous...
 		this.A = new ArrayFloat.D1( dims.get(0).getLength() );
 	}
 
-	public void addValue( int a, Object object )
+	public void addValue( int a, Object value )
 	{
 		Index ima = A.getIndex();
+		ima.set(a); 
+
+		encodeValue.encode( A, ima, attributes, value ); 
+/*
 		if( object == null) {
-			A.setFloat( ima.set(a), (float) attributes.get( "_FillValue" ));
+			A.setFloat( ima, (float) attributes.get( "_FillValue" ));
 		}
 		else if( object instanceof Float ) {
-			A.setFloat( ima.set(a), (float) object);
+			A.setFloat( ima, (float) object);
 		} 
 		else if( object instanceof Double ) {
-			A.setFloat( ima.set(a), (float)(double) object);
+			A.setFloat( ima, (float)(double) object);
 		} 
 		else {
 			throw new RuntimeException( "Failed to convert type for variable '" + variableName + "'" );
 		}
+*/
 	}
 
 	public void finish() throws Exception
@@ -1258,9 +1320,7 @@ class Timeseries1
 
 		System.out.println( "done determining feature instances " );
 
-
 		// should determine our target types here
-
 	}
 
 
