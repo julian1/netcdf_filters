@@ -902,6 +902,7 @@ interface EncodeValue
 
 	public void encode( Object A_, Index ima, Map<String, Object> attributes, Object value ); 
 
+	public Class type(); 
 }
 
 class EncodeFloatValue implements EncodeValue
@@ -910,6 +911,10 @@ class EncodeFloatValue implements EncodeValue
 	// abstract concept of dimension...
 
 	// assumption that the Object A is a float array
+	public Class type()
+	{
+		return Float.class;
+	}
 
 	public void encode( Object A_, Index ima, Map<String, Object> attributes, Object object )
 	{
@@ -971,8 +976,14 @@ class EncoderFloatD1 implements EncoderD1
 		// this is typed on the value type and the dimension. which makes it very hard to pull apart.  
 		// but
 
-		// this is just hideous...
-		this.A = new ArrayFloat.D1( dims.get(0).getLength() );
+		if( encodeValue.type() == Float.class )
+		{
+			System.out.println( "**** WHOOT it's a float " );
+			this.A = new ArrayFloat.D1( dims.get(0).getLength() );
+		}
+		else {
+			throw new RuntimeException( "Unrecognized encoder type" );
+		}
 	}
 
 	public void addValue( int a, Object value )
