@@ -735,103 +735,6 @@ interface EncoderD1 extends Encoder
 // we can do the same thing on the timeseries table....
 
 
-class EncoderTimestampD1 implements EncoderD1
-{
-	/*
-		we either 
-			- abstract the indexing ... and use same method call...
-			- or specialize the encoder again...
-
-		TIMESERIES 3d always t,lat,lon
-	*/
-
-
-	// abstraction that handles both data for type float, and definining the parameters 
-	// try to keep details about the dimensions out of this, and instead just encode the dimension lengths.
-	// do we want it to 
-
-	// let's stick with float for the moment.
-	// and try to do the 1950 conversion.
-
-	// do we define the netcdf???
-	public EncoderTimestampD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes )
-	{
-		this.writer = writer;
-		this.variableName = variableName; 
-		this.dims = dims;
-		this.attributes = attributes; 
-
-		this.A = null; 
-
-		if( dims.size() != 1 ) {
-			throw new RuntimeException( "Expected only 1 dimension" );
-		}
-	}
-
-	// column name should only be in the mapper. 
-	final NetcdfFileWriteable writer; 
-	final String variableName; 
-	final ArrayList<Dimension> dims;
-	final Map<String, Object> attributes; 
-
-	ArrayFloat.D1 A;
-
-
-	// OK, i think that we want to be passing in the dimensions at the start...
-	public void define()
-	{
-		writer.addVariable(variableName, DataType.FLOAT, dims );
-
-		for( Map.Entry< String, Object> entry : attributes.entrySet()) { 
-			writer.addVariableAttribute( variableName, entry.getKey(), entry.getValue().toString() ); 
-		}
-		this.A = new ArrayFloat.D1( dims.get(0).getLength() );
-	}
-
-	public void addValue( int t, Object object )  // over 1 dimension 
-	{
-		// this needs to be changes
-		if( attributes.get("units").equals( "days since 1950-01-01 00:00:00 UTC" ))
-		{
-			// System.out.println( "*** whoot it's a date " );
-			Index ima = A.getIndex();
-			if( object == null) {
-				A.setFloat( ima.set(t), (float) attributes.get( "_FillValue" ));
-			}
-			else if( object instanceof java.sql.Timestamp ) {
-				A.setFloat( ima.set(t), (float) t );
-			} 
-			else {
-				throw new RuntimeException( "Not a timestamp" );
-			}
-		}
-		else {
-			// only limited case
-			throw new RuntimeException( "Bad date unit" );
-		}
-	}
-
-	public void finish() throws Exception
-	{
-		// assumes writer is in data mode
-		int [] origin = new int[1];
-		writer.write(variableName, origin, A);
-	}
-}
-
-
-
-
-
-
-
-// dimension strategy 
-// type strategy...
-// are orthogonal concerns
-
-// But the array is typed on both the type and the value... 
-
-
 
 
 interface EncodeValue
@@ -839,17 +742,14 @@ interface EncodeValue
 
 	public void encode( Array A, Index ima, Map<String, Object> attributes, Object value ); 
 
-	public Class type(); 
+	public Class targetType(); 
 }
-
-
-
 
 
 
 class EncodeTimestampValue implements EncodeValue
 {
-	public Class type()
+	public Class targetType()
 	{
 		return Float.class;
 	}
@@ -859,8 +759,6 @@ class EncodeTimestampValue implements EncodeValue
 		// this needs to be changes
 		if( attributes.get("units").equals( "days since 1950-01-01 00:00:00 UTC" ))
 		{
-			// System.out.println( "*** whoot it's a date " );
-			// Index ima = A.getIndex();
 			if( value == null) {
 				A.setFloat( ima, (float) attributes.get( "_FillValue" ));
 			}
@@ -882,19 +780,14 @@ class EncodeTimestampValue implements EncodeValue
 
 class EncodeFloatValue implements EncodeValue
 {
-	// value encoder
-	// abstract concept of dimension...
-
 	// change name to targetType 
-	public Class type()
+	public Class targetType()
 	{
 		return Float.class;
 	}
 
 	public void encode( Array A, Index ima, Map<String, Object> attributes, Object value )
 	{
-		// ArrayFloat A = (ArrayFloat) A_;
-
 		if( value == null) {
 			A.setFloat( ima, (float) attributes.get( "_FillValue" ));
 		}
@@ -917,7 +810,7 @@ class EncodeByteValue implements EncodeValue
 	// abstract concept of dimension...
 
 	// assumption that the Object A is a float array
-	public Class type()
+	public Class targetType()
 	{
 		return Byte.class;
 	}
@@ -982,11 +875,11 @@ class EncoderD1_ implements EncoderD1
 
 		// this is typed on the value type and the dimension. which makes it very hard to pull apart.  
 		// but
-		if( encodeValue.type() == Float.class )
+		if( encodeValue.targetType() == Float.class )
 		{
 			this.A = new ArrayFloat.D1( dims.get(0).getLength() );
 		}
-		else if ( encodeValue.type() == Byte.class )
+		else if ( encodeValue.targetType() == Byte.class )
 		{
 			this.A = new ArrayByte.D1( dims.get(0).getLength() );
 		}
@@ -1054,11 +947,11 @@ class EncoderD3_ implements EncoderD3
 	// 	this.A = new ArrayFloat.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
 		// this is typed on the value type and the dimension. which makes it very hard to pull apart.  
 		// but
-		if( encodeValue.type() == Float.class )
+		if( encodeValue.targetType() == Float.class )
 		{
 			this.A = new ArrayFloat.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
 		}
-		else if ( encodeValue.type() == Byte.class )
+		else if ( encodeValue.targetType() == Byte.class )
 		{
 			this.A = new ArrayByte.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
 		}
@@ -1149,12 +1042,10 @@ class ConventionEncodingStrategy implements EncodingStrategy
 
 			EncodeValue encodeValue = new EncodeTimestampValue(); 
 
-
 			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
-	
 		}
-	
-		// 
+
+		// put attributes in the encoder?  no
 
 		else if( columnName.equals("LATITUDE"))
 		{
