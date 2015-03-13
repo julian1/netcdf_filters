@@ -930,10 +930,51 @@ class EncodeFloatValue implements EncodeValue
 			A.setFloat( ima, (float)(double) object);
 		} 
 		else {
-			throw new RuntimeException( "Failed to coerce type" );
+			throw new RuntimeException( "Failed to coerce type to float" );
 		}
 	}
 }
+
+class EncodeByteValue implements EncodeValue
+{
+	// value encoder
+	// abstract concept of dimension...
+
+	// assumption that the Object A is a float array
+	public Class type()
+	{
+		return Byte.class;
+	}
+
+	public void encode( Object A_, Index ima, Map<String, Object> attributes, Object object )
+	{
+		// ArrayByte A = (ArrayByte) A_;
+		Array A = (Array) A_;
+
+		if( object == null) {
+			A.setByte( ima, (byte) attributes.get( "_FillValue" ));
+		}
+		else if(object instanceof Byte)
+		{
+			A.setByte( ima, (byte) object);
+		}
+		else if(object instanceof String && ((String)object).length() == 1) {
+			// coerce string of length 1 to byte
+			String s = (String) object; 
+			Byte ch = s.getBytes()[0];
+			A.setByte(ima, ch);
+		} 
+		else {
+			throw new RuntimeException( "Failed to convert type to byte");
+		}
+	}
+}
+
+
+
+
+
+
 
 
 class EncoderD1_ implements EncoderD1
