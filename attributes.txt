@@ -117,8 +117,13 @@ Choices,
 - issue - helpful, to have a metadata harvest to identify initial starting attribute values
 	for a particular data collection. adapt the metadata harvester?  
 
+-----
+issues - if want to push into geoserver. then attributes will really need to be xml configuration rather  than db.
+			to be db agnostic. 
 
+		aodn scalability?  
 
+		if standalone. 
 
 
 

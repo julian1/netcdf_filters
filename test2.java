@@ -1,7 +1,8 @@
 
 // rm *.class ; javac main.java  ; java main
 
-//  javac test2.java -cp .:netcdfAll-4.2.jar
+// time javac test2.java -cp .:netcdfAll-4.2.jar
+// time java -cp .:postgresql-9.1-901.jdbc4.jar:netcdfAll-4.2.jar  test2 
 
 //import java.io.BufferedReader;
 import java.io.FileReader;
@@ -735,84 +736,177 @@ interface EncoderD1 extends Encoder
 // we can do the same thing on the timeseries table....
 
 
-class EncoderTimestampD1 implements EncoderD1
+
+
+interface EncodeValue
 {
-	/*
-		we either 
-			- abstract the indexing ... and use same method call...
-			- or specialize the encoder again...
 
-		TIMESERIES 3d always t,lat,lon
-	*/
+	public void encode( Array A, Index ima, Map<String, Object> attributes, Object value ); 
+
+	public Class targetType(); 
+}
 
 
-	// abstraction that handles both data for type float, and definining the parameters 
-	// try to keep details about the dimensions out of this, and instead just encode the dimension lengths.
-	// do we want it to 
 
-	// let's stick with float for the moment.
-	// and try to do the 1950 conversion.
-
-	// do we define the netcdf???
-	public EncoderTimestampD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, float fillValue )
+class EncodeTimestampValue implements EncodeValue
+{
+	public Class targetType()
 	{
-		this.writer = writer;
-		this.variableName = variableName; 
-		this.fillValue = fillValue; 
-		this.dims = dims;
-		this.A = null; 
-
-		if( dims.size() != 1 ) {
-			throw new RuntimeException( "Expected only 1 dimension" );
-		}
+		return Float.class;
 	}
 
-	// column name should only be in the mapper. 
-	final NetcdfFileWriteable writer; 
-	final String variableName; 
-	final float fillValue;
-	final ArrayList<Dimension> dims;
-	ArrayFloat.D1 A;
-
-
-	// OK, i think that we want to be passing in the dimensions at the start...
-	public void define()
+	public void encode( Array A, Index ima, Map<String, Object> attributes, Object value )
 	{
-		// assumes writer is in define mode
-		writer.addVariable(variableName, DataType.FLOAT, dims );
-		this.A = new ArrayFloat.D1( dims.get(0).getLength() );
-	}
-
-	public void addValue( int t, Object object )  // over 1 dimension 
-	{
-		Index ima = A.getIndex();
-		if( object == null) {
-			A.setFloat( ima.set(t), fillValue);
+		// this needs to be changes
+		if( attributes.get("units").equals( "days since 1950-01-01 00:00:00 UTC" ))
+		{
+			if( value == null) {
+				A.setFloat( ima, (float) attributes.get( "_FillValue" ));
+			}
+			else if( value instanceof java.sql.Timestamp ) {
+				A.setFloat( ima, (float) 0. );
+			} 
+			else {
+				throw new RuntimeException( "Not a timestamp" );
+			}
 		}
-		else if( object instanceof java.sql.Timestamp ) {
-			A.setFloat( ima.set(t), (float) t );
-		} 
 		else {
-			throw new RuntimeException( "Opps" );
+			// only limited case
+			throw new RuntimeException( "Bad date unit" );
 		}
-	}
-
-	// fill in the name and the fillvalue
-	// change name to write?
-
-	public void finish() throws Exception
-	{
-		// assumes writer is in data mode
-		int [] origin = new int[1];
-		writer.write(variableName, origin, A);
 	}
 }
 
 
 
+class EncodeFloatValue implements EncodeValue
+{
+	// change name to targetType 
+	public Class targetType()
+	{
+		return Float.class;
+	}
+
+	public void encode( Array A, Index ima, Map<String, Object> attributes, Object value )
+	{
+		if( value == null) {
+			A.setFloat( ima, (float) attributes.get( "_FillValue" ));
+		}
+		else if( value instanceof Float ) {
+			A.setFloat( ima, (float) value);
+		} 
+		else if( value instanceof Double ) {
+			A.setFloat( ima, (float)(double) value);
+		} 
+		else {
+			throw new RuntimeException( "Failed to coerce type to float" );
+		}
+	}
+}
 
 
-class EncoderFloatD3 implements EncoderD3
+class EncodeByteValue implements EncodeValue
+{
+	// value encoder
+	// abstract concept of dimension...
+
+	// assumption that the Object A is a float array
+	public Class targetType()
+	{
+		return Byte.class;
+	}
+
+	public void encode( Array A, Index ima, Map<String, Object> attributes, Object value )
+	{
+		// ArrayByte A = (ArrayByte) A_;
+		// Array A = (Array) A_;
+
+		if( value == null) {
+			A.setByte( ima, (byte) attributes.get( "_FillValue" ));
+		}
+		else if(value instanceof Byte)
+		{
+			A.setByte( ima, (byte) value);
+		}
+		else if(value instanceof String && ((String)value).length() == 1) {
+			// coerce string of length 1 to byte
+			String s = (String) value; 
+			Byte ch = s.getBytes()[0];
+			A.setByte(ima, ch);
+		} 
+		else {
+			throw new RuntimeException( "Failed to convert type to byte");
+		}
+	}
+}
+
+
+class EncoderD1_ implements EncoderD1
+{
+	// IMPORTANT - we could encode the variable name as an attribute and avoid having to pass it.
+
+	public EncoderD1_( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, EncodeValue encodeValue )
+	{
+		this.writer = writer;
+		this.variableName = variableName; 
+		this.dims = dims;
+		this.attributes = attributes;
+		this.encodeValue = encodeValue; // new EncodeFloatValue();
+		this.A = null; 
+		if( dims.size() != 1 ) {
+			throw new RuntimeException( "Expected only 1 dimension" );
+		}
+
+	}
+
+	final NetcdfFileWriteable writer; 
+	final String variableName; 
+	final ArrayList<Dimension> dims;
+	final Map<String, Object> attributes; 
+	final EncodeValue encodeValue;
+
+	Array	 A;
+
+	public void define()
+	{
+		writer.addVariable(variableName, DataType.FLOAT, dims);
+		for( Map.Entry< String, Object> entry : attributes.entrySet()) { 
+			writer.addVariableAttribute( variableName, entry.getKey(), entry.getValue().toString() ); 
+		}
+
+		// this is typed on the value type and the dimension. which makes it very hard to pull apart.  
+		// but
+		if( encodeValue.targetType() == Float.class )
+		{
+			this.A = new ArrayFloat.D1( dims.get(0).getLength() );
+		}
+		else if ( encodeValue.targetType() == Byte.class )
+		{
+			this.A = new ArrayByte.D1( dims.get(0).getLength() );
+		}
+		else {
+			throw new RuntimeException( "Unrecognized encoder type" );
+		}
+	}
+
+	public void addValue( int a, Object value )
+	{
+		Index ima = A.getIndex();
+		ima.set(a); 
+		encodeValue.encode( A, ima, attributes, value ); 
+	}
+
+	public void finish() throws Exception
+	{
+		int [] origin = new int[1];
+		writer.write(variableName, origin, A);
+
+		// and write the attribute values ...
+	}
+}
+
+
+class EncoderD3_ implements EncoderD3
 {
 	// abstraction that handles both data for type float, and definining the parameters 
 	// try to keep details about the dimensions out of this, and instead just encode the dimension lengths.
@@ -820,12 +914,14 @@ class EncoderFloatD3 implements EncoderD3
 	// do we want it to 
 
 	// do we define the netcdf???
-	public EncoderFloatD3( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, float fillValue  /* could delegate for other attributes */ )
+	public EncoderD3_( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, EncodeValue encodeValue )
 	{
 		this.writer = writer;
 		this.variableName = variableName; 
-		this.fillValue = fillValue; 
 		this.dims = dims;
+		this.attributes = attributes;
+		this.encodeValue = encodeValue; 
+
 		this.A = null; 
 		if( dims.size() != 3 ) {
 			throw new RuntimeException( "Expected only 1 dimension" );
@@ -835,32 +931,41 @@ class EncoderFloatD3 implements EncoderD3
 	// column name should only be in the mapper. 
 	final NetcdfFileWriteable writer; 
 	final String variableName; 
-	final float fillValue;
 	final ArrayList<Dimension> dims;
-	ArrayFloat.D3 A;
+	final Map<String, Object> attributes; 
+	final EncodeValue encodeValue;
+
+	//ArrayFloat.D3 A;
+	Array	 A;
 
 	public void define()
 	{
 		// assumes writer is in define mode
 		writer.addVariable(variableName, DataType.FLOAT, dims);
-		this.A = new ArrayFloat.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
-	}
+		for( Map.Entry< String, Object> entry : attributes.entrySet()) { 
+			writer.addVariableAttribute( variableName, entry.getKey(), entry.getValue().toString() ); 
+		}
+	// 	this.A = new ArrayFloat.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
+		// this is typed on the value type and the dimension. which makes it very hard to pull apart.  
+		// but
+		if( encodeValue.targetType() == Float.class )
+		{
+			this.A = new ArrayFloat.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
+		}
+		else if ( encodeValue.targetType() == Byte.class )
+		{
+			this.A = new ArrayByte.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
+		}
+		else {
+			throw new RuntimeException( "Unrecognized encoder type" );
+		}
 
-	public void addValue( int a, int b, int c, Object object )  // change name d0,d1 etc
+	}
+	public void addValue( int a, int b, int c, Object value )
 	{
 		Index ima = A.getIndex();
-		if( object == null) {
-			A.setFloat( ima.set(a, b, c), fillValue);
-		}
-		else if( object instanceof Float ) {
-			A.setFloat( ima.set(a, b, c), (float) object);
-		} 
-		else if( object instanceof Double ) {
-			A.setFloat( ima.set(a, b, c), (float)(double) object);
-		} 
-		else {
-			throw new RuntimeException( "Opps" );
-		}
+		ima.set(a, b, c); 
+		encodeValue.encode( A, ima, attributes, value ); 
 	}
 
 	public void finish() throws Exception
@@ -873,173 +978,10 @@ class EncoderFloatD3 implements EncoderD3
 
 
 
-class EncoderFloatD1 implements EncoderD1
-{
-	public EncoderFloatD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, float fillValue  /* could delegate for other attributes */ )
-	{
-		this.writer = writer;
-		this.variableName = variableName; 
-		this.fillValue = fillValue; 
-		this.dims = dims;
-		this.A = null; 
-		if( dims.size() != 1 ) {
-			throw new RuntimeException( "Expected only 1 dimension" );
-		}
-	}
-
-	final NetcdfFileWriteable writer; 
-	final String variableName; 
-	final float fillValue;
-	final ArrayList<Dimension> dims;
-	ArrayFloat.D1 A;
-
-	public void define()
-	{
-		writer.addVariable(variableName, DataType.FLOAT, dims);
-		this.A = new ArrayFloat.D1( dims.get(0).getLength() );
-	}
-
-	public void addValue( int a, Object object )
-	{
-		Index ima = A.getIndex();
-		if( object == null) {
-			A.setFloat( ima.set(a), fillValue);
-		}
-		else if( object instanceof Float ) {
-			A.setFloat( ima.set(a), (float) object);
-		} 
-		else if( object instanceof Double ) {
-			A.setFloat( ima.set(a), (float)(double) object);
-		} 
-		else {
-			throw new RuntimeException( "Failed to convert type for variable '" + variableName + "'" );
-		}
-	}
-
-	public void finish() throws Exception
-	{
-		int [] origin = new int[1];
-		writer.write(variableName, origin, A);
-	}
-}
-
-
-class EncoderByteD1 implements EncoderD1
-{
-	public EncoderByteD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, float fillValue  /* could delegate for other attributes */ )
-	{
-		this.writer = writer;
-		this.variableName = variableName; 
-		this.fillValue = fillValue; 
-		this.dims = dims;
-		this.A = null; 
-		if( dims.size() != 1 ) {
-			throw new RuntimeException( "Expected only 1 dimension" );
-		}
-	}
-
-	final NetcdfFileWriteable writer; 
-	final String variableName; 
-	final float fillValue;
-	final ArrayList<Dimension> dims;
-	ArrayFloat.D1 A;
-
-	public void define()
-	{
-		writer.addVariable(variableName, DataType.BYTE, dims);
-		this.A = new ArrayFloat.D1( dims.get(0).getLength() );
-	}
-
-	public void addValue( int a, Object object )
-	{
-		Index ima = A.getIndex();
-		if( object == null) {
-			A.setFloat( ima.set(a), fillValue);
-		}
-		else if(object instanceof Byte)
-		{
-			A.setByte( ima.set(a), (byte) object);
-		}
-		else if(object instanceof String && ((String)object).length() == 1) {
-			// coerce string of length 1 to byte
-			String s = (String) object; 
-			Byte ch = s.getBytes()[0];
-			A.setByte(ima.set(a), ch);
-		} 
-		else {
-			throw new RuntimeException( "Failed to convert type for variable '" + variableName + "'" );
-		}
-	}
-
-	public void finish() throws Exception
-	{
-		int [] origin = new int[1];
-		writer.write(variableName, origin, A);
-	}
-}
 
 
 
-class EncoderByteD3 implements EncoderD3
-{
-	public EncoderByteD3( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, byte fillValue   )
-	{
-		this.writer = writer;
-		this.variableName = variableName; 
-		this.fillValue = fillValue; 
-		this.dims = dims;
-		this.A = null; 
-		if( dims.size() != 3 ) {
-			throw new RuntimeException( "Expected only 1 dimension" );
-		}
-	}
-
-	// column name should only be in the mapper. 
-	final NetcdfFileWriteable writer; 
-	final String variableName; 
-	final byte fillValue;
-	final ArrayList<Dimension> dims;
-	ArrayByte.D3 A;
-
-	public void define()
-	{
-		// assumes writer is in define mode
-		writer.addVariable(variableName, DataType.BYTE, dims);
-		this.A = new ArrayByte.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
-	}
-
-	public void addValue( int a, int b, int c, Object object )  // change name d0,d1 etc
-	{
-		Index ima = A.getIndex();
-		if( object == null) {
-			A.setByte( ima.set(a, b, c), fillValue);
-		}
-		else if(object instanceof Byte)
-		{
-			A.setByte( ima.set(a, b, c), (byte) object);
-		}
-		else if(object instanceof String && ((String)object).length() == 1) {
-			// coerce string of length 1 to byte
-			String s = (String) object; 
-			Byte ch = s.getBytes()[0];
-			A.setByte(ima.set(a, b, c), ch);
-		} 
-		else {
-			throw new RuntimeException( "Opps" );
-		}
-	}
-
-	public void finish() throws Exception
-	{
-		// assumes writer is in data mode
-		int [] origin = new int[3];
-		writer.write(variableName, origin, A);
-	}
-}
-
-
-
-interface EncodeStrategy
+interface EncodingStrategy
 {
 	// it's both a decode and encode strategy . 
 
@@ -1047,11 +989,11 @@ interface EncodeStrategy
 }
 
 
-class ConventionEncodeStrategy implements EncodeStrategy
+class ConventionEncodingStrategy implements EncodingStrategy
 {
 	// Convention over configuration, will delegate for configuration...
 
-	public ConventionEncodeStrategy( NetcdfFileWriteable writer, ArrayList<Dimension> dims ) 
+	public ConventionEncodingStrategy( NetcdfFileWriteable writer, ArrayList<Dimension> dims ) 
 	{ 
 		this.writer = writer;
 		this.dims = dims;
@@ -1067,70 +1009,132 @@ class ConventionEncodeStrategy implements EncodeStrategy
 	// to multiple variables - eg. the_geometry and LATITUTDE AND LONGTITUDE...
 	public Encoder getEncoder( String columnName, Class columnType )
 	{
+		// class is an attempt to try to guess heuristically, how to encode. 
+		// we can populate. 
+
 		// delegate to configuration...
 		// otherwise apply convention rules
 		// it's the db column name and type
 		// System.out.println ( "name '" + columnName + "'  type '" + columnType + "'"  );
 
-		Encoder type = null; 
+		// think that we need to fill this in with SAX...
+		// then we query for what we want.
+
+		Encoder encoder = null; 
 
 		if( columnName.equals("TIME"))
 		{
+			// in main table, but is a dimension.
+
 			System.out.println ( "WHOOT ** got time " );
 
 			// should lookup the dimension by name
 			// we've set it to take all the dimensions
 			ArrayList<Dimension> d = new ArrayList<Dimension>();
 			d.add( dims.get( 0) );
-			type = new EncoderTimestampD1( writer, columnName, d , (float) 99999.  );
+
+			Map<String, Object> attributes = new HashMap<String, Object>();
+			attributes.put( "units", "days since 1950-01-01 00:00:00 UTC" );
+			attributes.put( "_FillValue", (float) 999999. ); 
+
+
+//			encoder = new EncoderTimestampD1( writer, columnName, d , attributes);
+
+
+			EncodeValue encodeValue = new EncodeTimestampValue(); 
+
+			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
 		}
+
+		// put attributes in the encoder?  no
+
 		else if( columnName.equals("LATITUDE"))
 		{
+			// need to look these up, by name
 			ArrayList<Dimension> d = new ArrayList<Dimension>();
 			d.add( dims.get( 1) );
-			type = new EncoderFloatD1( writer, columnName, d, (float)999999.);
+
+			Map<String, Object> attributes = new HashMap<String, Object>();
+			attributes.put( "_FillValue", (float) 999999. ); 
+
+			EncodeValue encodeValue = new EncodeFloatValue();
+
+			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
 		}
 		else if( columnName.equals("LONGITUDE"))
 		{
 			ArrayList<Dimension> d = new ArrayList<Dimension>();
 			d.add( dims.get( 2) );
-			type = new EncoderFloatD1( writer, columnName, d, (float)999999.);
+
+			Map<String, Object> attributes = new HashMap<String, Object>();
+			attributes.put( "_FillValue", (float) 999999. ); 
+
+			EncodeValue encodeValue = new EncodeFloatValue();
+
+			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
+
 		}
 		else if( columnName.equals("LATITUDE_quality_control"))
 		{
 			ArrayList<Dimension> d = new ArrayList<Dimension>();
 			d.add( dims.get( 1) );
-			type = new EncoderByteD1( writer, columnName, d, (byte)0xff );
+	
+			Map<String, Object> attributes = new HashMap<String, Object>();
+			attributes.put( "_FillValue", (byte) 0xff ); 
+
+	
+			EncodeValue encodeValue = new EncodeByteValue();
+			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
+
+		//	encoder = new encoderByteD1( writer, columnName, d, attributes ); //(byte)0xff );
 		}
 		else if( columnName.equals("LONGITUDE_quality_control"))
 		{
 			ArrayList<Dimension> d = new ArrayList<Dimension>();
 			d.add( dims.get( 2) );
-			type = new EncoderByteD1( writer, columnName, d, (byte)0xff );
+
+			Map<String, Object> attributes = new HashMap<String, Object>();
+			attributes.put( "_FillValue", (byte) 0xff ); 
+
+			EncodeValue encodeValue = new EncodeByteValue();
+
+			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
+
+			// encoder = new EncoderByteD1( writer, columnName, d, attributes );
 		}
+
+
 
 		else if( Pattern.compile(".*quality_control$" ).matcher( columnName) .matches()) 
 		{
-			// postgres varchar(1), JDBC string, but should be treated as netcdf byte
-			type = new EncoderByteD3( writer, columnName, dims , (byte)0xff );
+			Map<String, Object> attributes = new HashMap<String, Object>();
+			attributes.put( "_FillValue", (byte) 0xff ); 
+	
+			EncodeValue encodeValue = new EncodeByteValue();
+			encoder = new EncoderD3_( writer, columnName, dims , attributes, encodeValue );
+
 		}
 		else if( Pattern.compile("^[A-Z]+.*" ).matcher( columnName).matches()) 
 		{
+			Map<String, Object> attributes = new HashMap<String, Object>();
+			attributes.put( "_FillValue", (float) 999999. ); 
+
 			System.out.println( "normal var - " + columnName );
-			if( columnType.equals(Float.class)) {
-				type = new EncoderFloatD3( writer, columnName, dims , (float)999999.  );
-			}
-			else if( columnType.equals(Double.class)) {
-				type = new EncoderFloatD3( writer, columnName, dims , (float)999999.  );
+			if( columnType.equals(Float.class)
+				||	columnType.equals(Double.class)
+			) {
+
+				EncodeValue encodeValue = new EncodeFloatValue();
+				encoder = new EncoderD3_( writer, columnName, dims , attributes, encodeValue );
 			}
 			// other...
 		}
 /*
-		if ( type == null ){
-			type = new EncoderIgnore(); 
+		if ( encoder == null ){
+			encoder = new EncoderIgnore(); 
 		}
 */
-		return type;
+		return encoder;
 	}
 }
 
@@ -1192,9 +1196,7 @@ class Timeseries1
 
 		System.out.println( "done determining feature instances " );
 
-
 		// should determine our target types here
-
 	}
 
 
@@ -1213,7 +1215,7 @@ class Timeseries1
 		Map<String, EncoderD3> encodersD3, 
 		Map<String, EncoderD1> encodersD1 ,
 
-		EncodeStrategy encoderStrategy  
+		EncodingStrategy encodingStrategy  
 		 ) throws Exception
 	{
 		String query = "SELECT * FROM " + table + " limit 0"; 
@@ -1228,7 +1230,7 @@ class Timeseries1
 			String columnName = m.getColumnName(i); 
 			// issue is that we're going to be calling it multiple times over????
 			Class clazz = Class.forName(m.getColumnClassName(i));
-			Encoder encoder = encoderStrategy.getEncoder( columnName, clazz ); 
+			Encoder encoder = encodingStrategy.getEncoder( columnName, clazz ); 
 			if( encoder != null ) { 
 				encoders.put( columnName, encoder );
 
@@ -1297,15 +1299,15 @@ class Timeseries1
 		// this needs to be abstracted ...
 
 		// we shouldn't be instantiating this thing here...
-		EncodeStrategy encoderStrategy = new ConventionEncodeStrategy( writer, dims ); 
+		EncodingStrategy encodingStrategy = new ConventionEncodingStrategy( writer, dims ); 
 
 		Map<String, Encoder> encoders = new HashMap<String, Encoder>();
 		Map<String, EncoderD3> encodersD3 = new HashMap<String, EncoderD3>();
 		Map<String, EncoderD1> encodersD1 = new HashMap<String, EncoderD1>();
 
 
-		doDefinitionStuff( conn, "anmn_ts.timeseries", encoders, encodersD3, encodersD1 , encoderStrategy  ); 
-//		doDefinitionStuff( conn, "anmn_ts.measurement", encoders, encodersD3, encodersD1 , encoderStrategy  ); 
+		doDefinitionStuff( conn, "anmn_ts.timeseries", encoders, encodersD3, encodersD1 , encodingStrategy  ); 
+		doDefinitionStuff( conn, "anmn_ts.measurement", encoders, encodersD3, encodersD1 , encodingStrategy  ); 
 	
 
 		// define
@@ -1318,7 +1320,7 @@ class Timeseries1
 
 
 		// measurement data	
-		if( false )
+		if( true )
 		{
 			// sql stuff
 			// need to encode the additional parameter...
