@@ -25,9 +25,14 @@ WHAT'S DONE
 - netcdf encoder
 - localized convention/ config strategy
 - experimented with a couple of query approaches favor time to start streaming, total time etc. 
-
 - done - write required attributes with strategy
 
+-----
+	http://www.unidata.ucar.edu/software/thredds/v4.3/netcdf-java/reference/faq.html
+
+	Perhaps Easier way to create the array?  
+		Array.factory(DataType dataType, int[] shape, Object javaArray);
+			
 ---
 TODO
 
@@ -35,9 +40,10 @@ TODO
 - think we have to invert it, instead of trying to infer, use an explicit configuration.
 	- It's part of the task.
 	- meaning use spring.
-- write multiple files (and get the writable instantiation working ) (pass at the time). 
+- done - write multiple files (and get the writable instantiation working ) (pass at the time). 
 - compose with spring ?
 
+-  (cant but have abstracted out) do the netcdf generation in memory
 
 - get dates correctly encoded  (to enable verificiation of filter date range)
 - pass table as paraemter to encoder strategy (not sure)

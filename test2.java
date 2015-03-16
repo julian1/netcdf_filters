@@ -689,7 +689,7 @@ class MyType
 
 
 
-interface Encoder
+interface IEncoder
 {
 	// change name VarEncoder
 
@@ -702,7 +702,7 @@ interface Encoder
 }
 
 
-interface EncoderD3 extends Encoder
+interface IEncoderD3 extends IEncoder
 {
 	// change name VarEncoder
 
@@ -714,7 +714,7 @@ interface EncoderD3 extends Encoder
 }
 
 
-interface EncoderD1 extends Encoder
+interface IEncoderD1 extends IEncoder
 {
 	public void addValue( int a, Object object );  // over 1 dimension 
 }
@@ -842,7 +842,7 @@ class EncodeByteValue implements EncodeValue
 }
 
 
-class EncoderD1_ implements EncoderD1
+class EncoderD1_ implements IEncoderD1
 {
 	// IMPORTANT - we could encode the variable name as an attribute and avoid having to pass it.
 
@@ -907,7 +907,7 @@ class EncoderD1_ implements EncoderD1
 }
 
 
-class EncoderD3_ implements EncoderD3
+class EncoderD3_ implements IEncoderD3
 {
 	// abstraction that handles both data for type float, and definining the parameters 
 	// try to keep details about the dimensions out of this, and instead just encode the dimension lengths.
@@ -986,7 +986,7 @@ interface EncodingStrategy
 {
 	// it's both a decode and encode strategy . 
 
-	public Encoder getEncoder( String variableName, Class variableType ); 
+	public IEncoder getEncoder( String variableName, Class variableType ); 
 }
 
 
@@ -1008,7 +1008,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 
 	// we might need to return a list, if a single column type can map 
 	// to multiple variables - eg. the_geometry and LATITUTDE AND LONGTITUDE...
-	public Encoder getEncoder( String columnName, Class columnType )
+	public IEncoder getEncoder( String columnName, Class columnType )
 	{
 		// class is an attempt to try to guess heuristically, how to encode. 
 		// we can populate. 
@@ -1021,7 +1021,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 		// think that we need to fill this in with SAX...
 		// then we query for what we want.
 
-		Encoder encoder = null; 
+		IEncoder encoder = null; 
 
 		if( columnName.equals("TIME"))
 		{
@@ -1242,9 +1242,9 @@ class Timeseries1
 	
 		String table,	
 
-		Map<String, Encoder> encoders, 
-		Map<String, EncoderD3> encodersD3, 
-		Map<String, EncoderD1> encodersD1 ,
+		Map<String, IEncoder> encoders, 
+		Map<String, IEncoderD3> encodersD3, 
+		Map<String, IEncoderD1> encodersD1 ,
 
 		EncodingStrategy encodingStrategy  
 		 ) throws Exception
@@ -1261,14 +1261,14 @@ class Timeseries1
 			String columnName = m.getColumnName(i); 
 			// issue is that we're going to be calling it multiple times over????
 			Class clazz = Class.forName(m.getColumnClassName(i));
-			Encoder encoder = encodingStrategy.getEncoder( columnName, clazz ); 
+			IEncoder encoder = encodingStrategy.getEncoder( columnName, clazz ); 
 			if( encoder != null ) { 
 				encoders.put( columnName, encoder );
 
-				if( encoder instanceof EncoderD3)
-					encodersD3.put( columnName, (EncoderD3) encoder ); 
-				else if ( encoder instanceof EncoderD1)
-					encodersD1.put( columnName, (EncoderD1)encoder ); 
+				if( encoder instanceof IEncoderD3)
+					encodersD3.put( columnName, (IEncoderD3) encoder ); 
+				else if ( encoder instanceof IEncoderD1)
+					encodersD1.put( columnName, (IEncoderD1)encoder ); 
 				else {
 					throw new RuntimeException( "Unknown Encoder type for column '" + columnName + "'" );
 				}				
@@ -1332,9 +1332,9 @@ class Timeseries1
 		// we shouldn't be instantiating this thing here...
 		EncodingStrategy encodingStrategy = new ConventionEncodingStrategy( writer, dims ); 
 
-		Map<String, Encoder> encoders = new HashMap<String, Encoder>();
-		Map<String, EncoderD3> encodersD3 = new HashMap<String, EncoderD3>();
-		Map<String, EncoderD1> encodersD1 = new HashMap<String, EncoderD1>();
+		Map<String, IEncoder> encoders = new HashMap<String, IEncoder>();
+		Map<String, IEncoderD3> encodersD3 = new HashMap<String, IEncoderD3>();
+		Map<String, IEncoderD1> encodersD1 = new HashMap<String, IEncoderD1>();
 
 
 		doDefinitionStuff( conn, "anmn_ts.timeseries", encoders, encodersD3, encodersD1 , encodingStrategy  ); 
@@ -1342,7 +1342,7 @@ class Timeseries1
 	
 
 		// define
-		for ( Encoder encoder: encoders.values()) {
+		for ( IEncoder encoder: encoders.values()) {
 			encoder.define();
 		}
 
@@ -1370,7 +1370,7 @@ class Timeseries1
 				for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
 					// 3d values
 					for ( int i = 1 ; i <= numColumns ; i++ ) {
-						EncoderD3 encoder = encodersD3.get(m.getColumnName(i)); 
+						IEncoderD3 encoder = encodersD3.get(m.getColumnName(i)); 
 						if( encoder != null) 
 							encoder.addValue( time, lat, lon, rs.getObject( i));
 					}
@@ -1378,7 +1378,7 @@ class Timeseries1
 
 				// 1d values
 				for ( int i = 1 ; i <= numColumns ; i++ ) {
-					EncoderD1 encoder = encodersD1.get(m.getColumnName(i)); 
+					IEncoderD1 encoder = encodersD1.get(m.getColumnName(i)); 
 					if( encoder != null) 
 						encoder.addValue( time, rs.getObject( i));
 				}
@@ -1402,14 +1402,14 @@ class Timeseries1
 			rs.next(); 
 			// 1d values
 			for ( int i = 1 ; i <= numColumns ; i++ ) {
-				EncoderD1 encoder = encodersD1.get(m.getColumnName(i)); 
+				IEncoderD1 encoder = encodersD1.get(m.getColumnName(i)); 
 				if( encoder != null ) 
 					encoder.addValue(0, rs.getObject(i));
 			}
 		}
 
 		// write values to netcdf
-		for ( Encoder encoder: encoders.values()) {
+		for ( IEncoder encoder: encoders.values()) {
 			encoder.finish();
 		}
 
