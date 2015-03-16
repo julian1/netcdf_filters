@@ -1248,7 +1248,7 @@ class Timeseries1
 	}
 
 
-	public void get() throws Exception
+	public NetcdfFileWriteable get() throws Exception
 	{
 		// code organized so we only iterate over the recordset returned by the query once
 
@@ -1384,8 +1384,13 @@ class Timeseries1
 
 		System.out.println( "done writing data" );
 
+
+
+
 		// close
 		writer.close();
+	
+		return writer; 
 	}
 
 
@@ -1446,7 +1451,12 @@ public class test2 {
 		// Timeseries timeseries = new Timeseries( parser, translate, conn ); 
 
 		timeseries.init();	
-		timeseries.get();	
+
+		NetcdfFileWriteable writer = null;
+		do {  
+			writer = timeseries.get();	
+		}
+		while( writer != null );
 
 	}
 
