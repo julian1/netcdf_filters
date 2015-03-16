@@ -1,7 +1,8 @@
 
 // rm *.class ; javac main.java  ; java main
 
-//  javac test2.java -cp .:netcdfAll-4.2.jar
+// time javac test2.java -cp .:netcdfAll-4.2.jar
+// time java -cp .:postgresql-9.1-901.jdbc4.jar:netcdfAll-4.2.jar  test2 
 
 //import java.io.BufferedReader;
 import java.io.FileReader;
