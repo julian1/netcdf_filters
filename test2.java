@@ -7,6 +7,7 @@
 //import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.InputStream ;
+import java.io.IOException;
 
 import java.io.FileInputStream;
 import java.io.BufferedInputStream;
@@ -59,7 +60,7 @@ import java.util.regex.Matcher;
 // or leave the value there...
 
 
-interface Visitor
+interface IVisitor
 {
 	public void visit( ExprInteger expr );
 	public void visit( ExprProc expr );
@@ -74,7 +75,7 @@ interface Visitor
 interface IExpression
 {
 	public int getPosition() ;
-	public void accept( Visitor v ) ;
+	public void accept( IVisitor v ) ;
 }
 
 class ExprSymbol implements IExpression
@@ -86,7 +87,7 @@ class ExprSymbol implements IExpression
 	}
 
 	public int getPosition() { return pos; }
-	public void accept( Visitor v )  { v.visit( this); }
+	public void accept( IVisitor v )  { v.visit( this); }
 
 	final int pos;
 	final String value; //
@@ -101,7 +102,7 @@ class ExprInteger implements IExpression
 	}
 
 	public int getPosition() { return pos; }
-	public void accept( Visitor v )  { v.visit( this); }
+	public void accept( IVisitor v )  { v.visit( this); }
 
 	final int pos;
 	final int value; //
@@ -116,7 +117,7 @@ class ExprTimestamp implements IExpression
 	}
 
 	public int getPosition() { return pos; }
-	public void accept( Visitor v )  { v.visit( this); }
+	public void accept( IVisitor v )  { v.visit( this); }
 
 	final int pos;
 	final Timestamp value; //
@@ -132,7 +133,7 @@ class ExprLiteral implements IExpression
 	}
 
 	public int getPosition() { return pos; }
-	public void accept( Visitor v )  { v.visit( this); }
+	public void accept( IVisitor v )  { v.visit( this); }
 	final int pos;
 	final String value; //
 }
@@ -146,7 +147,7 @@ class ExprWhite implements IExpression
 		pos = pos_;
 	}
 	public int getPosition() { return pos; }
-	public void visit( Visitor v )  { }
+	public void visit( IVisitor v )  { }
 	int pos;
 }
 */
@@ -162,7 +163,7 @@ class ExprProc implements IExpression
 	}
 
 	public int getPosition() { return pos; }
-	public void accept( Visitor v )  { v.visit( this); }
+	public void accept( IVisitor v )  { v.visit( this); }
 
 	final int		pos;
 	final String symbol;
@@ -389,7 +390,7 @@ class Parser
 
 
 
-class PrettyPrinterVisitor implements Visitor
+class PrettyPrinterVisitor implements IVisitor
 {
 	// should take the stream on the constructor
 
@@ -428,7 +429,7 @@ class PrettyPrinterVisitor implements Visitor
 
 
 
-class PostgresGenerationVisitor implements Visitor
+class PostgresGenerationVisitor implements IVisitor
 {
 	// rename PGDialectSelectionGenerator
 
@@ -688,7 +689,7 @@ class MyType
 
 
 
-interface Encoder
+interface IEncoder
 {
 	// change name VarEncoder
 
@@ -701,7 +702,7 @@ interface Encoder
 }
 
 
-interface EncoderD3 extends Encoder
+interface IEncoderD3 extends IEncoder
 {
 	// change name VarEncoder
 
@@ -713,7 +714,7 @@ interface EncoderD3 extends Encoder
 }
 
 
-interface EncoderD1 extends Encoder
+interface IEncoderD1 extends IEncoder
 {
 	public void addValue( int a, Object object );  // over 1 dimension 
 }
@@ -738,7 +739,7 @@ interface EncoderD1 extends Encoder
 
 
 
-interface EncodeValue
+interface IEncodeValue
 {
 
 	public void encode( Array A, Index ima, Map<String, Object> attributes, Object value ); 
@@ -748,7 +749,7 @@ interface EncodeValue
 
 
 
-class EncodeTimestampValue implements EncodeValue
+class EncodeTimestampValue implements IEncodeValue
 {
 	public Class targetType()
 	{
@@ -779,7 +780,7 @@ class EncodeTimestampValue implements EncodeValue
 
 
 
-class EncodeFloatValue implements EncodeValue
+class EncodeFloatValue implements IEncodeValue
 {
 	// change name to targetType 
 	public Class targetType()
@@ -805,7 +806,7 @@ class EncodeFloatValue implements EncodeValue
 }
 
 
-class EncodeByteValue implements EncodeValue
+class EncodeByteValue implements IEncodeValue
 {
 	// value encoder
 	// abstract concept of dimension...
@@ -841,11 +842,11 @@ class EncodeByteValue implements EncodeValue
 }
 
 
-class EncoderD1_ implements EncoderD1
+class EncoderD1_ implements IEncoderD1
 {
 	// IMPORTANT - we could encode the variable name as an attribute and avoid having to pass it.
 
-	public EncoderD1_( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, EncodeValue encodeValue )
+	public EncoderD1_( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IEncodeValue encodeValue )
 	{
 		this.writer = writer;
 		this.variableName = variableName; 
@@ -863,7 +864,7 @@ class EncoderD1_ implements EncoderD1
 	final String variableName; 
 	final ArrayList<Dimension> dims;
 	final Map<String, Object> attributes; 
-	final EncodeValue encodeValue;
+	final IEncodeValue encodeValue;
 
 	Array	 A;
 
@@ -906,7 +907,7 @@ class EncoderD1_ implements EncoderD1
 }
 
 
-class EncoderD3_ implements EncoderD3
+class EncoderD3_ implements IEncoderD3
 {
 	// abstraction that handles both data for type float, and definining the parameters 
 	// try to keep details about the dimensions out of this, and instead just encode the dimension lengths.
@@ -914,7 +915,7 @@ class EncoderD3_ implements EncoderD3
 	// do we want it to 
 
 	// do we define the netcdf???
-	public EncoderD3_( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, EncodeValue encodeValue )
+	public EncoderD3_( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IEncodeValue encodeValue )
 	{
 		this.writer = writer;
 		this.variableName = variableName; 
@@ -933,7 +934,7 @@ class EncoderD3_ implements EncoderD3
 	final String variableName; 
 	final ArrayList<Dimension> dims;
 	final Map<String, Object> attributes; 
-	final EncodeValue encodeValue;
+	final IEncodeValue encodeValue;
 
 	//ArrayFloat.D3 A;
 	Array	 A;
@@ -981,15 +982,15 @@ class EncoderD3_ implements EncoderD3
 
 
 
-interface EncodingStrategy
+interface IEncodingStrategy
 {
 	// it's both a decode and encode strategy . 
 
-	public Encoder getEncoder( String variableName, Class variableType ); 
+	public IEncoder getEncoder( String variableName, Class variableType ); 
 }
 
 
-class ConventionEncodingStrategy implements EncodingStrategy
+class ConventionEncodingStrategy implements IEncodingStrategy
 {
 	// Convention over configuration, will delegate for configuration...
 
@@ -1007,7 +1008,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 
 	// we might need to return a list, if a single column type can map 
 	// to multiple variables - eg. the_geometry and LATITUTDE AND LONGTITUDE...
-	public Encoder getEncoder( String columnName, Class columnType )
+	public IEncoder getEncoder( String columnName, Class columnType )
 	{
 		// class is an attempt to try to guess heuristically, how to encode. 
 		// we can populate. 
@@ -1020,7 +1021,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 		// think that we need to fill this in with SAX...
 		// then we query for what we want.
 
-		Encoder encoder = null; 
+		IEncoder encoder = null; 
 
 		if( columnName.equals("TIME"))
 		{
@@ -1041,7 +1042,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 //			encoder = new EncoderTimestampD1( writer, columnName, d , attributes);
 
 
-			EncodeValue encodeValue = new EncodeTimestampValue(); 
+			IEncodeValue encodeValue = new EncodeTimestampValue(); 
 
 			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
 		}
@@ -1057,7 +1058,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.put( "_FillValue", (float) 999999. ); 
 
-			EncodeValue encodeValue = new EncodeFloatValue();
+			IEncodeValue encodeValue = new EncodeFloatValue();
 
 			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
 		}
@@ -1069,7 +1070,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.put( "_FillValue", (float) 999999. ); 
 
-			EncodeValue encodeValue = new EncodeFloatValue();
+			IEncodeValue encodeValue = new EncodeFloatValue();
 
 			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
 
@@ -1083,7 +1084,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			attributes.put( "_FillValue", (byte) 0xff ); 
 
 	
-			EncodeValue encodeValue = new EncodeByteValue();
+			IEncodeValue encodeValue = new EncodeByteValue();
 			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
 
 		//	encoder = new encoderByteD1( writer, columnName, d, attributes ); //(byte)0xff );
@@ -1096,7 +1097,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.put( "_FillValue", (byte) 0xff ); 
 
-			EncodeValue encodeValue = new EncodeByteValue();
+			IEncodeValue encodeValue = new EncodeByteValue();
 
 			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
 
@@ -1110,7 +1111,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.put( "_FillValue", (byte) 0xff ); 
 	
-			EncodeValue encodeValue = new EncodeByteValue();
+			IEncodeValue encodeValue = new EncodeByteValue();
 			encoder = new EncoderD3_( writer, columnName, dims , attributes, encodeValue );
 
 		}
@@ -1124,7 +1125,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 				||	columnType.equals(Double.class)
 			) {
 
-				EncodeValue encodeValue = new EncodeFloatValue();
+				IEncodeValue encodeValue = new EncodeFloatValue();
 				encoder = new EncoderD3_( writer, columnName, dims , attributes, encodeValue );
 			}
 			// other...
@@ -1140,11 +1141,40 @@ class ConventionEncodingStrategy implements EncodingStrategy
 
 
 
+interface ICreateWritable 
+{
+	public NetcdfFileWriteable create( )  throws IOException ; 
+}
+
+
+class CreateWritable implements  ICreateWritable
+{
+	// NetcdfFileWriteable is not an abstraction over a stream!. instead it insists on being a file...
+
+	public NetcdfFileWriteable create() throws IOException 
+	{
+		System.out.println( "creating writer" );
+		// netcdf stuff
+		String filename = "testWrite.nc";
+
+		return NetcdfFileWriteable.createNew(filename, false);
+	}
+
+	// reopen as byte stream and return?
+	// or add to a stream...
+}
+
+
+
+
+
 class Timeseries1
 {
 	Parser parser;				// change name to expressionParser or SelectionParser
 	IDialectTranslate translate ;		// will also load up the parameters?
 	Connection conn;
+
+	ICreateWritable createWritable; // generate a writiable 
 	// Encoder
 	// Order criterion (actually a projection bit) 
 
@@ -1155,12 +1185,13 @@ class Timeseries1
 	ResultSet featureInstances;
 
 
-	public Timeseries1( Parser parser, IDialectTranslate translate, Connection conn ) {
+	public Timeseries1( Parser parser, IDialectTranslate translate, Connection conn, ICreateWritable createWritable ) {
 		// we need to inject the selector ...
 		// 
 		this.parser = parser;
 		this.translate = translate; // sqlEncode.. dialect... specialization
 		this.conn = conn;
+		this.createWritable = createWritable;
 	
 		featureInstances = null;
 		selection_expr = null;
@@ -1211,11 +1242,11 @@ class Timeseries1
 	
 		String table,	
 
-		Map<String, Encoder> encoders, 
-		Map<String, EncoderD3> encodersD3, 
-		Map<String, EncoderD1> encodersD1 ,
+		Map<String, IEncoder> encoders, 
+		Map<String, IEncoderD3> encodersD3, 
+		Map<String, IEncoderD1> encodersD1 ,
 
-		EncodingStrategy encodingStrategy  
+		IEncodingStrategy encodingStrategy  
 		 ) throws Exception
 	{
 		String query = "SELECT * FROM " + table + " limit 0"; 
@@ -1230,14 +1261,14 @@ class Timeseries1
 			String columnName = m.getColumnName(i); 
 			// issue is that we're going to be calling it multiple times over????
 			Class clazz = Class.forName(m.getColumnClassName(i));
-			Encoder encoder = encodingStrategy.getEncoder( columnName, clazz ); 
+			IEncoder encoder = encodingStrategy.getEncoder( columnName, clazz ); 
 			if( encoder != null ) { 
 				encoders.put( columnName, encoder );
 
-				if( encoder instanceof EncoderD3)
-					encodersD3.put( columnName, (EncoderD3) encoder ); 
-				else if ( encoder instanceof EncoderD1)
-					encodersD1.put( columnName, (EncoderD1)encoder ); 
+				if( encoder instanceof IEncoderD3)
+					encodersD3.put( columnName, (IEncoderD3) encoder ); 
+				else if ( encoder instanceof IEncoderD1)
+					encodersD1.put( columnName, (IEncoderD1)encoder ); 
 				else {
 					throw new RuntimeException( "Unknown Encoder type for column '" + columnName + "'" );
 				}				
@@ -1248,7 +1279,7 @@ class Timeseries1
 	}
 
 
-	public void get() throws Exception
+	public NetcdfFileWriteable get() throws Exception
 	{
 		// code organized so we only iterate over the recordset returned by the query once
 
@@ -1276,11 +1307,11 @@ class Timeseries1
 			count = (int)(long) rs.getObject(1); 
 		}
 
+		/*
+			need a strategy as to where to create these files
+		*/
 
-		System.out.println( "creating writer" );
-		// netcdf stuff
-		String filename = "testWrite.nc";
-		NetcdfFileWriteable writer = NetcdfFileWriteable.createNew(filename, false);
+		NetcdfFileWriteable writer = createWritable.create();
 
 		// we have to encode these values as well.
 
@@ -1299,11 +1330,11 @@ class Timeseries1
 		// this needs to be abstracted ...
 
 		// we shouldn't be instantiating this thing here...
-		EncodingStrategy encodingStrategy = new ConventionEncodingStrategy( writer, dims ); 
+		IEncodingStrategy encodingStrategy = new ConventionEncodingStrategy( writer, dims ); 
 
-		Map<String, Encoder> encoders = new HashMap<String, Encoder>();
-		Map<String, EncoderD3> encodersD3 = new HashMap<String, EncoderD3>();
-		Map<String, EncoderD1> encodersD1 = new HashMap<String, EncoderD1>();
+		Map<String, IEncoder> encoders = new HashMap<String, IEncoder>();
+		Map<String, IEncoderD3> encodersD3 = new HashMap<String, IEncoderD3>();
+		Map<String, IEncoderD1> encodersD1 = new HashMap<String, IEncoderD1>();
 
 
 		doDefinitionStuff( conn, "anmn_ts.timeseries", encoders, encodersD3, encodersD1 , encodingStrategy  ); 
@@ -1311,7 +1342,7 @@ class Timeseries1
 	
 
 		// define
-		for ( Encoder encoder: encoders.values()) {
+		for ( IEncoder encoder: encoders.values()) {
 			encoder.define();
 		}
 
@@ -1339,7 +1370,7 @@ class Timeseries1
 				for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
 					// 3d values
 					for ( int i = 1 ; i <= numColumns ; i++ ) {
-						EncoderD3 encoder = encodersD3.get(m.getColumnName(i)); 
+						IEncoderD3 encoder = encodersD3.get(m.getColumnName(i)); 
 						if( encoder != null) 
 							encoder.addValue( time, lat, lon, rs.getObject( i));
 					}
@@ -1347,7 +1378,7 @@ class Timeseries1
 
 				// 1d values
 				for ( int i = 1 ; i <= numColumns ; i++ ) {
-					EncoderD1 encoder = encodersD1.get(m.getColumnName(i)); 
+					IEncoderD1 encoder = encodersD1.get(m.getColumnName(i)); 
 					if( encoder != null) 
 						encoder.addValue( time, rs.getObject( i));
 				}
@@ -1371,21 +1402,26 @@ class Timeseries1
 			rs.next(); 
 			// 1d values
 			for ( int i = 1 ; i <= numColumns ; i++ ) {
-				EncoderD1 encoder = encodersD1.get(m.getColumnName(i)); 
+				IEncoderD1 encoder = encodersD1.get(m.getColumnName(i)); 
 				if( encoder != null ) 
 					encoder.addValue(0, rs.getObject(i));
 			}
 		}
 
 		// write values to netcdf
-		for ( Encoder encoder: encoders.values()) {
+		for ( IEncoder encoder: encoders.values()) {
 			encoder.finish();
 		}
 
 		System.out.println( "done writing data" );
 
+
+
+
 		// close
 		writer.close();
+	
+		return writer; 
 	}
 
 
@@ -1441,12 +1477,19 @@ public class test2 {
 		IDialectTranslate translate = new  PostgresDialectTranslate();
 
 		Connection conn = getConn();
+
+		ICreateWritable createWritable = new CreateWritable();  
 	
-		Timeseries1 timeseries = new Timeseries1( parser, translate, conn ); 
+		Timeseries1 timeseries = new Timeseries1( parser, translate, conn, createWritable ); 
 		// Timeseries timeseries = new Timeseries( parser, translate, conn ); 
 
 		timeseries.init();	
-		timeseries.get();	
+
+		NetcdfFileWriteable writer = null;
+		do {  
+			writer = timeseries.get();	
+		}
+		while( writer != null );
 
 	}
 
