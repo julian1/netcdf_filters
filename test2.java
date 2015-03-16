@@ -739,7 +739,7 @@ interface IEncoderD1 extends IEncoder
 
 
 
-interface EncodeValue
+interface IEncodeValue
 {
 
 	public void encode( Array A, Index ima, Map<String, Object> attributes, Object value ); 
@@ -749,7 +749,7 @@ interface EncodeValue
 
 
 
-class EncodeTimestampValue implements EncodeValue
+class EncodeTimestampValue implements IEncodeValue
 {
 	public Class targetType()
 	{
@@ -780,7 +780,7 @@ class EncodeTimestampValue implements EncodeValue
 
 
 
-class EncodeFloatValue implements EncodeValue
+class EncodeFloatValue implements IEncodeValue
 {
 	// change name to targetType 
 	public Class targetType()
@@ -806,7 +806,7 @@ class EncodeFloatValue implements EncodeValue
 }
 
 
-class EncodeByteValue implements EncodeValue
+class EncodeByteValue implements IEncodeValue
 {
 	// value encoder
 	// abstract concept of dimension...
@@ -846,7 +846,7 @@ class EncoderD1_ implements IEncoderD1
 {
 	// IMPORTANT - we could encode the variable name as an attribute and avoid having to pass it.
 
-	public EncoderD1_( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, EncodeValue encodeValue )
+	public EncoderD1_( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IEncodeValue encodeValue )
 	{
 		this.writer = writer;
 		this.variableName = variableName; 
@@ -864,7 +864,7 @@ class EncoderD1_ implements IEncoderD1
 	final String variableName; 
 	final ArrayList<Dimension> dims;
 	final Map<String, Object> attributes; 
-	final EncodeValue encodeValue;
+	final IEncodeValue encodeValue;
 
 	Array	 A;
 
@@ -915,7 +915,7 @@ class EncoderD3_ implements IEncoderD3
 	// do we want it to 
 
 	// do we define the netcdf???
-	public EncoderD3_( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, EncodeValue encodeValue )
+	public EncoderD3_( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IEncodeValue encodeValue )
 	{
 		this.writer = writer;
 		this.variableName = variableName; 
@@ -934,7 +934,7 @@ class EncoderD3_ implements IEncoderD3
 	final String variableName; 
 	final ArrayList<Dimension> dims;
 	final Map<String, Object> attributes; 
-	final EncodeValue encodeValue;
+	final IEncodeValue encodeValue;
 
 	//ArrayFloat.D3 A;
 	Array	 A;
@@ -1042,7 +1042,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 //			encoder = new EncoderTimestampD1( writer, columnName, d , attributes);
 
 
-			EncodeValue encodeValue = new EncodeTimestampValue(); 
+			IEncodeValue encodeValue = new EncodeTimestampValue(); 
 
 			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
 		}
@@ -1058,7 +1058,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.put( "_FillValue", (float) 999999. ); 
 
-			EncodeValue encodeValue = new EncodeFloatValue();
+			IEncodeValue encodeValue = new EncodeFloatValue();
 
 			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
 		}
@@ -1070,7 +1070,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.put( "_FillValue", (float) 999999. ); 
 
-			EncodeValue encodeValue = new EncodeFloatValue();
+			IEncodeValue encodeValue = new EncodeFloatValue();
 
 			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
 
@@ -1084,7 +1084,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			attributes.put( "_FillValue", (byte) 0xff ); 
 
 	
-			EncodeValue encodeValue = new EncodeByteValue();
+			IEncodeValue encodeValue = new EncodeByteValue();
 			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
 
 		//	encoder = new encoderByteD1( writer, columnName, d, attributes ); //(byte)0xff );
@@ -1097,7 +1097,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.put( "_FillValue", (byte) 0xff ); 
 
-			EncodeValue encodeValue = new EncodeByteValue();
+			IEncodeValue encodeValue = new EncodeByteValue();
 
 			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
 
@@ -1111,7 +1111,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.put( "_FillValue", (byte) 0xff ); 
 	
-			EncodeValue encodeValue = new EncodeByteValue();
+			IEncodeValue encodeValue = new EncodeByteValue();
 			encoder = new EncoderD3_( writer, columnName, dims , attributes, encodeValue );
 
 		}
@@ -1125,7 +1125,7 @@ class ConventionEncodingStrategy implements EncodingStrategy
 				||	columnType.equals(Double.class)
 			) {
 
-				EncodeValue encodeValue = new EncodeFloatValue();
+				IEncodeValue encodeValue = new EncodeFloatValue();
 				encoder = new EncoderD3_( writer, columnName, dims , attributes, encodeValue );
 			}
 			// other...
