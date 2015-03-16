@@ -60,7 +60,7 @@ import java.util.regex.Matcher;
 // or leave the value there...
 
 
-interface Visitor
+interface IVisitor
 {
 	public void visit( ExprInteger expr );
 	public void visit( ExprProc expr );
@@ -75,7 +75,7 @@ interface Visitor
 interface IExpression
 {
 	public int getPosition() ;
-	public void accept( Visitor v ) ;
+	public void accept( IVisitor v ) ;
 }
 
 class ExprSymbol implements IExpression
@@ -87,7 +87,7 @@ class ExprSymbol implements IExpression
 	}
 
 	public int getPosition() { return pos; }
-	public void accept( Visitor v )  { v.visit( this); }
+	public void accept( IVisitor v )  { v.visit( this); }
 
 	final int pos;
 	final String value; //
@@ -102,7 +102,7 @@ class ExprInteger implements IExpression
 	}
 
 	public int getPosition() { return pos; }
-	public void accept( Visitor v )  { v.visit( this); }
+	public void accept( IVisitor v )  { v.visit( this); }
 
 	final int pos;
 	final int value; //
@@ -117,7 +117,7 @@ class ExprTimestamp implements IExpression
 	}
 
 	public int getPosition() { return pos; }
-	public void accept( Visitor v )  { v.visit( this); }
+	public void accept( IVisitor v )  { v.visit( this); }
 
 	final int pos;
 	final Timestamp value; //
@@ -133,7 +133,7 @@ class ExprLiteral implements IExpression
 	}
 
 	public int getPosition() { return pos; }
-	public void accept( Visitor v )  { v.visit( this); }
+	public void accept( IVisitor v )  { v.visit( this); }
 	final int pos;
 	final String value; //
 }
@@ -147,7 +147,7 @@ class ExprWhite implements IExpression
 		pos = pos_;
 	}
 	public int getPosition() { return pos; }
-	public void visit( Visitor v )  { }
+	public void visit( IVisitor v )  { }
 	int pos;
 }
 */
@@ -163,7 +163,7 @@ class ExprProc implements IExpression
 	}
 
 	public int getPosition() { return pos; }
-	public void accept( Visitor v )  { v.visit( this); }
+	public void accept( IVisitor v )  { v.visit( this); }
 
 	final int		pos;
 	final String symbol;
@@ -390,7 +390,7 @@ class Parser
 
 
 
-class PrettyPrinterVisitor implements Visitor
+class PrettyPrinterVisitor implements IVisitor
 {
 	// should take the stream on the constructor
 
@@ -429,7 +429,7 @@ class PrettyPrinterVisitor implements Visitor
 
 
 
-class PostgresGenerationVisitor implements Visitor
+class PostgresGenerationVisitor implements IVisitor
 {
 	// rename PGDialectSelectionGenerator
 
