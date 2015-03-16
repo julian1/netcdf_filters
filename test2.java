@@ -842,11 +842,11 @@ class EncodeByteValue implements IEncodeValue
 }
 
 
-class EncoderD1_ implements IEncoderD1
+class EncoderD1 implements IEncoderD1
 {
 	// IMPORTANT - we could encode the variable name as an attribute and avoid having to pass it.
 
-	public EncoderD1_( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IEncodeValue encodeValue )
+	public EncoderD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IEncodeValue encodeValue )
 	{
 		this.writer = writer;
 		this.variableName = variableName; 
@@ -907,7 +907,7 @@ class EncoderD1_ implements IEncoderD1
 }
 
 
-class EncoderD3_ implements IEncoderD3
+class EncoderD3 implements IEncoderD3
 {
 	// abstraction that handles both data for type float, and definining the parameters 
 	// try to keep details about the dimensions out of this, and instead just encode the dimension lengths.
@@ -915,7 +915,7 @@ class EncoderD3_ implements IEncoderD3
 	// do we want it to 
 
 	// do we define the netcdf???
-	public EncoderD3_( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IEncodeValue encodeValue )
+	public EncoderD3( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IEncodeValue encodeValue )
 	{
 		this.writer = writer;
 		this.variableName = variableName; 
@@ -1044,7 +1044,7 @@ class ConventionEncodingStrategy implements IEncodingStrategy
 
 			IEncodeValue encodeValue = new EncodeTimestampValue(); 
 
-			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
+			encoder = new EncoderD1( writer, columnName, d, attributes, encodeValue);
 		}
 
 		// put attributes in the encoder?  no
@@ -1060,7 +1060,7 @@ class ConventionEncodingStrategy implements IEncodingStrategy
 
 			IEncodeValue encodeValue = new EncodeFloatValue();
 
-			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
+			encoder = new EncoderD1( writer, columnName, d, attributes, encodeValue);
 		}
 		else if( columnName.equals("LONGITUDE"))
 		{
@@ -1072,7 +1072,7 @@ class ConventionEncodingStrategy implements IEncodingStrategy
 
 			IEncodeValue encodeValue = new EncodeFloatValue();
 
-			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
+			encoder = new EncoderD1( writer, columnName, d, attributes, encodeValue);
 
 		}
 		else if( columnName.equals("LATITUDE_quality_control"))
@@ -1085,7 +1085,7 @@ class ConventionEncodingStrategy implements IEncodingStrategy
 
 	
 			IEncodeValue encodeValue = new EncodeByteValue();
-			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
+			encoder = new EncoderD1( writer, columnName, d, attributes, encodeValue);
 
 		//	encoder = new encoderByteD1( writer, columnName, d, attributes ); //(byte)0xff );
 		}
@@ -1099,7 +1099,7 @@ class ConventionEncodingStrategy implements IEncodingStrategy
 
 			IEncodeValue encodeValue = new EncodeByteValue();
 
-			encoder = new EncoderD1_( writer, columnName, d, attributes, encodeValue);
+			encoder = new EncoderD1( writer, columnName, d, attributes, encodeValue);
 
 			// encoder = new EncoderByteD1( writer, columnName, d, attributes );
 		}
@@ -1112,7 +1112,7 @@ class ConventionEncodingStrategy implements IEncodingStrategy
 			attributes.put( "_FillValue", (byte) 0xff ); 
 	
 			IEncodeValue encodeValue = new EncodeByteValue();
-			encoder = new EncoderD3_( writer, columnName, dims , attributes, encodeValue );
+			encoder = new EncoderD3( writer, columnName, dims , attributes, encodeValue );
 
 		}
 		else if( Pattern.compile("^[A-Z]+.*" ).matcher( columnName).matches()) 
@@ -1126,7 +1126,7 @@ class ConventionEncodingStrategy implements IEncodingStrategy
 			) {
 
 				IEncodeValue encodeValue = new EncodeFloatValue();
-				encoder = new EncoderD3_( writer, columnName, dims , attributes, encodeValue );
+				encoder = new EncoderD3( writer, columnName, dims , attributes, encodeValue );
 			}
 			// other...
 		}
