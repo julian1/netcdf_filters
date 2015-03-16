@@ -982,7 +982,7 @@ class EncoderD3_ implements IEncoderD3
 
 
 
-interface EncodingStrategy
+interface IEncodingStrategy
 {
 	// it's both a decode and encode strategy . 
 
@@ -990,7 +990,7 @@ interface EncodingStrategy
 }
 
 
-class ConventionEncodingStrategy implements EncodingStrategy
+class ConventionEncodingStrategy implements IEncodingStrategy
 {
 	// Convention over configuration, will delegate for configuration...
 
@@ -1246,7 +1246,7 @@ class Timeseries1
 		Map<String, IEncoderD3> encodersD3, 
 		Map<String, IEncoderD1> encodersD1 ,
 
-		EncodingStrategy encodingStrategy  
+		IEncodingStrategy encodingStrategy  
 		 ) throws Exception
 	{
 		String query = "SELECT * FROM " + table + " limit 0"; 
@@ -1330,7 +1330,7 @@ class Timeseries1
 		// this needs to be abstracted ...
 
 		// we shouldn't be instantiating this thing here...
-		EncodingStrategy encodingStrategy = new ConventionEncodingStrategy( writer, dims ); 
+		IEncodingStrategy encodingStrategy = new ConventionEncodingStrategy( writer, dims ); 
 
 		Map<String, IEncoder> encoders = new HashMap<String, IEncoder>();
 		Map<String, IEncoderD3> encodersD3 = new HashMap<String, IEncoderD3>();
