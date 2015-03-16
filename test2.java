@@ -7,6 +7,7 @@
 //import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.InputStream ;
+import java.io.IOException;
 
 import java.io.FileInputStream;
 import java.io.BufferedInputStream;
@@ -1140,11 +1141,40 @@ class ConventionEncodingStrategy implements EncodingStrategy
 
 
 
+interface ICreateWritable 
+{
+	public NetcdfFileWriteable create( )  throws IOException ; 
+}
+
+
+class CreateWritable implements  ICreateWritable
+{
+	// NetcdfFileWriteable is not an abstraction over a stream!. instead it insists on being a file...
+
+	public NetcdfFileWriteable create() throws IOException 
+	{
+		System.out.println( "creating writer" );
+		// netcdf stuff
+		String filename = "testWrite.nc";
+
+		return NetcdfFileWriteable.createNew(filename, false);
+	}
+
+	// reopen as byte stream and return?
+	// or add to a stream...
+}
+
+
+
+
+
 class Timeseries1
 {
 	Parser parser;				// change name to expressionParser or SelectionParser
 	IDialectTranslate translate ;		// will also load up the parameters?
 	Connection conn;
+
+	ICreateWritable createWritable; // generate a writiable 
 	// Encoder
 	// Order criterion (actually a projection bit) 
 
@@ -1155,12 +1185,13 @@ class Timeseries1
 	ResultSet featureInstances;
 
 
-	public Timeseries1( Parser parser, IDialectTranslate translate, Connection conn ) {
+	public Timeseries1( Parser parser, IDialectTranslate translate, Connection conn, ICreateWritable createWritable ) {
 		// we need to inject the selector ...
 		// 
 		this.parser = parser;
 		this.translate = translate; // sqlEncode.. dialect... specialization
 		this.conn = conn;
+		this.createWritable = createWritable;
 	
 		featureInstances = null;
 		selection_expr = null;
@@ -1276,11 +1307,11 @@ class Timeseries1
 			count = (int)(long) rs.getObject(1); 
 		}
 
+		/*
+			need a strategy as to where to create these files
+		*/
 
-		System.out.println( "creating writer" );
-		// netcdf stuff
-		String filename = "testWrite.nc";
-		NetcdfFileWriteable writer = NetcdfFileWriteable.createNew(filename, false);
+		NetcdfFileWriteable writer = createWritable.create();
 
 		// we have to encode these values as well.
 
@@ -1446,8 +1477,10 @@ public class test2 {
 		IDialectTranslate translate = new  PostgresDialectTranslate();
 
 		Connection conn = getConn();
+
+		ICreateWritable createWritable = new CreateWritable();  
 	
-		Timeseries1 timeseries = new Timeseries1( parser, translate, conn ); 
+		Timeseries1 timeseries = new Timeseries1( parser, translate, conn, createWritable ); 
 		// Timeseries timeseries = new Timeseries( parser, translate, conn ); 
 
 		timeseries.init();	
