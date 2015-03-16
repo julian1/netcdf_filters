@@ -26,6 +26,7 @@ WHAT'S DONE
 - localized convention/ config strategy
 - experimented with a couple of query approaches favor time to start streaming, total time etc. 
 - done - write required attributes with strategy
+- done - write multiple files (and get the writable instantiation working ) (pass at the time). 
 
 -----
 	http://www.unidata.ucar.edu/software/thredds/v4.3/netcdf-java/reference/faq.html
@@ -40,7 +41,6 @@ TODO
 - think we have to invert it, instead of trying to infer, use an explicit configuration.
 	- It's part of the task.
 	- meaning use spring.
-- done - write multiple files (and get the writable instantiation working ) (pass at the time). 
 - compose with spring ?
 
 -  (cant but have abstracted out) do the netcdf generation in memory

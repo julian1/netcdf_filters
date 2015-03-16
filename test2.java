@@ -1160,8 +1160,8 @@ class CreateWritable implements  ICreateWritable
 		return NetcdfFileWriteable.createNew(filename, false);
 	}
 
-	// reopen as byte stream and return?
-	// or add to a stream...
+	// method to request as a byte stream and return?
+	// public getByteStream () { } 
 }
 
 
@@ -1267,8 +1267,10 @@ class Timeseries1
 
 				if( encoder instanceof IEncoderD3)
 					encodersD3.put( columnName, (IEncoderD3) encoder ); 
+
 				else if ( encoder instanceof IEncoderD1)
 					encodersD1.put( columnName, (IEncoderD1)encoder ); 
+
 				else {
 					throw new RuntimeException( "Unknown Encoder type for column '" + columnName + "'" );
 				}				
@@ -1481,7 +1483,6 @@ public class test2 {
 		ICreateWritable createWritable = new CreateWritable();  
 	
 		Timeseries1 timeseries = new Timeseries1( parser, translate, conn, createWritable ); 
-		// Timeseries timeseries = new Timeseries( parser, translate, conn ); 
 
 		timeseries.init();	
 
