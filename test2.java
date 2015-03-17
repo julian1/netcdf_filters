@@ -702,6 +702,8 @@ interface IEncoder
 
 
 	public void addValueToBuffer( Object value ); 
+
+	public void dump();
 }
 
 /*
@@ -868,15 +870,15 @@ class MyEncoder implements IEncoder
 		buffer.add( value );
 	}
 
-	public void define()
-	{
+	public void define() { }
+	public void finish( ) throws Exception { }
 
+	public void dump()
+	{ 
+		System.out.println( "WHOOT ENCODEER - " + variableName );
 	}
 
-	public void finish( ) throws Exception 
-	{
 
-	}
 }
 
 
@@ -991,7 +993,13 @@ class Timeseries1
 		String selection = translate.process( selection_expr); // we ought to be caching the specific query ??? 
 					
 		// we'll add them all to a List 
-		IEncoder e = new MyEncoder ( "LATITUDE", null ) ; 
+//		IEncoder e = new MyEncoder ( "LATITUDE", null ) ; 
+
+		Map< String, IEncoder> encoders = new HashMap< String, IEncoder> ();
+
+		encoders.put( "LATITUDE", new MyEncoder ( "LATITUDE", null ) ) ; 
+
+
 
 		// measurement data	
 		if( true )
@@ -1009,6 +1017,12 @@ class Timeseries1
 			// encode values t,lat,lon are always indexes - so we should be able to delegate to the thing...
 			int time = 0;
 			while ( rs.next() ) {  
+
+				for ( int i = 1 ; i <= numColumns ; i++ ) {
+					IEncoder encoder = encoders.get( m.getColumnName(i)); 
+					if( encoder != null) 
+						encoder.addValueToBuffer( rs.getObject( i));
+				}
 /*
 				for( int lat = 0; lat < latDim.getLength(); ++lat )
 				for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
@@ -1019,17 +1033,25 @@ class Timeseries1
 							encoder.addValue( time, lat, lon, rs.getObject( i));
 					}
 				}
-
 				// 1d values
 				for ( int i = 1 ; i <= numColumns ; i++ ) {
 					IEncoderD1 encoder = encodersD1.get(m.getColumnName(i)); 
 					if( encoder != null) 
 						encoder.addValue( time, rs.getObject( i));
 				}
-*/
 				++time;
+*/
 			}
 		}
+
+
+		 for ( IEncoder encoder: encoders.values())
+		  {
+
+			encoder.dump ();
+		}
+
+
 
 /*
 		// timeseries data	
