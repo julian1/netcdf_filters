@@ -699,9 +699,12 @@ interface IEncoder
 
 	public void define();  // change name to start(); ?
 	public void finish( ) throws Exception ; 
+
+
+	public void addValueToBuffer( Object value ); 
 }
 
-
+/*
 interface IEncoderD3 extends IEncoder
 {
 	// change name VarEncoder
@@ -718,7 +721,7 @@ interface IEncoderD1 extends IEncoder
 {
 	public void addValue( int a, Object object );  // over 1 dimension 
 }
-
+*/
 
 
 // do we have different types of encoder based on the number of dimensions it handles
@@ -841,301 +844,38 @@ class EncodeByteValue implements IEncodeValue
 	}
 }
 
-
-class EncoderD1 implements IEncoderD1
-{
-	// IMPORTANT - we could encode the variable name as an attribute and avoid having to pass it.
-
-	public EncoderD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IEncodeValue encodeValue )
-	{
-		this.writer = writer;
-		this.variableName = variableName; 
-		this.dims = dims;
-		this.attributes = attributes;
-		this.encodeValue = encodeValue; // new EncodeFloatValue();
-		this.A = null; 
-		if( dims.size() != 1 ) {
-			throw new RuntimeException( "Expected only 1 dimension" );
-		}
-
-	}
-
-	final NetcdfFileWriteable writer; 
-	final String variableName; 
-	final ArrayList<Dimension> dims;
-	final Map<String, Object> attributes; 
-	final IEncodeValue encodeValue;
-
-	Array	 A;
-
-	public void define()
-	{
-		writer.addVariable(variableName, DataType.FLOAT, dims);
-		for( Map.Entry< String, Object> entry : attributes.entrySet()) { 
-			writer.addVariableAttribute( variableName, entry.getKey(), entry.getValue().toString() ); 
-		}
-
-		// this is typed on the value type and the dimension. which makes it very hard to pull apart.  
-		// but
-		if( encodeValue.targetType() == Float.class )
-		{
-			this.A = new ArrayFloat.D1( dims.get(0).getLength() );
-		}
-		else if ( encodeValue.targetType() == Byte.class )
-		{
-			this.A = new ArrayByte.D1( dims.get(0).getLength() );
-		}
-		else {
-			throw new RuntimeException( "Unrecognized encoder type" );
-		}
-	}
-
-	public void addValue( int a, Object value )
-	{
-		Index ima = A.getIndex();
-		ima.set(a); 
-		encodeValue.encode( A, ima, attributes, value ); 
-	}
-
-	public void finish() throws Exception
-	{
-		int [] origin = new int[1];
-		writer.write(variableName, origin, A);
-
-		// and write the attribute values ...
-	}
-}
-
-
-class EncoderD3 implements IEncoderD3
-{
-	// abstraction that handles both data for type float, and definining the parameters 
-	// try to keep details about the dimensions out of this, and instead just encode the dimension lengths.
-
-	// do we want it to 
-
-	// do we define the netcdf???
-	public EncoderD3( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IEncodeValue encodeValue )
-	{
-		this.writer = writer;
-		this.variableName = variableName; 
-		this.dims = dims;
-		this.attributes = attributes;
-		this.encodeValue = encodeValue; 
-
-		this.A = null; 
-		if( dims.size() != 3 ) {
-			throw new RuntimeException( "Expected only 1 dimension" );
-		}
-	}
-
-	// column name should only be in the mapper. 
-	final NetcdfFileWriteable writer; 
-	final String variableName; 
-	final ArrayList<Dimension> dims;
-	final Map<String, Object> attributes; 
-	final IEncodeValue encodeValue;
-
-	//ArrayFloat.D3 A;
-	Array	 A;
-
-	public void define()
-	{
-		// assumes writer is in define mode
-		writer.addVariable(variableName, DataType.FLOAT, dims);
-		for( Map.Entry< String, Object> entry : attributes.entrySet()) { 
-			writer.addVariableAttribute( variableName, entry.getKey(), entry.getValue().toString() ); 
-		}
-	// 	this.A = new ArrayFloat.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
-		// this is typed on the value type and the dimension. which makes it very hard to pull apart.  
-		// but
-		if( encodeValue.targetType() == Float.class )
-		{
-			this.A = new ArrayFloat.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
-		}
-		else if ( encodeValue.targetType() == Byte.class )
-		{
-			this.A = new ArrayByte.D3( dims.get(0).getLength(), dims.get(1).getLength(), dims.get(2).getLength());
-		}
-		else {
-			throw new RuntimeException( "Unrecognized encoder type" );
-		}
-
-	}
-	public void addValue( int a, int b, int c, Object value )
-	{
-		Index ima = A.getIndex();
-		ima.set(a, b, c); 
-		encodeValue.encode( A, ima, attributes, value ); 
-	}
-
-	public void finish() throws Exception
-	{
-		// assumes writer is in data mode
-		int [] origin = new int[3];
-		writer.write(variableName, origin, A);
-	}
-}
-
-
-
-
-
-
-interface IEncodingStrategy
-{
-	// it's both a decode and encode strategy . 
-
-	public IEncoder getEncoder( String variableName, Class variableType ); 
-}
-
-
-class ConventionEncodingStrategy implements IEncodingStrategy
-{
-	// Convention over configuration, will delegate for configuration...
-
-	public ConventionEncodingStrategy( NetcdfFileWriteable writer, ArrayList<Dimension> dims ) 
-	{ 
-		this.writer = writer;
-		this.dims = dims;
-		// we need to pass both the writer and dims.... 
-		// which is p
-		// well we can abstract the instantiation of this thing ...
-	} 
-
-	final NetcdfFileWriteable writer ; 
-	final ArrayList<Dimension> dims; 
-
-	// we might need to return a list, if a single column type can map 
-	// to multiple variables - eg. the_geometry and LATITUTDE AND LONGTITUDE...
-	public IEncoder getEncoder( String columnName, Class columnType )
-	{
-		// class is an attempt to try to guess heuristically, how to encode. 
-		// we can populate. 
-
-		// delegate to configuration...
-		// otherwise apply convention rules
-		// it's the db column name and type
-		// System.out.println ( "name '" + columnName + "'  type '" + columnType + "'"  );
-
-		// think that we need to fill this in with SAX...
-		// then we query for what we want.
-
-		IEncoder encoder = null; 
-
-		if( columnName.equals("TIME"))
-		{
-			// in main table, but is a dimension.
-
-			System.out.println ( "WHOOT ** got time " );
-
-			// should lookup the dimension by name
-			// we've set it to take all the dimensions
-			ArrayList<Dimension> d = new ArrayList<Dimension>();
-			d.add( dims.get( 0) );
-
-			Map<String, Object> attributes = new HashMap<String, Object>();
-			attributes.put( "units", "days since 1950-01-01 00:00:00 UTC" );
-			attributes.put( "_FillValue", (float) 999999. ); 
-
-
-//			encoder = new EncoderTimestampD1( writer, columnName, d , attributes);
-
-
-			IEncodeValue encodeValue = new EncodeTimestampValue(); 
-
-			encoder = new EncoderD1( writer, columnName, d, attributes, encodeValue);
-		}
-
-		// put attributes in the encoder?  no
-
-		else if( columnName.equals("LATITUDE"))
-		{
-			// need to look these up, by name
-			ArrayList<Dimension> d = new ArrayList<Dimension>();
-			d.add( dims.get( 1) );
-
-			Map<String, Object> attributes = new HashMap<String, Object>();
-			attributes.put( "_FillValue", (float) 999999. ); 
-
-			IEncodeValue encodeValue = new EncodeFloatValue();
-
-			encoder = new EncoderD1( writer, columnName, d, attributes, encodeValue);
-		}
-		else if( columnName.equals("LONGITUDE"))
-		{
-			ArrayList<Dimension> d = new ArrayList<Dimension>();
-			d.add( dims.get( 2) );
-
-			Map<String, Object> attributes = new HashMap<String, Object>();
-			attributes.put( "_FillValue", (float) 999999. ); 
-
-			IEncodeValue encodeValue = new EncodeFloatValue();
-
-			encoder = new EncoderD1( writer, columnName, d, attributes, encodeValue);
-
-		}
-		else if( columnName.equals("LATITUDE_quality_control"))
-		{
-			ArrayList<Dimension> d = new ArrayList<Dimension>();
-			d.add( dims.get( 1) );
-	
-			Map<String, Object> attributes = new HashMap<String, Object>();
-			attributes.put( "_FillValue", (byte) 0xff ); 
-
-	
-			IEncodeValue encodeValue = new EncodeByteValue();
-			encoder = new EncoderD1( writer, columnName, d, attributes, encodeValue);
-
-		//	encoder = new encoderByteD1( writer, columnName, d, attributes ); //(byte)0xff );
-		}
-		else if( columnName.equals("LONGITUDE_quality_control"))
-		{
-			ArrayList<Dimension> d = new ArrayList<Dimension>();
-			d.add( dims.get( 2) );
-
-			Map<String, Object> attributes = new HashMap<String, Object>();
-			attributes.put( "_FillValue", (byte) 0xff ); 
-
-			IEncodeValue encodeValue = new EncodeByteValue();
-
-			encoder = new EncoderD1( writer, columnName, d, attributes, encodeValue);
-
-			// encoder = new EncoderByteD1( writer, columnName, d, attributes );
-		}
-
-
-
-		else if( Pattern.compile(".*quality_control$" ).matcher( columnName) .matches()) 
-		{
-			Map<String, Object> attributes = new HashMap<String, Object>();
-			attributes.put( "_FillValue", (byte) 0xff ); 
-	
-			IEncodeValue encodeValue = new EncodeByteValue();
-			encoder = new EncoderD3( writer, columnName, dims , attributes, encodeValue );
-
-		}
-		else if( Pattern.compile("^[A-Z]+.*" ).matcher( columnName).matches()) 
-		{
-			Map<String, Object> attributes = new HashMap<String, Object>();
-			attributes.put( "_FillValue", (float) 999999. ); 
-
-			System.out.println( "normal var - " + columnName );
-			if( columnType.equals(Float.class)
-				||	columnType.equals(Double.class)
-			) {
-
-				IEncodeValue encodeValue = new EncodeFloatValue();
-				encoder = new EncoderD3( writer, columnName, dims , attributes, encodeValue );
-			}
-			// other...
-		}
 /*
-		if ( encoder == null ){
-			encoder = new EncoderIgnore(); 
-		}
+	The final netcdf document is actully a combination of everything 
 */
-		return encoder;
+
+class MyEncoder implements IEncoder
+{
+	public MyEncoder( String variableName, ArrayList< IEncoder>  children )
+	{
+		this.variableName = variableName; 
+		this.children = children; 
+		
+		this.buffer = new ArrayList<Object>( );	
+	}
+
+	final String variableName; 
+	final ArrayList<Object>		buffer;
+	final ArrayList<IEncoder>	children;
+
+	public void addValueToBuffer( Object value )
+	{
+		// perhaps delegate to strategy...
+		buffer.add( value );
+	}
+
+	public void define()
+	{
+
+	}
+
+	public void finish( ) throws Exception 
+	{
+
 	}
 }
 
@@ -1237,49 +977,6 @@ class Timeseries1
 	// rather than instantiate it
 
 
-	public void doDefinitionStuff( 
-		Connection conn,
-	
-		String table,	
-
-		Map<String, IEncoder> encoders, 
-		Map<String, IEncoderD3> encodersD3, 
-		Map<String, IEncoderD1> encodersD1 ,
-
-		IEncodingStrategy encodingStrategy  
-		 ) throws Exception
-	{
-		String query = "SELECT * FROM " + table + " limit 0"; 
-		PreparedStatement stmt = conn.prepareStatement( query ); 
-		ResultSet rs = stmt.executeQuery();
-
-		ResultSetMetaData m = rs.getMetaData();
-		int numColumns = m.getColumnCount();
-
-		// Establish conversions according to convention
-		for ( int i = 1 ; i <= numColumns ; i++ ) {
-			String columnName = m.getColumnName(i); 
-			// issue is that we're going to be calling it multiple times over????
-			Class clazz = Class.forName(m.getColumnClassName(i));
-			IEncoder encoder = encodingStrategy.getEncoder( columnName, clazz ); 
-			if( encoder != null ) { 
-				encoders.put( columnName, encoder );
-
-				if( encoder instanceof IEncoderD3)
-					encodersD3.put( columnName, (IEncoderD3) encoder ); 
-
-				else if ( encoder instanceof IEncoderD1)
-					encodersD1.put( columnName, (IEncoderD1)encoder ); 
-
-				else {
-					throw new RuntimeException( "Unknown Encoder type for column '" + columnName + "'" );
-				}				
-			}
-		}
-
-		rs.close();
-	}
-
 
 	public NetcdfFileWriteable get() throws Exception
 	{
@@ -1293,64 +990,8 @@ class Timeseries1
 
 		String selection = translate.process( selection_expr); // we ought to be caching the specific query ??? 
 					
-		// doing independent queries for COUNT, then values, 
-		// should be faster than creating a scrollable cursor, iterating and rewinding.
-		// we can query the count independently of querying all the values...
-		
-		// we're going to have to close all this stuff,
-		int count = 0;
-		{
-			// We know how many values we are going to deal with, so let's encode rather than use an unlimited dimension 
-			String query = "SELECT count(1) FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id); 
-			PreparedStatement stmt = conn.prepareStatement( query ); 
-			// stmt.setFetchSize(1000);
-			ResultSet rs = stmt.executeQuery();
-			rs.next(); 
-			count = (int)(long) rs.getObject(1); 
-		}
-
-		/*
-			need a strategy as to where to create these files
-		*/
-
-		NetcdfFileWriteable writer = createWritable.create();
-
-		// we have to encode these values as well.
-
-		// All, time series need this to be explicitly setup...
-		// add dimensions
-		Dimension timeDim = writer.addDimension("TIME", count); // writer.addUnlimitedDimension("time");
-		Dimension latDim = writer.addDimension("LATITUDE", 1);
-		Dimension lonDim = writer.addDimension("LONGITUDE", 1);
-
-		// time unlimited ...  // need time, // define Variable
-		ArrayList<Dimension> dims = new ArrayList<Dimension>();
-		dims.add(timeDim);
-		dims.add(latDim);
-		dims.add(lonDim);
-
-		// this needs to be abstracted ...
-
-		// we shouldn't be instantiating this thing here...
-		IEncodingStrategy encodingStrategy = new ConventionEncodingStrategy( writer, dims ); 
-
-		Map<String, IEncoder> encoders = new HashMap<String, IEncoder>();
-		Map<String, IEncoderD3> encodersD3 = new HashMap<String, IEncoderD3>();
-		Map<String, IEncoderD1> encodersD1 = new HashMap<String, IEncoderD1>();
-
-
-		doDefinitionStuff( conn, "anmn_ts.timeseries", encoders, encodersD3, encodersD1 , encodingStrategy  ); 
-		doDefinitionStuff( conn, "anmn_ts.measurement", encoders, encodersD3, encodersD1 , encodingStrategy  ); 
-	
-
-		// define
-		for ( IEncoder encoder: encoders.values()) {
-			encoder.define();
-		}
-
-		// finish netcdf definition
-		writer.create();
-
+		// we'll add them all to a List 
+		IEncoder e = new MyEncoder ( "LATITUDE", null ) ; 
 
 		// measurement data	
 		if( true )
@@ -1368,6 +1009,7 @@ class Timeseries1
 			// encode values t,lat,lon are always indexes - so we should be able to delegate to the thing...
 			int time = 0;
 			while ( rs.next() ) {  
+/*
 				for( int lat = 0; lat < latDim.getLength(); ++lat )
 				for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
 					// 3d values
@@ -1384,10 +1026,12 @@ class Timeseries1
 					if( encoder != null) 
 						encoder.addValue( time, rs.getObject( i));
 				}
+*/
 				++time;
 			}
 		}
 
+/*
 		// timeseries data	
 		{
 			// sql stuff
@@ -1417,13 +1061,15 @@ class Timeseries1
 
 		System.out.println( "done writing data" );
 
+*/
 
-
-
+/*
 		// close
 		writer.close();
 	
 		return writer; 
+*/
+		return null;
 	}
 
 
@@ -1483,6 +1129,7 @@ public class test2 {
 		ICreateWritable createWritable = new CreateWritable();  
 	
 		Timeseries1 timeseries = new Timeseries1( parser, translate, conn, createWritable ); 
+		// Timeseries timeseries = new Timeseries( parser, translate, conn ); 
 
 		timeseries.init();	
 
