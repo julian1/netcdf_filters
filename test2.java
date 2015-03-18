@@ -861,7 +861,7 @@ interface IEncoder
 class MyEncoder implements IEncoder
 {
 	//public MyEncoder( String variableName, ArrayList< IEncoder>  children )
-	public MyEncoder( String variableName, ArrayList< IEncoder>  children, IEncodeValue encodeValue )
+	public MyEncoder( String variableName, ArrayList< IEncoder>  children, IEncodeValue encodeValue, Map<String, Object> attributes )
 	{
 		this.variableName = variableName; 
 		// ease interface use
@@ -873,6 +873,7 @@ class MyEncoder implements IEncoder
 		}
 
 		this.encodeValue = encodeValue;
+		this.attributes = attributes;
 
 		this.buffer = new ArrayList<Object>( );	
 
@@ -885,6 +886,7 @@ class MyEncoder implements IEncoder
 
 	final String variableName; 
 	final IEncodeValue			encodeValue; 
+	final Map<String, Object>	attributes; 
 	final ArrayList<IEncoder>	children;
 	final ArrayList<Object>		buffer;
 	final ArrayList<Dimension>	dims; // change name childDimensions 
@@ -964,7 +966,12 @@ class MyEncoder implements IEncoder
 		{
 			System.out.println( "dimIndex " + "  acc " + acc );
 			// we need to jjjjjjjjjjjjjjjj
-			A.setFloat( acc, (float) 99999. ); 
+
+
+	// public void encode( Array A, int ima, Map<String, Object> attributes, Object value ); 
+			encodeValue.encode( A, acc, attributes, buffer.get( acc ) ); 
+
+//			A.setFloat( acc, (float) 99999. ); 
 		}
 		
 	}
@@ -1155,9 +1162,23 @@ class Timeseries1
 		IEncodeValue floatEncoder = new EncodeFloatValue();
 		IEncodeValue byteEncoder = new EncodeByteValue();
 
-		IEncoder lat = new MyEncoder ( "LATITUDE", null, floatEncoder); 
-		IEncoder lon = new MyEncoder ( "LONGITUDE", null , floatEncoder); 
-		IEncoder time = new MyEncoder ( "TIME", null, floatEncoder) ; 
+
+
+		Map<String, Object> attributes = new HashMap<String, Object>();
+		attributes.put( "units", "days since 1950-01-01 00:00:00 UTC" );
+		attributes.put( "_FillValue", (float) 999999. ); 
+
+		Map<String, Object> floatAttributes = new HashMap<String, Object>();
+		floatAttributes.put( "_FillValue", (float) 999999. ); 
+
+		Map<String, Object> byteAttributes = new HashMap<String, Object>();
+		byteAttributes.put( "_FillValue", (byte) 0xff ); 
+
+
+
+		IEncoder lat = new MyEncoder ( "LATITUDE", null, floatEncoder, floatAttributes); 
+		IEncoder lon = new MyEncoder ( "LONGITUDE", null , floatEncoder, floatAttributes); 
+		IEncoder time = new MyEncoder ( "TIME", null, floatEncoder, floatAttributes) ; 
 
 		// where on earth are the attributes coming from ? 
 
@@ -1165,9 +1186,9 @@ class Timeseries1
 		// OK
 		IEncoder u [] = { lat, lon, time };   // we should use a list to make this simpler
 
-		IEncoder temp = new MyEncoder ( "TEMP", new ArrayList< IEncoder>( Arrays.asList( u )), floatEncoder ) ; 
+		IEncoder temp = new MyEncoder ( "TEMP", new ArrayList< IEncoder>( Arrays.asList( u )), floatEncoder, floatAttributes ) ; 
 
-		IEncoder time_qc = new MyEncoder ( "TIME_quality_control", new ArrayList< IEncoder>( Arrays.asList( u )), byteEncoder ) ; 
+		IEncoder time_qc = new MyEncoder ( "TIME_quality_control", new ArrayList< IEncoder>( Arrays.asList( u )), byteEncoder, byteAttributes ) ; 
 		
 		encoders.put( lat.getVariableName(), lat ) ; 
 		encoders.put( lon.getVariableName(), lon ) ; 
