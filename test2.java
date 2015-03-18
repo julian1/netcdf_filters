@@ -866,6 +866,9 @@ class MyEncoder implements IEncoder
 
 	public void addValueToBuffer( Object value )
 	{
+
+		System.out.println( "WHOOT Add value to buffer - " + variableName  );
+
 		// perhaps delegate to strategy...
 		buffer.add( value );
 	}
@@ -875,7 +878,7 @@ class MyEncoder implements IEncoder
 
 	public void dump()
 	{ 
-		System.out.println( "WHOOT ENCODEER - " + variableName );
+		System.out.println( "WHOOT ENCODEER - " + variableName + " buffer size " + buffer.size() );
 	}
 
 
@@ -999,14 +1002,19 @@ class Timeseries1
 
 		encoders.put( "LATITUDE", new MyEncoder ( "LATITUDE", null ) ) ; 
 
+		/*
+			For timeseries - we may only need a 
 
+		*/
 
 		// measurement data	
 		if( true )
 		{
 			// sql stuff
 			// need to encode the additional parameter...
-			String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
+			//String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
+
+			String query = "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id); 
 			PreparedStatement stmt = conn.prepareStatement( query ); 
 			stmt.setFetchSize(1000);
 			ResultSet rs = stmt.executeQuery();
@@ -1017,30 +1025,13 @@ class Timeseries1
 			// encode values t,lat,lon are always indexes - so we should be able to delegate to the thing...
 			int time = 0;
 			while ( rs.next() ) {  
-
 				for ( int i = 1 ; i <= numColumns ; i++ ) {
+					// System.out.println( "column name " + m.getColumnName(i) );
+
 					IEncoder encoder = encoders.get( m.getColumnName(i)); 
 					if( encoder != null) 
 						encoder.addValueToBuffer( rs.getObject( i));
 				}
-/*
-				for( int lat = 0; lat < latDim.getLength(); ++lat )
-				for( int lon = 0; lon < lonDim.getLength(); ++lon ) {
-					// 3d values
-					for ( int i = 1 ; i <= numColumns ; i++ ) {
-						IEncoderD3 encoder = encodersD3.get(m.getColumnName(i)); 
-						if( encoder != null) 
-							encoder.addValue( time, lat, lon, rs.getObject( i));
-					}
-				}
-				// 1d values
-				for ( int i = 1 ; i <= numColumns ; i++ ) {
-					IEncoderD1 encoder = encodersD1.get(m.getColumnName(i)); 
-					if( encoder != null) 
-						encoder.addValue( time, rs.getObject( i));
-				}
-				++time;
-*/
 			}
 		}
 
