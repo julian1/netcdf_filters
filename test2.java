@@ -13,6 +13,7 @@ import java.io.FileInputStream;
 import java.io.BufferedInputStream;
 
 import java.util.ArrayList; //io.BufferedInputStream;
+import java.util.List; //io.BufferedInputStream;
 //import java.util.ArrayDouble; //io.BufferedInputStream;
 
 import java.util.HashMap; //io.BufferedInputStream;
@@ -940,54 +941,60 @@ class MyEncoder implements IEncoder
 
 	// or we use a modulo to produce the value ??? 
 
-	public void writeValues( ArrayList<Dimension> dims, int dimIndex, int acc ) 
+	public void writeValues( ArrayList<Dimension> dims, int dimIndex, int acc, Array A  ) 
 	{
 		// ok, actually we only need to compute the Index that we will use...
+		// this is always going to generate a linear sequence...
+			
+		// so what is the actual usefulness...
 		
 		if( dimIndex < dims.size() )
 		{
 			Dimension dim = dims.get( dimIndex ); 
-
 			for( int i = 0; i < dim.getLength(); i++ )
 			{
-				
-
-				writeValues( dims, dimIndex + 1, acc + i ); 
+				writeValues( dims, dimIndex + 1, acc + i, A ); 
 			}
 		}
 		else 
 		{
-
-				System.out.println( "dimIndex " + "  acc " + acc );
-
+			System.out.println( "dimIndex " + "  acc " + acc );
+			// we need to jjjjjjjjjjjjjjjj
+			A.setFloat( acc, (float) 99999. ); 
 		}
 		
 	}
+
+
+	int[] toIntArray( List<Integer> list)
+	{
+		// List.toArray() only supports Boxed Integers...
+		int[] ret = new int[list.size()];
+		for(int i = 0;i < ret.length;i++)
+			ret[i] = list.get(i);
+		return ret;
+	}
+
 
 	public void finish( NetcdfFileWriteable writer) throws Exception 
 	{ 
 		// now we have to set up a loop ... over all the dimensions...   
 		// which means we have to assemble the dimensions again.
-		// 
-
 		System.out.println( "finish " + variableName );
 
-		writeValues( dims,  0, 0 ); 
-
-/*
-		index = 0;
+		ArrayList< Integer> shape = new ArrayList< Integer>() ;
 		for( Dimension dim : dims )
-		{
-			System.out.println( " dim " + dim.getLength() ); 
-			// in fact needs to be recursive ... to effect the loop...
-			for( int i = 0; i < dim.getLength(); i++ )
-			{
-				index += 
-			}
-		}
-*/
+			shape.add( dim.getLength() );
 
+//		DataType.FLOAT,
+//		Array A = new ArrayFloat(  toIntArray( shape )  );
+		Array A = Array.factory( DataType.FLOAT,   toIntArray( shape )  );
 
+		writeValues( dims,  0, 0 , A ); 
+
+		// int [] origin = new int[1];
+		// writer.write(variableName, origin, A);
+		writer.write(variableName, A);
 	}
 
 	public void dump()
