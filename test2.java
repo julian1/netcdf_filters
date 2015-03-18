@@ -730,8 +730,9 @@ interface IEncoderD1 extends IEncoder
 
 interface IEncodeValue
 {
+	// Change name to ValueEncoderTimestamp
 
-	public void encode( Array A, Index ima, Map<String, Object> attributes, Object value ); 
+	public void encode( Array A, int ima, Map<String, Object> attributes, Object value ); 
 
 	public Class targetType(); 
 }
@@ -745,7 +746,7 @@ class EncodeTimestampValue implements IEncodeValue
 		return Float.class;
 	}
 
-	public void encode( Array A, Index ima, Map<String, Object> attributes, Object value )
+	public void encode( Array A, int ima, Map<String, Object> attributes, Object value )
 	{
 		// this needs to be changes
 		if( attributes.get("units").equals( "days since 1950-01-01 00:00:00 UTC" ))
@@ -777,7 +778,7 @@ class EncodeFloatValue implements IEncodeValue
 		return Float.class;
 	}
 
-	public void encode( Array A, Index ima, Map<String, Object> attributes, Object value )
+	public void encode( Array A, int ima, Map<String, Object> attributes, Object value )
 	{
 		if( value == null) {
 			A.setFloat( ima, (float) attributes.get( "_FillValue" ));
@@ -806,11 +807,8 @@ class EncodeByteValue implements IEncodeValue
 		return Byte.class;
 	}
 
-	public void encode( Array A, Index ima, Map<String, Object> attributes, Object value )
+	public void encode( Array A, int ima, Map<String, Object> attributes, Object value )
 	{
-		// ArrayByte A = (ArrayByte) A_;
-		// Array A = (Array) A_;
-
 		if( value == null) {
 			A.setByte( ima, (byte) attributes.get( "_FillValue" ));
 		}
@@ -862,7 +860,7 @@ interface IEncoder
 class MyEncoder implements IEncoder
 {
 	//public MyEncoder( String variableName, ArrayList< IEncoder>  children )
-	public MyEncoder( String variableName, ArrayList< IEncoder>  children )
+	public MyEncoder( String variableName, ArrayList< IEncoder>  children, IEncodeValue encodeValue )
 	{
 		this.variableName = variableName; 
 		// ease interface use
@@ -872,6 +870,9 @@ class MyEncoder implements IEncoder
 		else {
 			this.children = children; 
 		}
+
+		this.encodeValue = encodeValue;
+
 		this.buffer = new ArrayList<Object>( );	
 
 		this.dims = new ArrayList<Dimension>();
@@ -882,9 +883,10 @@ class MyEncoder implements IEncoder
 	}
 
 	final String variableName; 
-	final ArrayList<Object>		buffer;
+	final IEncodeValue			encodeValue; 
 	final ArrayList<IEncoder>	children;
-	final ArrayList<Dimension> dims; // change name childDimensions 
+	final ArrayList<Object>		buffer;
+	final ArrayList<Dimension>	dims; // change name childDimensions 
 
 	boolean isDefined; 
 	Dimension dimension;
@@ -988,6 +990,8 @@ class MyEncoder implements IEncoder
 
 //		DataType.FLOAT,
 //		Array A = new ArrayFloat(  toIntArray( shape )  );
+
+		// so we can delegate to the encoder type... to generate
 		Array A = Array.factory( DataType.FLOAT,   toIntArray( shape )  );
 
 		writeValues( dims,  0, 0 , A ); 
@@ -1150,14 +1154,16 @@ class Timeseries1
 
 		Map< String, IEncoder> encoders = new HashMap< String, IEncoder> ();
 
-		IEncoder lat = new MyEncoder ( "LATITUDE", null ); 
-		IEncoder lon = new MyEncoder ( "LONGITUDE", null ); 
-		IEncoder time = new MyEncoder ( "TIME", null ) ; 
+//EncodeFloatValue v = new EncodeFloatValue
 
+		IEncoder lat = new MyEncoder ( "LATITUDE", null, null ); 
+		IEncoder lon = new MyEncoder ( "LONGITUDE", null ,null ); 
+		IEncoder time = new MyEncoder ( "TIME", null, null ) ; 
 
+		// OK
 		IEncoder u [] = { lat, lon, time };
 
-		IEncoder temp = new MyEncoder ( "TEMP", new ArrayList< IEncoder>( Arrays.asList( u ))) ; 
+		IEncoder temp = new MyEncoder ( "TEMP", new ArrayList< IEncoder>( Arrays.asList( u )), null   ) ; 
 
 
 		encoders.put( lat.getVariableName(), lat ) ; 
