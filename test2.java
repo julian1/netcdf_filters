@@ -992,7 +992,7 @@ class MyEncoder implements IEncoder
 
 		Array A = Array.factory( encodeValue.targetType(),   toIntArray( shape )  );
 
-		writeValues( dims,  0, 0 , A ); 
+//		writeValues( dims,  0, 0 , A ); 
 
 		// int [] origin = new int[1];
 		// writer.write(variableName, origin, A);
@@ -1152,12 +1152,14 @@ class Timeseries1
 
 		Map< String, IEncoder> encoders = new HashMap< String, IEncoder> ();
 
-		EncodeFloatValue floatEncoder = new EncodeFloatValue();
+		IEncodeValue floatEncoder = new EncodeFloatValue();
+		IEncodeValue byteEncoder = new EncodeByteValue();
 
 		IEncoder lat = new MyEncoder ( "LATITUDE", null, floatEncoder); 
 		IEncoder lon = new MyEncoder ( "LONGITUDE", null , floatEncoder); 
 		IEncoder time = new MyEncoder ( "TIME", null, floatEncoder) ; 
 
+		// where on earth are the attributes coming from ? 
 
 
 		// OK
@@ -1165,9 +1167,8 @@ class Timeseries1
 
 		IEncoder temp = new MyEncoder ( "TEMP", new ArrayList< IEncoder>( Arrays.asList( u )), floatEncoder ) ; 
 
-		IEncoder time_qc = new MyEncoder ( "TIME_quality_control", new ArrayList< IEncoder>( Arrays.asList( u )), floatEncoder ) ; 
+		IEncoder time_qc = new MyEncoder ( "TIME_quality_control", new ArrayList< IEncoder>( Arrays.asList( u )), byteEncoder ) ; 
 		
-
 		encoders.put( lat.getVariableName(), lat ) ; 
 		encoders.put( lon.getVariableName(), lon ) ; 
 		encoders.put( time.getVariableName(), time ) ; 
