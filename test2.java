@@ -873,6 +873,9 @@ class MyEncoder implements IEncoder
 		}
 		this.buffer = new ArrayList<Object>( );	
 
+		this.dims = new ArrayList<Dimension>();
+
+
 		this.isDefined = false;
 		this.dimension = null;
 	}
@@ -880,9 +883,12 @@ class MyEncoder implements IEncoder
 	final String variableName; 
 	final ArrayList<Object>		buffer;
 	final ArrayList<IEncoder>	children;
+	final ArrayList<Dimension> dims; // change name childDimensions 
 
 	boolean isDefined; 
 	Dimension dimension;
+
+
 
 	/*	we can also record the table, or index of table here if we want
 			to incorporate into the strategy.
@@ -896,6 +902,8 @@ class MyEncoder implements IEncoder
 
 	public Dimension define( NetcdfFileWriteable writer ) 
 	{ 
+		// this is called recursively,
+
 		if( isDefined) {
 			return dimension;
 		}
@@ -903,8 +911,7 @@ class MyEncoder implements IEncoder
 
 		System.out.println( "defining " + variableName );
 
-		ArrayList<Dimension> dims = new ArrayList<Dimension>();
-
+	
 		// make sure children are defined already
 		for( IEncoder child: children )
 		{
@@ -922,17 +929,22 @@ class MyEncoder implements IEncoder
 
 		if( children.size() == 0 )
 		{
-			// no children means it's a dimension... actually could still be a stand alone scalar.
+			// no children means it's a dimension... actually could still be a stand alone scalar, that's an array.
 			dimension = writer.addDimension( variableName, buffer.size() ); 
-	
-
 		}
-
 
 		return dimension;
 	}
 
-	public void finish( ) throws Exception { }
+	public void finish( ) throws Exception 
+	{ 
+		// now we have to set up a loop ... over all the dimensions...   
+		// which means we have to assemble the dimensions again.
+		// 
+
+
+
+	}
 
 	public void dump()
 	{ 
