@@ -883,7 +883,18 @@ class MyEncoder implements IEncoder
 		buffer.add( value );
 	}
 
-	public void define() { }
+	public void define() 
+	{ 
+		System.out.println( "define - " + variableName   );
+
+		// make sure children are defined already
+		for( IEncoder child: children )
+		{
+			child.define();
+		}
+
+	}
+
 	public void finish( ) throws Exception { }
 
 	public void dump()
@@ -1068,9 +1079,19 @@ class Timeseries1
 
 		for ( IEncoder encoder: encoders.values())
 		{
-
-			encoder.dump ();
+			encoder.dump();
 		}
+
+		// now we loop the encoders and try to define...
+		// will need to pass a dimensions need if it's already defined
+		// 
+
+		for ( IEncoder encoder: encoders.values())
+		{
+			// actually recursive...
+			encoder.define();
+		}
+
 
 
 
