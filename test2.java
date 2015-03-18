@@ -872,8 +872,7 @@ class MyEncoder implements IEncoder
 	final ArrayList<Object>		buffer;
 	final ArrayList<IEncoder>	children;
 
-	/*
-		we can also record the table, or index of table here if we want
+	/*	we can also record the table, or index of table here if we want
 			to incorporate into the strategy.
 		eg. we can compre with xml to decide what to do.
 	*/
@@ -885,23 +884,21 @@ class MyEncoder implements IEncoder
 
 	public void define() 
 	{ 
-		System.out.println( "define - " + variableName   );
+		System.out.println( "define - " + variableName );
 
 		// make sure children are defined already
 		for( IEncoder child: children )
 		{
 			child.define();
 		}
-
 	}
 
 	public void finish( ) throws Exception { }
 
 	public void dump()
 	{ 
-		System.out.println( "WHOOT ENCODEER - " + variableName + " buffer size " + buffer.size() + " children size " + children.size()  );
+		System.out.println( "WHOOT ENCODEER - " + variableName + " buffer size " + buffer.size() + " children size " + children.size());
 	}
-
 
 	public String getVariableName()
 	{
