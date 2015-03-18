@@ -843,7 +843,7 @@ interface IEncoder
 //	public void define();  // change name to start(); ?
 
 	public Dimension define( NetcdfFileWriteable writer) ; 
-	public void finish( ) throws Exception ; 
+	public void finish( NetcdfFileWriteable writer) throws Exception ; 
 
 
 	public void addValueToBuffer( Object value ); 
@@ -936,12 +936,56 @@ class MyEncoder implements IEncoder
 		return dimension;
 	}
 
-	public void finish( ) throws Exception 
+	// we're going to need to pass in our instantiated array
+
+	// or we use a modulo to produce the value ??? 
+
+	public void writeValues( ArrayList<Dimension> dims, int dimIndex, int acc ) 
+	{
+		// ok, actually we only need to compute the Index that we will use...
+		
+		if( dimIndex < dims.size() )
+		{
+			Dimension dim = dims.get( dimIndex ); 
+
+			for( int i = 0; i < dim.getLength(); i++ )
+			{
+				
+
+				writeValues( dims, dimIndex + 1, acc + i ); 
+			}
+		}
+		else 
+		{
+
+				System.out.println( "dimIndex " + "  acc " + acc );
+
+		}
+		
+	}
+
+	public void finish( NetcdfFileWriteable writer) throws Exception 
 	{ 
 		// now we have to set up a loop ... over all the dimensions...   
 		// which means we have to assemble the dimensions again.
 		// 
 
+		System.out.println( "finish " + variableName );
+
+		writeValues( dims,  0, 0 ); 
+
+/*
+		index = 0;
+		for( Dimension dim : dims )
+		{
+			System.out.println( " dim " + dim.getLength() ); 
+			// in fact needs to be recursive ... to effect the loop...
+			for( int i = 0; i < dim.getLength(); i++ )
+			{
+				index += 
+			}
+		}
+*/
 
 
 	}
@@ -1147,6 +1191,13 @@ class Timeseries1
 
 		// finish netcdf definition
 		writer.create();
+
+
+		for ( IEncoder encoder: encoders.values())
+		{
+			encoder.finish( writer );
+		}
+
 
 
 		// close
