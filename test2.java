@@ -858,17 +858,13 @@ class MyEncoder implements IEncoder
 	public MyEncoder( String variableName, ArrayList< IEncoder>  children )
 	{
 		this.variableName = variableName; 
-
-		System.out.println ( "**** children " + children  );
+		// ease interface use
 		if( children == null ) {
-
 			this.children = new ArrayList< IEncoder>() ;
 		}
 		else {
-			System.out.println ( "**** not null " );
 			this.children = children; 
 		}
-		
 		this.buffer = new ArrayList<Object>( );	
 	}
 
@@ -1053,11 +1049,9 @@ class Timeseries1
 
 		ArrayList< IEncoder> fuck =  new ArrayList< IEncoder>(); 
 		fuck.add( lat );
-		System.out.println( "**** size " + fuck.size() );
 
 //		ArrayList< IEncoder> uu = new ArrayList< IEncoder>( Arrays.asList(u) );
-		//IEncoder temp = new MyEncoder ( "TEMP", new ArrayList< IEncoder>( Arrays.asList( u ))) ; 
-		IEncoder temp = new MyEncoder ( "TEMP", fuck ); 
+		IEncoder temp = new MyEncoder ( "TEMP", new ArrayList< IEncoder>( Arrays.asList( u ))) ; 
 
 
 		encoders.put( lat.getVariableName(), lat ) ; 
