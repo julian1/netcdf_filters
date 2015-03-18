@@ -689,25 +689,6 @@ class MyType
 
 
 
-interface IEncoder
-{
-	// change name VarEncoder
-
-	// name is provided by map lookup
-	// theoretically this object could also preserve the index
-	// if we give it a concept of the name, then it can also define the netcdf.
-
-	public void define();  // change name to start(); ?
-	public void finish( ) throws Exception ; 
-
-
-	public void addValueToBuffer( Object value ); 
-
-	public String getVariableName();
-
-	public void dump();
-}
-
 /*
 interface IEncoderD3 extends IEncoder
 {
@@ -848,6 +829,31 @@ class EncodeByteValue implements IEncodeValue
 	}
 }
 
+
+
+
+interface IEncoder
+{
+	// change name VarEncoder
+
+	// name is provided by map lookup
+	// theoretically this object could also preserve the index
+	// if we give it a concept of the name, then it can also define the netcdf.
+
+//	public void define();  // change name to start(); ?
+
+	public Dimension define( NetcdfFileWriteable writer) ; 
+	public void finish( ) throws Exception ; 
+
+
+	public void addValueToBuffer( Object value ); 
+
+	public String getVariableName();
+
+	public void dump();
+}
+
+
 /*
 	The final netcdf document is actully a combination of everything 
 */
@@ -866,11 +872,17 @@ class MyEncoder implements IEncoder
 			this.children = children; 
 		}
 		this.buffer = new ArrayList<Object>( );	
+
+		this.isDefined = false;
+		this.dimension = null;
 	}
 
 	final String variableName; 
 	final ArrayList<Object>		buffer;
 	final ArrayList<IEncoder>	children;
+
+	boolean isDefined; 
+	Dimension dimension;
 
 	/*	we can also record the table, or index of table here if we want
 			to incorporate into the strategy.
@@ -882,15 +894,37 @@ class MyEncoder implements IEncoder
 		buffer.add( value );
 	}
 
-	public void define() 
+	public Dimension define( NetcdfFileWriteable writer ) 
 	{ 
-		System.out.println( "define - " + variableName );
+		if( isDefined) {
+			return dimension;
+		}
+		isDefined = true;
+
+		ArrayList<Dimension> dims = new ArrayList<Dimension>();
 
 		// make sure children are defined already
 		for( IEncoder child: children )
 		{
-			child.define();
+			// get the children to populate...
+			Dimension d = child.define( writer );
+			if( d != null) 
+				dims.add( d );  
 		}
+
+		// System.out.println( "define - " + variableName );
+//		writer.addVariable(variableName, DataType.FLOAT, dims);
+
+		if( children.size() == 0 )
+		{
+			// no children means it's a dimension... actually could still be a stand alone scalar.
+			dimension = writer.addDimension( variableName, buffer.size() ); 
+	
+
+		}
+
+
+		return null;
 	}
 
 	public void finish( ) throws Exception { }
@@ -1083,10 +1117,15 @@ class Timeseries1
 		// will need to pass a dimensions need if it's already defined
 		// 
 
+
+		NetcdfFileWriteable writer = createWritable.create();
+
+
+
 		for ( IEncoder encoder: encoders.values())
 		{
 			// actually recursive...
-			encoder.define();
+			encoder.define( writer );
 		}
 
 
