@@ -901,6 +901,8 @@ class MyEncoder implements IEncoder
 		}
 		isDefined = true;
 
+		System.out.println( "defining " + variableName );
+
 		ArrayList<Dimension> dims = new ArrayList<Dimension>();
 
 		// make sure children are defined already
@@ -912,8 +914,11 @@ class MyEncoder implements IEncoder
 				dims.add( d );  
 		}
 
+
+		System.out.println( "dims size " + dims.size() );
+
 		// System.out.println( "define - " + variableName );
-//		writer.addVariable(variableName, DataType.FLOAT, dims);
+		writer.addVariable(variableName, DataType.FLOAT, dims);
 
 		if( children.size() == 0 )
 		{
@@ -1128,8 +1133,13 @@ class Timeseries1
 			encoder.define( writer );
 		}
 
+		// finish netcdf definition
+		writer.create();
 
 
+		// close
+		writer.close();
+	
 
 /*
 		// close
