@@ -1188,9 +1188,10 @@ class Timeseries1
 
 		// where on earth are the attributes coming from ? 
 
+		// VERY IMPORTANT - dimensions are the same as sql ordering criteria.
 
 		// OK
-		IEncoder u [] = { lat, lon, time };   // we should use a list to make this simpler
+		IEncoder u [] = { /*lat, lon,*/ time };   // we should use a list to make this simpler
 
 		IEncoder temp = new MyEncoder ( "TEMP", new ArrayList< IEncoder>( Arrays.asList( u )), floatEncoder, floatAttributes ) ; 
 
