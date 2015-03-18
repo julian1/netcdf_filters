@@ -1047,10 +1047,6 @@ class Timeseries1
 
 		IEncoder u [] = { lat, lon, time };
 
-		ArrayList< IEncoder> fuck =  new ArrayList< IEncoder>(); 
-		fuck.add( lat );
-
-//		ArrayList< IEncoder> uu = new ArrayList< IEncoder>( Arrays.asList(u) );
 		IEncoder temp = new MyEncoder ( "TEMP", new ArrayList< IEncoder>( Arrays.asList( u ))) ; 
 
 
@@ -1077,38 +1073,6 @@ class Timeseries1
 		}
 
 
-
-/*
-		// timeseries data	
-		{
-			// sql stuff
-			// need to encode the additional parameter...
-			String query = "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id); 
-			PreparedStatement stmt = conn.prepareStatement( query ); 
-			stmt.setFetchSize(1000);
-			ResultSet rs = stmt.executeQuery();
-
-			// now we loop the main attributes 
-			ResultSetMetaData m = rs.getMetaData();
-			int numColumns = m.getColumnCount();
-
-			rs.next(); 
-			// 1d values
-			for ( int i = 1 ; i <= numColumns ; i++ ) {
-				IEncoderD1 encoder = encodersD1.get(m.getColumnName(i)); 
-				if( encoder != null ) 
-					encoder.addValue(0, rs.getObject(i));
-			}
-		}
-
-		// write values to netcdf
-		for ( IEncoder encoder: encoders.values()) {
-			encoder.finish();
-		}
-
-		System.out.println( "done writing data" );
-
-*/
 
 /*
 		// close
