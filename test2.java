@@ -703,6 +703,8 @@ interface IEncoder
 
 	public void addValueToBuffer( Object value ); 
 
+	public String getVariableName();
+
 	public void dump();
 }
 
@@ -864,6 +866,11 @@ class MyEncoder implements IEncoder
 	final ArrayList<Object>		buffer;
 	final ArrayList<IEncoder>	children;
 
+	/*
+		we can also record the table, or index of table here if we want
+			to incorporate into the strategy.
+		eg. we can compre with xml to decide what to do.
+	*/
 	public void addValueToBuffer( Object value )
 	{
 		// perhaps delegate to strategy...
@@ -879,6 +886,10 @@ class MyEncoder implements IEncoder
 	}
 
 
+	public String getVariableName()
+	{
+		return variableName;
+	}
 }
 
 
@@ -1022,8 +1033,12 @@ class Timeseries1
 
 		Map< String, IEncoder> encoders = new HashMap< String, IEncoder> ();
 
-		encoders.put( "LATITUDE", new MyEncoder ( "LATITUDE", null ) ) ; 
-		encoders.put( "TIME", new MyEncoder ( "TIME", null ) ) ; 
+
+		IEncoder lat = new MyEncoder ( "LATITUDE", null ); 
+		IEncoder time = new MyEncoder ( "TIME", null ) ; 
+
+		encoders.put( lat.getVariableName(), lat ) ; 
+		encoders.put( time.getVariableName(), time ) ; 
 
 		/*
 			For timeseries - we may only need a 
@@ -1033,12 +1048,11 @@ class Timeseries1
 		populateValues( encoders, "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id) );
 		populateValues( encoders, "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
 
-		/*
-			Issue - ordering criteria...
+		/* IMPORTANT Issue - ordering criteria...
 		*/
 
-		 for ( IEncoder encoder: encoders.values())
-		  {
+		for ( IEncoder encoder: encoders.values())
+		{
 
 			encoder.dump ();
 		}
