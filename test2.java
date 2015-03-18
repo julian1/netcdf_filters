@@ -914,8 +914,8 @@ class MyEncoder implements IEncoder
 				dims.add( d );  
 		}
 
-
-		System.out.println( "dims size " + dims.size() );
+		System.out.println( " children size " + children.size() );
+		System.out.println( " dims size " + dims.size() );
 
 		// System.out.println( "define - " + variableName );
 		writer.addVariable(variableName, DataType.FLOAT, dims);
@@ -929,7 +929,7 @@ class MyEncoder implements IEncoder
 		}
 
 
-		return null;
+		return dimension;
 	}
 
 	public void finish( ) throws Exception { }
