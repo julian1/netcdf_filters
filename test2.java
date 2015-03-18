@@ -864,6 +864,7 @@ interface IDimension
 //	public void finish( NetcdfFileWriteable writer) throws Exception ; 
 	public void define( NetcdfFileWriteable writer) ;
 
+	public Dimension getDimension( ) ; // bad naming
 
 	public int getLength();
 	
@@ -894,6 +895,12 @@ class MyDimension implements IDimension
 	int size; 
 	Dimension dimension;
 
+
+	public Dimension getDimension( )  // bad naming
+	{
+		// throw if not defined...
+		return dimension;
+	}
 
 	public int getLength()
 	{
@@ -951,14 +958,11 @@ class MyEncoder implements IEncoder
 			this.children = children; 
 		}
 */
-
 		this.encodeValue = encodeValue;
 		this.attributes = attributes;
+		this.dimensions = dimensions; //new ArrayList<Dimension>();
 
 		this.buffer = new ArrayList<Object>( );	
-
-		this.dims = dimensions; //new ArrayList<Dimension>();
-
 
 //		this.isDefined = false;
 //		this.dimension = null;
@@ -967,9 +971,8 @@ class MyEncoder implements IEncoder
 	final String variableName; 
 	final IEncodeValue			encodeValue; 
 	final Map<String, Object>	attributes; 
-//	final ArrayList<IEncoder>	children;
+	final ArrayList<IDimension>	dimensions; // change name childDimensions 
 	final ArrayList<Object>		buffer;
-	final ArrayList<IDimension>	dims; // change name childDimensions 
 
 //	boolean isDefined; 
 //	Dimension dimension;
@@ -988,6 +991,22 @@ class MyEncoder implements IEncoder
 
 	public void define( NetcdfFileWriteable writer ) 
 	{ 
+
+		// make sure children are defined already
+		List<Dimension> d = new ArrayList<Dimension>();
+		for( IDimension dimension: dimensions)
+		{
+			d.add( dimension.getDimension() );  
+		}
+
+		writer.addVariable(variableName, encodeValue.targetType(), d );
+
+		for( Map.Entry< String, Object> entry : attributes.entrySet()) { 
+			writer.addVariableAttribute( variableName, entry.getKey(), entry.getValue().toString() ); 
+		}
+
+
+
 /*
 		// this is called recursively,
 
@@ -1007,9 +1026,6 @@ class MyEncoder implements IEncoder
 			if( d != null) 
 				dims.add( d );  
 		}
-
-		System.out.println( " children size " + children.size() );
-		System.out.println( " dims size " + dims.size() );
 
 		// System.out.println( "define - " + variableName );
 		// writer.addVariable(variableName, DataType.FLOAT, dims);
@@ -1079,8 +1095,8 @@ class MyEncoder implements IEncoder
 		System.out.println( "finish " + variableName );
 
 		ArrayList< Integer> shape = new ArrayList< Integer>() ;
-		for( IDimension dim : dims )
-			shape.add( dim.getLength() );
+		for( IDimension dimension : dimensions )
+			shape.add( dimension.getLength() );
 
 		Array A = Array.factory( encodeValue.targetType(), toIntArray(shape ) );
 
@@ -1321,6 +1337,8 @@ class Timeseries1
 			For timeseries - we may only need a 
 		*/
 
+		// we could have a common interface for addValue...
+		// in order to avoid passing encoders and dimensions.
 		populateValues( encoders, dimensions, "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id) );
 		populateValues( encoders, dimensions, "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
 
@@ -1354,13 +1372,13 @@ class Timeseries1
 			dimension.define(writer);
 		}
 
-/*
+
 		for ( IEncoder encoder: encoders.values())
 		{
 			// actually recursive...
 			encoder.define( writer );
 		}
-*/
+
 
 		// finish netcdf definition
 		writer.create();
