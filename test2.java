@@ -929,7 +929,8 @@ class MyEncoder implements IEncoder
 		System.out.println( " dims size " + dims.size() );
 
 		// System.out.println( "define - " + variableName );
-		writer.addVariable(variableName, DataType.FLOAT, dims);
+		// writer.addVariable(variableName, DataType.FLOAT, dims);
+		writer.addVariable(variableName, encodeValue.targetType(), dims);
 
 		if( children.size() == 0 )
 		{
@@ -989,11 +990,7 @@ class MyEncoder implements IEncoder
 		for( Dimension dim : dims )
 			shape.add( dim.getLength() );
 
-//		DataType.FLOAT,
-//		Array A = new ArrayFloat(  toIntArray( shape )  );
-
-		// so we can delegate to the encoder type... to generate
-		Array A = Array.factory( DataType.FLOAT,   toIntArray( shape )  );
+		Array A = Array.factory( encodeValue.targetType(),   toIntArray( shape )  );
 
 		writeValues( dims,  0, 0 , A ); 
 
@@ -1155,22 +1152,27 @@ class Timeseries1
 
 		Map< String, IEncoder> encoders = new HashMap< String, IEncoder> ();
 
-//EncodeFloatValue v = new EncodeFloatValue
+		EncodeFloatValue floatEncoder = new EncodeFloatValue();
 
-		IEncoder lat = new MyEncoder ( "LATITUDE", null, null ); 
-		IEncoder lon = new MyEncoder ( "LONGITUDE", null ,null ); 
-		IEncoder time = new MyEncoder ( "TIME", null, null ) ; 
+		IEncoder lat = new MyEncoder ( "LATITUDE", null, floatEncoder); 
+		IEncoder lon = new MyEncoder ( "LONGITUDE", null , floatEncoder); 
+		IEncoder time = new MyEncoder ( "TIME", null, floatEncoder) ; 
+
+
 
 		// OK
-		IEncoder u [] = { lat, lon, time };
+		IEncoder u [] = { lat, lon, time };   // we should use a list to make this simpler
 
-		IEncoder temp = new MyEncoder ( "TEMP", new ArrayList< IEncoder>( Arrays.asList( u )), null   ) ; 
+		IEncoder temp = new MyEncoder ( "TEMP", new ArrayList< IEncoder>( Arrays.asList( u )), floatEncoder ) ; 
 
+		IEncoder time_qc = new MyEncoder ( "TIME_quality_control", new ArrayList< IEncoder>( Arrays.asList( u )), floatEncoder ) ; 
+		
 
 		encoders.put( lat.getVariableName(), lat ) ; 
 		encoders.put( lon.getVariableName(), lon ) ; 
 		encoders.put( time.getVariableName(), time ) ; 
 		encoders.put( temp.getVariableName(), temp ) ; 
+		encoders.put( time_qc.getVariableName(), time_qc ) ; 
 
 		/*
 			For timeseries - we may only need a 
