@@ -1033,12 +1033,15 @@ class Timeseries1
 
 		Map< String, IEncoder> encoders = new HashMap< String, IEncoder> ();
 
-
 		IEncoder lat = new MyEncoder ( "LATITUDE", null ); 
+		IEncoder lon = new MyEncoder ( "LONGITUDE", null ); 
 		IEncoder time = new MyEncoder ( "TIME", null ) ; 
+		IEncoder temp = new MyEncoder ( "TEMP", null ) ; 
 
 		encoders.put( lat.getVariableName(), lat ) ; 
+		encoders.put( lon.getVariableName(), lon ) ; 
 		encoders.put( time.getVariableName(), time ) ; 
+		encoders.put( temp.getVariableName(), temp ) ; 
 
 		/*
 			For timeseries - we may only need a 
