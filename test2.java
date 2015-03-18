@@ -934,6 +934,11 @@ class MyEncoder implements IEncoder
 		// writer.addVariable(variableName, DataType.FLOAT, dims);
 		writer.addVariable(variableName, encodeValue.targetType(), dims);
 
+		for( Map.Entry< String, Object> entry : attributes.entrySet()) { 
+			writer.addVariableAttribute( variableName, entry.getKey(), entry.getValue().toString() ); 
+		}
+
+
 		if( children.size() == 0 )
 		{
 			// no children means it's a dimension... actually could still be a stand alone scalar, that's an array.
