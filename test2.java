@@ -861,7 +861,8 @@ interface IDimension
 
 //	public Dimension define( NetcdfFileWriteable writer) ; 
 //	public void finish( NetcdfFileWriteable writer) throws Exception ; 
-
+	public Dimension define( NetcdfFileWriteable writer) ;
+	
 	public void addValueToBuffer( Object value ); 
 
 	public String getName();
@@ -872,6 +873,8 @@ interface IDimension
 
 class MyDimension implements IDimension 
 {
+	// dimension determines sql ordering criteria.
+
 	public MyDimension( String name ) 
 	{
 		this.name = name; // required to encode dimension
@@ -879,9 +882,19 @@ class MyDimension implements IDimension
 
 	final String name;
 
-	public void addValueToBuffer( Object value ) { } 
+	public Dimension define( NetcdfFileWriteable writer) 
+	{ 
+		// shouldn't do all this at the same time...
+		// uggh.
+		return null;
+	} 
 
-	public String getName() { } 
+	public void addValueToBuffer( Object value ) 
+	{ 
+		System.out.println( "add value to dimension " + name );
+	} 
+
+	public String getName() { return name ; } 
 
 	public void dump() { } 
 }
@@ -1005,14 +1018,12 @@ class MyEncoder implements IEncoder
 		}
 		else 
 		{
-			System.out.println( "dimIndex " + "  acc " + acc  + "  buffer " + buffer.get( acc ) );
-			// we need to jjjjjjjjjjjjjjjj
+			// System.out.println( "dimIndex " + "  acc " + acc  + "  buffer " + buffer.get( acc ) );
 
-
-	// public void encode( Array A, int ima, Map<String, Object> attributes, Object value ); 
+			// public void encode( Array A, int ima, Map<String, Object> attributes, Object value ); 
 			encodeValue.encode( A, acc, attributes, buffer.get( acc ) ); 
 
-//			A.setFloat( acc, (float) 99999. ); 
+			// A.setFloat( acc, (float) 99999. ); 
 		}
 		
 	}
@@ -1155,7 +1166,12 @@ class Timeseries1
 	// we should definitely pass a writable here ...
 	// rather than instantiate it
 
-	public void populateValues(  Map< String, IEncoder> encoders, String query  )  throws Exception
+	public void populateValues(  
+		Map< String, IEncoder> encoders, 
+		Map< String, IDimension> dimensions, 
+		String query  
+
+		)  throws Exception
 	{
 		// sql stuff
 		// need to encode the additional parameter...
@@ -1205,12 +1221,22 @@ class Timeseries1
 //		IEncoder e = new MyEncoder ( "LATITUDE", null ) ; 
 
 
+
+
+		Map< String, IDimension> dimensions = new HashMap< String, IDimension> ();
+
+
+		IDimension time_ = new MyDimension( "TIME" );
+		dimensions.put( time_.getName(), time_ );
+
+
+
 		Map< String, IEncoder> encoders = new HashMap< String, IEncoder> ();
+
 
 		IEncodeValue floatEncoder = new EncodeFloatValue();
 		IEncodeValue byteEncoder = new EncodeByteValue();
 		IEncodeValue timestampEncoder = new EncodeTimestampValue();
-
 
 
 		Map<String, Object> timestampAttributes = new HashMap<String, Object>();
@@ -1252,11 +1278,11 @@ class Timeseries1
 
 		/*
 			For timeseries - we may only need a 
-
 		*/
 
-		populateValues( encoders, "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id) );
-		populateValues( encoders, "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
+		populateValues( encoders, dimensions, "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id) );
+		populateValues( encoders, dimensions, "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
+
 
 		/* IMPORTANT Issue - ordering criteria...
 		*/
