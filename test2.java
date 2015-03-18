@@ -866,9 +866,6 @@ class MyEncoder implements IEncoder
 
 	public void addValueToBuffer( Object value )
 	{
-
-		System.out.println( "WHOOT Add value to buffer - " + variableName  );
-
 		// perhaps delegate to strategy...
 		buffer.add( value );
 	}
@@ -981,6 +978,31 @@ class Timeseries1
 	// we should definitely pass a writable here ...
 	// rather than instantiate it
 
+	public void populateValues(  Map< String, IEncoder> encoders, String query  )  throws Exception
+	{
+		// sql stuff
+		// need to encode the additional parameter...
+		//String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
+		// String query = "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id); 
+		PreparedStatement stmt = conn.prepareStatement( query ); 
+		stmt.setFetchSize(1000);
+		ResultSet rs = stmt.executeQuery();
+
+		// now we loop the main attributes 
+		ResultSetMetaData m = rs.getMetaData();
+		int numColumns = m.getColumnCount();
+		// encode values t,lat,lon are always indexes - so we should be able to delegate to the thing...
+		int time = 0;
+		while ( rs.next() ) {  
+			for ( int i = 1 ; i <= numColumns ; i++ ) {
+				// System.out.println( "column name " + m.getColumnName(i) );
+
+				IEncoder encoder = encoders.get( m.getColumnName(i)); 
+				if( encoder != null) 
+					encoder.addValueToBuffer( rs.getObject( i));
+			}
+		}
+	} 
 
 
 	public NetcdfFileWriteable get() throws Exception
@@ -1001,40 +1023,19 @@ class Timeseries1
 		Map< String, IEncoder> encoders = new HashMap< String, IEncoder> ();
 
 		encoders.put( "LATITUDE", new MyEncoder ( "LATITUDE", null ) ) ; 
+		encoders.put( "TIME", new MyEncoder ( "TIME", null ) ) ; 
 
 		/*
 			For timeseries - we may only need a 
 
 		*/
 
-		// measurement data	
-		if( true )
-		{
-			// sql stuff
-			// need to encode the additional parameter...
-			//String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
+		populateValues( encoders, "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id) );
+		populateValues( encoders, "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
 
-			String query = "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id); 
-			PreparedStatement stmt = conn.prepareStatement( query ); 
-			stmt.setFetchSize(1000);
-			ResultSet rs = stmt.executeQuery();
-
-			// now we loop the main attributes 
-			ResultSetMetaData m = rs.getMetaData();
-			int numColumns = m.getColumnCount();
-			// encode values t,lat,lon are always indexes - so we should be able to delegate to the thing...
-			int time = 0;
-			while ( rs.next() ) {  
-				for ( int i = 1 ; i <= numColumns ; i++ ) {
-					// System.out.println( "column name " + m.getColumnName(i) );
-
-					IEncoder encoder = encoders.get( m.getColumnName(i)); 
-					if( encoder != null) 
-						encoder.addValueToBuffer( rs.getObject( i));
-				}
-			}
-		}
-
+		/*
+			Issue - ordering criteria...
+		*/
 
 		 for ( IEncoder encoder: encoders.values())
 		  {
