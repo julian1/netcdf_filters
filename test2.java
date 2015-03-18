@@ -46,7 +46,7 @@ import ucar.ma2.ArrayByte;
 
 import ucar.ma2.Index;
 
-
+import java.util.Arrays;
 
 import java.util.regex.Pattern ; 
 import java.util.regex.Matcher; 
@@ -854,10 +854,20 @@ class EncodeByteValue implements IEncodeValue
 
 class MyEncoder implements IEncoder
 {
+	//public MyEncoder( String variableName, ArrayList< IEncoder>  children )
 	public MyEncoder( String variableName, ArrayList< IEncoder>  children )
 	{
 		this.variableName = variableName; 
-		this.children = children; 
+
+		System.out.println ( "**** children " + children  );
+		if( children == null ) {
+
+			this.children = new ArrayList< IEncoder>() ;
+		}
+		else {
+			System.out.println ( "**** not null " );
+			this.children = children; 
+		}
 		
 		this.buffer = new ArrayList<Object>( );	
 	}
@@ -882,7 +892,7 @@ class MyEncoder implements IEncoder
 
 	public void dump()
 	{ 
-		System.out.println( "WHOOT ENCODEER - " + variableName + " buffer size " + buffer.size() );
+		System.out.println( "WHOOT ENCODEER - " + variableName + " buffer size " + buffer.size() + " children size " + children.size()  );
 	}
 
 
@@ -1031,12 +1041,24 @@ class Timeseries1
 		// we'll add them all to a List 
 //		IEncoder e = new MyEncoder ( "LATITUDE", null ) ; 
 
+
 		Map< String, IEncoder> encoders = new HashMap< String, IEncoder> ();
 
 		IEncoder lat = new MyEncoder ( "LATITUDE", null ); 
 		IEncoder lon = new MyEncoder ( "LONGITUDE", null ); 
 		IEncoder time = new MyEncoder ( "TIME", null ) ; 
-		IEncoder temp = new MyEncoder ( "TEMP", null ) ; 
+
+
+		IEncoder u [] = { lat, lon, time };
+
+		ArrayList< IEncoder> fuck =  new ArrayList< IEncoder>(); 
+		fuck.add( lat );
+		System.out.println( "**** size " + fuck.size() );
+
+//		ArrayList< IEncoder> uu = new ArrayList< IEncoder>( Arrays.asList(u) );
+		//IEncoder temp = new MyEncoder ( "TEMP", new ArrayList< IEncoder>( Arrays.asList( u ))) ; 
+		IEncoder temp = new MyEncoder ( "TEMP", fuck ); 
+
 
 		encoders.put( lat.getVariableName(), lat ) ; 
 		encoders.put( lon.getVariableName(), lon ) ; 
