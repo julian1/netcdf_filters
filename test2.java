@@ -844,7 +844,8 @@ interface IEncoder
 
 //	public void define();  // change name to start(); ?
 
-	public Dimension define( NetcdfFileWriteable writer) ; 
+
+	public void define( NetcdfFileWriteable writer ) ; 
 	public void finish( NetcdfFileWriteable writer) throws Exception ; 
 
 	public void addValueToBuffer( Object value ); 
@@ -861,7 +862,10 @@ interface IDimension
 
 //	public Dimension define( NetcdfFileWriteable writer) ; 
 //	public void finish( NetcdfFileWriteable writer) throws Exception ; 
-	public Dimension define( NetcdfFileWriteable writer) ;
+	public void define( NetcdfFileWriteable writer) ;
+
+
+	public int getLength();
 	
 	public void addValueToBuffer( Object value ); 
 
@@ -871,6 +875,10 @@ interface IDimension
 }
 
 // this will get rid of the horrible recursion as well...
+
+
+// VERY IMPORTANT - we need to keep the dimension list separately, because they must be written 
+// before the variables.
 
 class MyDimension implements IDimension 
 {
@@ -884,23 +892,34 @@ class MyDimension implements IDimension
 
 	final String name;
 	int size; 
+	Dimension dimension;
 
-	public Dimension define( NetcdfFileWriteable writer) 
+
+	public int getLength()
+	{
+		return size;
+	}
+
+	public void define( NetcdfFileWriteable writer) 
 	{ 
 		// shouldn't do all this at the same time...
 		// uggh.
-		return null;
+		// no children means it's a dimension... actually could still be a stand alone scalar, that's an array.
+		dimension = writer.addDimension( name, size ); 
+		//return null;
 	} 
 
 	public void addValueToBuffer( Object value ) 
 	{ 
-		System.out.println( "add value to dimension " + name );
 		++size;
 	} 
 
 	public String getName() { return name ; } 
 
-	public void dump() { } 
+	public void dump() 
+	{ 
+		System.out.println( "** Dimension size " + size );
+	} 
 }
 
 
@@ -913,39 +932,47 @@ class MyDimension implements IDimension
 
 class MyEncoder implements IEncoder
 {
+
+
+		// IEncoder temp = new MyEncoder ( "TEMP", idimensions, floatEncoder, floatAttributes ) ; 
+
 	//public MyEncoder( String variableName, ArrayList< IEncoder>  children )
-	public MyEncoder( String variableName, ArrayList< IEncoder>  children, IEncodeValue encodeValue, Map<String, Object> attributes )
+
+	//public EncoderD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IEncodeValue encodeValue )
+	public MyEncoder( String variableName, ArrayList< IDimension> dimensions, IEncodeValue encodeValue, Map<String, Object> attributes )
 	{
+
 		this.variableName = variableName; 
-		// ease interface use
+/*		// ease interface use
 		if( children == null ) {
 			this.children = new ArrayList< IEncoder>() ;
 		}
 		else {
 			this.children = children; 
 		}
+*/
 
 		this.encodeValue = encodeValue;
 		this.attributes = attributes;
 
 		this.buffer = new ArrayList<Object>( );	
 
-		this.dims = new ArrayList<Dimension>();
+		this.dims = dimensions; //new ArrayList<Dimension>();
 
 
-		this.isDefined = false;
-		this.dimension = null;
+//		this.isDefined = false;
+//		this.dimension = null;
 	}
 
 	final String variableName; 
 	final IEncodeValue			encodeValue; 
 	final Map<String, Object>	attributes; 
-	final ArrayList<IEncoder>	children;
+//	final ArrayList<IEncoder>	children;
 	final ArrayList<Object>		buffer;
-	final ArrayList<Dimension>	dims; // change name childDimensions 
+	final ArrayList<IDimension>	dims; // change name childDimensions 
 
-	boolean isDefined; 
-	Dimension dimension;
+//	boolean isDefined; 
+//	Dimension dimension;
 
 
 
@@ -959,8 +986,9 @@ class MyEncoder implements IEncoder
 		buffer.add( value );
 	}
 
-	public Dimension define( NetcdfFileWriteable writer ) 
+	public void define( NetcdfFileWriteable writer ) 
 	{ 
+/*
 		// this is called recursively,
 
 		if( isDefined) {
@@ -999,6 +1027,7 @@ class MyEncoder implements IEncoder
 		}
 
 		return dimension;
+*/
 	}
 
 	// we're going to need to pass in our instantiated array
@@ -1050,21 +1079,23 @@ class MyEncoder implements IEncoder
 		System.out.println( "finish " + variableName );
 
 		ArrayList< Integer> shape = new ArrayList< Integer>() ;
-		for( Dimension dim : dims )
+		for( IDimension dim : dims )
 			shape.add( dim.getLength() );
 
-		Array A = Array.factory( encodeValue.targetType(),   toIntArray( shape )  );
+		Array A = Array.factory( encodeValue.targetType(), toIntArray(shape ) );
 
+/*
 		writeValues( dims,  0, 0 , A ); 
 
 		// int [] origin = new int[1];
 		// writer.write(variableName, origin, A);
 		writer.write(variableName, A);
+*/
 	}
 
 	public void dump()
 	{ 
-		System.out.println( "WHOOT ENCODEER - " + variableName + " buffer size " + buffer.size() + " children size " + children.size());
+		System.out.println( "WHOOT ENCODEER - " + variableName + " buffer size " + buffer.size() );
 	}
 
 	public String getVariableName()
@@ -1259,24 +1290,30 @@ class Timeseries1
 		// time dimension and time variable 
 		
 
-		IEncoder lat = new MyEncoder ( "LATITUDE", null, floatEncoder, floatAttributes); 
+	/*	IEncoder lat = new MyEncoder ( "LATITUDE", null, floatEncoder, floatAttributes); 
 		IEncoder lon = new MyEncoder ( "LONGITUDE", null , floatEncoder, floatAttributes); 
 		IEncoder time = new MyEncoder ( "TIME", null, timestampEncoder, timestampAttributes) ; 
-
+	*/
 		// where on earth are the attributes coming from ? 
 
 		// VERY IMPORTANT - dimensions are the same as sql ordering criteria. order by TIME. they decide the encode order.
 
+
+		ArrayList< IDimension> idimensions = new ArrayList<IDimension>(); 
+		idimensions.add( time_ );
+
+
 		// OK
-		IEncoder u [] = { /*lat, lon,*/ time };   // we should use a list to make this simpler
+//		IEncoder u [] = { /*lat, lon,*/ time };   // we should use a list to make this simpler
 
-		IEncoder temp = new MyEncoder ( "TEMP", new ArrayList< IEncoder>( Arrays.asList( u )), floatEncoder, floatAttributes ) ; 
+		//IEncoder temp = new MyEncoder ( "TEMP", new ArrayList< IEncoder>( Arrays.asList( u )), floatEncoder, floatAttributes ) ; 
+		IEncoder temp = new MyEncoder ( "TEMP", idimensions, floatEncoder, floatAttributes ) ; 
 
-		IEncoder time_qc = new MyEncoder ( "TIME_quality_control", new ArrayList< IEncoder>( Arrays.asList( u )), byteEncoder, byteAttributes ) ; 
+		IEncoder time_qc = new MyEncoder ( "TIME_quality_control", idimensions, byteEncoder, byteAttributes ) ; 
 		
-		encoders.put( lat.getVariableName(), lat ) ; 
-		encoders.put( lon.getVariableName(), lon ) ; 
-		encoders.put( time.getVariableName(), time ) ; 
+		//encoders.put( lat.getVariableName(), lat ) ; 
+		//encoders.put( lon.getVariableName(), lon ) ; 
+		//encoders.put( time.getVariableName(), time ) ; 
 		encoders.put( temp.getVariableName(), temp ) ; 
 		encoders.put( time_qc.getVariableName(), time_qc ) ; 
 
@@ -1287,7 +1324,7 @@ class Timeseries1
 		populateValues( encoders, dimensions, "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id) );
 		populateValues( encoders, dimensions, "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
 
-		for ( IDimension dimension: dimensions.values())
+/*		for ( IDimension dimension: dimensions.values())
 		{
 			dimension.dump();
 		}
@@ -1295,7 +1332,7 @@ class Timeseries1
 		if( true ) { 
 			throw new RuntimeException( "Finished" );
 		}
-
+*/
 		/* IMPORTANT Issue - ordering criteria...
 		*/
 
@@ -1312,21 +1349,28 @@ class Timeseries1
 		NetcdfFileWriteable writer = createWritable.create();
 
 
+		for ( IDimension dimension: dimensions.values())
+		{
+			dimension.define(writer);
+		}
 
+/*
 		for ( IEncoder encoder: encoders.values())
 		{
 			// actually recursive...
 			encoder.define( writer );
 		}
+*/
 
 		// finish netcdf definition
 		writer.create();
 
-
+/*
 		for ( IEncoder encoder: encoders.values())
 		{
 			encoder.finish( writer );
 		}
+*/
 
 
 
