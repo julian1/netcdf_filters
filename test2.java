@@ -740,6 +740,8 @@ interface IEncodeValue
 
 
 
+
+
 class EncodeTimestampValue implements IEncodeValue
 {
 	public DataType targetType()
@@ -845,13 +847,47 @@ interface IEncoder
 	public Dimension define( NetcdfFileWriteable writer) ; 
 	public void finish( NetcdfFileWriteable writer) throws Exception ; 
 
-
 	public void addValueToBuffer( Object value ); 
 
-	public String getVariableName();
+	public String getVariableName(); // change class name to IVariableEncoder and this to just getName()
 
 	public void dump();
 }
+
+
+interface IDimension
+{
+//	public void define();  // change name to start(); ?
+
+//	public Dimension define( NetcdfFileWriteable writer) ; 
+//	public void finish( NetcdfFileWriteable writer) throws Exception ; 
+
+	public void addValueToBuffer( Object value ); 
+
+	public String getName();
+
+	public void dump();
+}
+
+
+class MyDimension implements IDimension 
+{
+	public MyDimension( String name ) 
+	{
+		this.name = name; // required to encode dimension
+	}
+
+	final String name;
+
+	public void addValueToBuffer( Object value ) { } 
+
+	public String getName() { } 
+
+	public void dump() { } 
+}
+
+
+
 
 
 /*
@@ -1141,6 +1177,13 @@ class Timeseries1
 				IEncoder encoder = encoders.get( m.getColumnName(i)); 
 				if( encoder != null) 
 					encoder.addValueToBuffer( rs.getObject( i));
+
+				// if we did dimension first then we can handle this...				 
+				IDimension dimension = dimensions.get( m.getColumnName(i)); 
+				// this doesn't need to store values, only increment a count. 
+				if( dimension != null) 
+					dimension.addValueToBuffer( rs.getObject( i));
+
 			}
 		}
 	} 
@@ -1181,6 +1224,10 @@ class Timeseries1
 		byteAttributes.put( "_FillValue", (byte) 0xff ); 
 
 
+		// the dimensions 
+
+		// time dimension and time variable 
+		
 
 		IEncoder lat = new MyEncoder ( "LATITUDE", null, floatEncoder, floatAttributes); 
 		IEncoder lon = new MyEncoder ( "LONGITUDE", null , floatEncoder, floatAttributes); 
@@ -1188,7 +1235,7 @@ class Timeseries1
 
 		// where on earth are the attributes coming from ? 
 
-		// VERY IMPORTANT - dimensions are the same as sql ordering criteria.
+		// VERY IMPORTANT - dimensions are the same as sql ordering criteria. order by TIME. they decide the encode order.
 
 		// OK
 		IEncoder u [] = { /*lat, lon,*/ time };   // we should use a list to make this simpler
