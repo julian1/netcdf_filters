@@ -734,16 +734,17 @@ interface IEncodeValue
 
 	public void encode( Array A, int ima, Map<String, Object> attributes, Object value ); 
 
-	public Class targetType(); 
+	//public Class targetType(); 
+	public DataType targetType(); 
 }
 
 
 
 class EncodeTimestampValue implements IEncodeValue
 {
-	public Class targetType()
+	public DataType targetType()
 	{
-		return Float.class;
+		return DataType.FLOAT;//.class;
 	}
 
 	public void encode( Array A, int ima, Map<String, Object> attributes, Object value )
@@ -773,9 +774,9 @@ class EncodeTimestampValue implements IEncodeValue
 class EncodeFloatValue implements IEncodeValue
 {
 	// change name to targetType 
-	public Class targetType()
+	public DataType targetType()
 	{
-		return Float.class;
+		return DataType.FLOAT;//.class;
 	}
 
 	public void encode( Array A, int ima, Map<String, Object> attributes, Object value )
@@ -802,9 +803,9 @@ class EncodeByteValue implements IEncodeValue
 	// abstract concept of dimension...
 
 	// assumption that the Object A is a float array
-	public Class targetType()
+	public DataType targetType()
 	{
-		return Byte.class;
+		return DataType.BYTE;//.class;
 	}
 
 	public void encode( Array A, int ima, Map<String, Object> attributes, Object value )
