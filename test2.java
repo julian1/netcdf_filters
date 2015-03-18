@@ -964,7 +964,7 @@ class MyEncoder implements IEncoder
 		}
 		else 
 		{
-			System.out.println( "dimIndex " + "  acc " + acc );
+			System.out.println( "dimIndex " + "  acc " + acc  + "  buffer " + buffer.get( acc ) );
 			// we need to jjjjjjjjjjjjjjjj
 
 
@@ -999,7 +999,7 @@ class MyEncoder implements IEncoder
 
 		Array A = Array.factory( encodeValue.targetType(),   toIntArray( shape )  );
 
-//		writeValues( dims,  0, 0 , A ); 
+		writeValues( dims,  0, 0 , A ); 
 
 		// int [] origin = new int[1];
 		// writer.write(variableName, origin, A);
@@ -1161,12 +1161,13 @@ class Timeseries1
 
 		IEncodeValue floatEncoder = new EncodeFloatValue();
 		IEncodeValue byteEncoder = new EncodeByteValue();
+		IEncodeValue timestampEncoder = new EncodeTimestampValue();
 
 
 
-		Map<String, Object> attributes = new HashMap<String, Object>();
-		attributes.put( "units", "days since 1950-01-01 00:00:00 UTC" );
-		attributes.put( "_FillValue", (float) 999999. ); 
+		Map<String, Object> timestampAttributes = new HashMap<String, Object>();
+		timestampAttributes.put( "units", "days since 1950-01-01 00:00:00 UTC" );
+		timestampAttributes.put( "_FillValue", (float) 999999. ); 
 
 		Map<String, Object> floatAttributes = new HashMap<String, Object>();
 		floatAttributes.put( "_FillValue", (float) 999999. ); 
@@ -1178,7 +1179,7 @@ class Timeseries1
 
 		IEncoder lat = new MyEncoder ( "LATITUDE", null, floatEncoder, floatAttributes); 
 		IEncoder lon = new MyEncoder ( "LONGITUDE", null , floatEncoder, floatAttributes); 
-		IEncoder time = new MyEncoder ( "TIME", null, floatEncoder, floatAttributes) ; 
+		IEncoder time = new MyEncoder ( "TIME", null, timestampEncoder, timestampAttributes) ; 
 
 		// where on earth are the attributes coming from ? 
 
