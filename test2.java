@@ -870,6 +870,7 @@ interface IDimension
 	public void dump();
 }
 
+// this will get rid of the horrible recursion as well...
 
 class MyDimension implements IDimension 
 {
@@ -878,9 +879,11 @@ class MyDimension implements IDimension
 	public MyDimension( String name ) 
 	{
 		this.name = name; // required to encode dimension
+		this.size = 0;
 	}
 
 	final String name;
+	int size; 
 
 	public Dimension define( NetcdfFileWriteable writer) 
 	{ 
@@ -892,6 +895,7 @@ class MyDimension implements IDimension
 	public void addValueToBuffer( Object value ) 
 	{ 
 		System.out.println( "add value to dimension " + name );
+		++size;
 	} 
 
 	public String getName() { return name ; } 
@@ -1283,6 +1287,14 @@ class Timeseries1
 		populateValues( encoders, dimensions, "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id) );
 		populateValues( encoders, dimensions, "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
 
+		for ( IDimension dimension: dimensions.values())
+		{
+			dimension.dump();
+		}
+
+		if( true ) { 
+			throw new RuntimeException( "Finished" );
+		}
 
 		/* IMPORTANT Issue - ordering criteria...
 		*/
