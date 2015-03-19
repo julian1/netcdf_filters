@@ -1162,26 +1162,25 @@ class DecodeXmlConfiguration
 			NodeList lst = node.getChildNodes(); 
 			for( int i = 0; i < lst.getLength(); ++i )
 			{
-				Node child = lst.item( i);
+				Node child = lst.item(i);
 				if( child.getNodeType() == Node.TEXT_NODE )
 				{
 					return child.getNodeValue();
-					// System.out.println( "whoot " + key + " " + val );
-					// m.put( key, val );
 				}
-				//else {
-				//	m.put( key, "");
-				//}
 			}
 			return "";
 		}
 
-		void parseKeys( Node node, Map< String, String> m )
+		Map< String, String> parseKeyVals( Node node )
+		//void parseKeys( Node node, Map< String, String> m )
 		{
+
+			Map< String, String> m = new HashMap< String, String>();	
+
 			NodeList lst = node.getChildNodes(); 
 			for( int i = 0; i < lst.getLength(); ++i )
 			{
-				Node child = lst.item( i);
+				Node child = lst.item(i);
 				if( child.getNodeType() == Node.ELEMENT_NODE )
 				{
 					String key = child.getNodeName(); 
@@ -1189,14 +1188,17 @@ class DecodeXmlConfiguration
 					m.put( key, val );
 				}
 			}
-		}
 
+			return m;
+		}
+/*
 		Map< String, String> parseKeyVals( Node node )
 		{
 			Map< String, String> m = new HashMap< String, String>();	
 			parseKeys( node, m );
 			return m;
 		}
+*/
 
 		IDimension parseDimension( Node node) 
 		{
