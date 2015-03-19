@@ -1259,6 +1259,9 @@ class DecodeXmlConfiguration
 
 		void  parseTop( Node node )
 		{
+			Map< String, IDimension> dimensions = null; 
+			IEncodeValue encodeValue = null; 
+
 			if( node.getNodeType() == Node.ELEMENT_NODE 
 				&& node.getNodeName() == "top" )
 			{
@@ -1269,9 +1272,12 @@ class DecodeXmlConfiguration
 				for( int i = 0; i < lst.getLength(); ++i )
 				{
 					Node child = lst.item( i); 
-					parseDimensions( child );
-					
-					IEncodeValue encodeValue = parseEncoder( child ) ; 
+
+					if( dimensions == null)
+						dimensions  = parseDimensions( child );
+	
+					if( encodeValue == null)
+						encodeValue = parseEncoder( child ) ; 
 				}
 			}
 
