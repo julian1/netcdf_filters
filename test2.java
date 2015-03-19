@@ -1202,10 +1202,8 @@ class Timeseries1
 //		int time = 0;
 
 
-		//ArrayList< IAddValue> [] processing = new ArrayList< IAddValue > [ (numColumns + 1) ]; 
-//		Object  [] processing = new Object  [ (numColumns + 1) ]; 
-
-		ArrayList< IAddValue> [] processing = (ArrayList< IAddValue> []) new Object [ (numColumns + 1) ]; 
+		ArrayList< IAddValue> [] processing = (ArrayList< IAddValue> []) new ArrayList [ (numColumns + 1) ]; 
+		// ArrayList< IAddValue> [] processing = (ArrayList< IAddValue> []) java.lang.reflect.Array.newInstance( ArrayList.class, numColumns + 1) ; 
 
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
 			 System.out.println( "column name "+ m.getColumnName(i) ); 
