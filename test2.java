@@ -1129,10 +1129,12 @@ class DecodeXmlConfiguration
 	public DecodeXmlConfiguration () { } 
 
 	private static String XML = "<?xml version=\"1.0\"?>\n" +
+
+		"  <dimensions>\n" +
 		"    <dimension>\n" +
 		"        <name>TIME</name>\n" +
-		"        <name2>TIME</name2>\n" +
-		"    </dimension>\n" ;
+		"    </dimension>\n" + 
+		"  </dimensions>\n"; 
 
 
 	// it actually has to be a bottom out node...
@@ -1140,125 +1142,93 @@ class DecodeXmlConfiguration
 	// select the child node by name ... explicitly...
 	// unless we want to simply be able to return the 
 
-	// 
-/*
-	public Map<String, Object> parseChildren( Node node )
-	{
-		if( node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName() == "dimension" ) 
-		{ // do dimen
-		}
-		return null;
-	} 
-	public Object parseVal( Node node) 
-	{
-		if( node.getNodeType() = Node.TEXT_NODE )
-		{ }
-	}
+	// we may need property setters - to completely integrate into geoserver 
+	// but we'll try to do this with constructor 
 
-	public void parseKeyVal( Node node) 
+
+	// TJ's stuff is built on the assumption that everything is a simple object 
+
+	// why don't we build a setter  object  that's what the key pair is
+
+	// so we should pass the map in...
+
+	class DimensionParser
 	{
-		// we use this to get a list of key val objects to instantiate our class...
-		// if it ends in s we could pull a list 
-		// so we have to return a tuple.
-		String key = node.getNodeName();  // required...
-	}
-	public Object parseValue( Node node ) 
-	{
-		if( node.getNodeType() == Node.TEXT_NODE)
+		void parseVals( String key, Node node, Map< String, String> m  )
 		{
-			return  
-		}
-	}
-		if( node.getNodeType() == Node.ELEMENT_NODE) 
-			System.out.println( "node " + node.getNodeName() );
-		else if( node.getNodeType() == Node.TEXT_NODE) 
-			System.out.println( "text " + node.getNodeValue() );
-
-
-*/
-
-	public String parseSimpleStringValue( Node node ) 
-	{
-		// simple key value pair eg.   <name>value</name>	
-		String val = null;
-		NodeList lst = node.getChildNodes(); 
-		for( int i = 0; i < lst.getLength(); ++i )
-		{
-			Node child = lst.item( i);
-			if( child.getNodeType() == Node.TEXT_NODE)
-			{
-				val = child.getNodeValue();
-			}
-		}
-		return val;	
-	}
-
-	public Object parseComplexValue( Node node ) 
-	{
-		if( node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName() == "dimension" ) 
-		{
-			System.out.println( "whoot got dimension"  );
-
-			Map< String, Object> pairs  = new HashMap< String, Object>();
-			parseKeyValues( node, pairs ) ;
-
-			// instantiate
-						
-		}
-		// throw
-		return null;
-	}
-
-	public void parseKeyValue( Node node, Map< String, Object> pairs ) 
-	{
-		// we do the children...
-
-		String key = node.getNodeName();
-		Object val = parseSimpleStringValue( node ) ;
-
-		if( val == null ) {
-
-
-		}
-		System.out.println( "got pair " + key + " " + val );
-		pairs.put( key, val );
-	}
-
-	public void parseKeyValues( Node node, Map< String, Object> pairs ) 
-	{
-		NodeList lst = node.getChildNodes(); 
-		for( int i = 0; i < lst.getLength(); ++i )
-		{
-			Node child = lst.item( i);
-			if( child.getNodeType() == Node.ELEMENT_NODE )
-				parseKeyValue( child, pairs ) ;
-		}
-	}
-/*
-	public void walk( Node node, int depth ) 
-	{
-		for( int i = 0; i < depth; ++i)
-			System.out.print( "   " );
-
-
-		if( node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName() == "dimension" ) 
-		{
-			System.out.println( "whoot got dimension"  );
-
-			Map< String, Object> pairs  = new HashMap< String, Object>();
-			parseKeyValues( node, pairs ) ;
-		}
-
-		else {
 			NodeList lst = node.getChildNodes(); 
 			for( int i = 0; i < lst.getLength(); ++i )
 			{
-				Node child = lst .item( i); 
-				walk( child, depth + 1 );
+				Node child = lst.item( i);
+				if( child.getNodeType() == Node.TEXT_NODE )
+				{
+					String val = child.getNodeValue();
+					System.out.println( "whoot " + key + " " + val );
+					m.put( key, val );
+				}
 			}
 		}
+
+		void parseKeys1( Node node, Map< String, String> m )
+		{
+			NodeList lst = node.getChildNodes(); 
+			for( int i = 0; i < lst.getLength(); ++i )
+			{
+				Node child = lst.item( i);
+				if( child.getNodeType() == Node.ELEMENT_NODE )
+				{
+					String key = child.getNodeName(); 
+					parseVals( key, child, m); 
+				}
+			}
+		}
+
+		Map< String, String> parseKeys( Node node )
+		{
+			Map< String, String> m = new HashMap< String, String>();	
+			parseKeys1( node, m );
+			return m;
+		}
+
+
+
+		IDimension parseDimension( Node node) 
+		{
+			// new NodeWrapper(node );
+			if( node.getNodeType() == Node.ELEMENT_NODE 
+				&& node.getNodeName() == "dimension" )
+			{
+				Map< String, String> m = parseKeys( node );
+				System.out.println( "whoot creating dimension " + m.get( "name" ) );
+				return new MyDimension( m.get( "name" ) );
+			}
+			return null;
+		}
+
+		Map< String, IDimension> parseDimensions( Node node )
+		{
+			if( node.getNodeType() == Node.ELEMENT_NODE 
+				&& node.getNodeName() == "dimensions" )
+			{
+				Map< String, IDimension> dimensions = new HashMap< String, IDimension> () ;  
+
+				NodeList lst = node.getChildNodes(); 
+				for( int i = 0; i < lst.getLength(); ++i )
+				{
+					Node child = lst.item( i);
+					IDimension dimension = parseDimension( child );
+					if( dimension != null)
+					{
+						dimensions.put( dimension.getName(), dimension );
+					}
+				}
+				return dimensions;
+			}
+			return null;
+		}
+
 	}
-*/
+	
 
 	public void test() throws Exception 
 	{	
@@ -1266,7 +1236,13 @@ class DecodeXmlConfiguration
 		Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream);
 		Node node =	document.getFirstChild(); 
 
-		parseComplexValue( node ) ;
+
+//		IDimension d = new DimensionParser().parse( node );
+
+
+		Map< String, IDimension> dimensions = new DimensionParser().parseDimensions( node ); 
+
+//		parseComplexValue( node ) ;
 	
 //		walk( node, 0 );
 	}

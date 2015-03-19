@@ -19,14 +19,19 @@ prototype demonstrate end-to-end filter to subset netcdf generation, with stream
 on prod data.
 
 WHAT'S DONE
-- sequencing the definition, and data writing phases of netcdf generation 
-- basic subset expression parser/ 
-- postgres dialect rewriter instance
-- netcdf encoder
-- localized convention/ config strategy
-- experimented with a couple of query approaches favor time to start streaming, total time etc. 
+- done sequencing the definition, and data writing phases of netcdf generation 
+- done basic subset expression parser/ 
+- done postgres dialect rewriter instance
+- done netcdf encoder
+- done localized convention/ config strategy
+- done experimented with a couple of query approaches favor time to start streaming, total time etc. 
 - done - write required attributes with strategy
 - done - write multiple files (and get the writable instantiation working ) (pass at the time). 
+- done-  should specify dimension of a var by name, then we can infer size/count. 
+- done - think we have to invert it, instead of trying to infer, use an explicit configuration.
+	- It's part of the task.
+	- meaning use spring.
+
 
 -----
 	http://www.unidata.ucar.edu/software/thredds/v4.3/netcdf-java/reference/faq.html
@@ -37,10 +42,11 @@ WHAT'S DONE
 ---
 TODO
 
-- should specify dimension of a var by name, then we can infer size/count. 
-- think we have to invert it, instead of trying to infer, use an explicit configuration.
-	- It's part of the task.
-	- meaning use spring.
+- mvn project
+- configuration
+- generalize to trajectory and profile
+
+
 - compose with spring ?
 
 -  (cant but have abstracted out) do the netcdf generation in memory
