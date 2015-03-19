@@ -53,6 +53,7 @@ import java.util.regex.Pattern ;
 import java.util.regex.Matcher; 
 
 
+import java.util.Iterator;
 
 /*
 import au.org.emii.geoserver.extensions.filters.layer.data.FilterConfiguration;
@@ -75,6 +76,12 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+
+import java.util.AbstractMap.SimpleImmutableEntry;  
+// java.util.AbstractMap.SimpleImmutableEntry<K,V>;  
+	
+
 
 //import java.util.StringTokenizer;
 
@@ -1122,11 +1129,69 @@ class CreateWritable implements  ICreateWritable
 }
 
 
+class NodeWrapper implements Iterable<Node> {
+
+    private Node node;
+    private List<Node> nodes;
+    private NodeList nodeList;
+
+    public NodeWrapper(Node node) {
+        this.node = node;
+    }   
+
+    public Iterator<Node> iterator() {
+        if (nodes == null) {
+            buildNodes();
+        }   
+
+        return nodes.iterator();
+    }   
+
+    private void buildNodes() {
+        nodes = new ArrayList<Node>(getListLength());
+        for (int i = 0; i < getListLength(); i++) {
+            nodes.add(nodeList.item(i));
+        }   
+    }   
+
+    private int getListLength() {
+        return getNodeList().getLength();
+    }   
+
+    private NodeList getNodeList() {
+        if (nodeList == null) {
+            setNodeList();
+        }   
+        return nodeList;
+    }   
+
+    private void setNodeList() {
+        if (node.hasChildNodes()) {
+            nodeList = node.getChildNodes();
+        }   
+        else {
+            nodeList = new NullNodeList();
+        }   
+    }   
+
+    private class NullNodeList implements NodeList {
+
+        public Node item(int index) {
+            return null;
+        }   
+
+        public int getLength() {
+            return 0;
+        }   
+    }   
+}
 
 
 class DecodeXmlConfiguration
 {
 	public DecodeXmlConfiguration () { } 
+
+	// type of the attribute comes from the encoder type target type
 
 	private static String XML = "<?xml version=\"1.0\"?>\n" +
 
@@ -1137,9 +1202,12 @@ class DecodeXmlConfiguration
 		"    </dimension>\n" + 
 		"  </dimensions>\n" +
 		"  <encoder>floatEncoder</encoder>\n" +
-		"  <attribute>\n" + 
-		"    <name>_FillValue</name>\n" +
-		"  </attribute>\n" + 
+		"  <attributes>\n" +
+		"    <attribute>\n" + 
+		"      <name>_FillValue</name>\n" +
+		"      <value>999999.</value>\n" +
+		"    </attribute>\n" + 
+		"  </attributes>\n" +
 		"</top>\n";
 
 
@@ -1173,15 +1241,11 @@ class DecodeXmlConfiguration
 		Map< String, String> parseKeyVals( Node node )
 		{
 			Map< String, String> m = new HashMap< String, String>();	
-			NodeList lst = node.getChildNodes(); 
-			for( int i = 0; i < lst.getLength(); ++i )
-			{
-				Node child = lst.item(i);
+
+			for( Node child : new NodeWrapper( node)) 
 				if( child.getNodeType() == Node.ELEMENT_NODE )
-				{
 					m.put( child.getNodeName(), nodeVal( child ));
-				}
-			}
+
 			return m;
 		}
 
@@ -1207,15 +1271,10 @@ class DecodeXmlConfiguration
 				&& node.getNodeName() == "dimensions" )
 			{
 				Map< String, IDimension> dimensions = new HashMap< String, IDimension> () ;  
-				NodeList lst = node.getChildNodes(); 
-				for( int i = 0; i < lst.getLength(); ++i )
-				{
-					Node child = lst.item( i);
+				for( Node child : new NodeWrapper(node) ) {
 					IDimension dimension = parseDimension( child );
 					if( dimension != null)
-					{
 						dimensions.put( dimension.getName(), dimension );
-					}
 				}
 				return dimensions;
 			}
@@ -1257,19 +1316,42 @@ class DecodeXmlConfiguration
 			final String val;
 		};
 
-		void parseAttribute( Node node )
+		SimpleImmutableEntry<String, String> parseAttribute( Node node )
 		{
 			if( node.getNodeType() == Node.ELEMENT_NODE 
 				&& node.getNodeName().equals("attribute"))
 			{
 				Map< String, String> m = parseKeyVals( node );
-	
 				System.out.println( "attribute name  " + m.get( "name" ));
 				System.out.println( "attribute value " + m.get( "value" ));
+				return new SimpleImmutableEntry< String, String>( m.get( "name"), m.get("value"));
 			}
-			//return null;
+			return null;
 		}
 
+	/*
+		- we really need the simplified looping construct  
+		- which should be easy to do.
+	*/
+		Map<String, String> parseAttributes( Node node )
+		{
+			if( node.getNodeType() == Node.ELEMENT_NODE 
+				&& node.getNodeName().equals("attributes"))
+			{
+				Map<String, String> m = new HashMap<String, String> ();
+				NodeList lst = node.getChildNodes(); 
+				for( int i = 0; i < lst.getLength(); ++i )
+				{
+					Node child = lst.item( i); 
+					SimpleImmutableEntry< String, String> pair = parseAttribute( child);
+					if( pair != null)
+						m.put( pair.getKey(), pair.getValue());	
+				}	
+				System.out.println( "returning attributes!" );
+				return m;
+			}
+			return null;
+		}
 
 
 
@@ -1277,6 +1359,8 @@ class DecodeXmlConfiguration
 		{
 			Map< String, IDimension> dimensions = null; 
 			IEncodeValue encodeValue = null; 
+
+			Map< String, String> attributes = null; 
 
 			if( node.getNodeType() == Node.ELEMENT_NODE 
 				&& node.getNodeName().equals("top") )
@@ -1295,8 +1379,9 @@ class DecodeXmlConfiguration
 					if( encodeValue == null)
 						encodeValue = parseEncoder( child ) ; 
 
+					if( attributes == null)
+						attributes = parseAttributes( child );
 
-					parseAttribute( child);
 				}
 			}
 
