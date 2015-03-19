@@ -1157,7 +1157,7 @@ class DecodeXmlConfiguration
 
 	class DimensionParser
 	{
-		void parseVals( String key, Node node, Map< String, String> m  )
+		String parseVal( Node node  )
 		{
 			NodeList lst = node.getChildNodes(); 
 			for( int i = 0; i < lst.getLength(); ++i )
@@ -1165,14 +1165,15 @@ class DecodeXmlConfiguration
 				Node child = lst.item( i);
 				if( child.getNodeType() == Node.TEXT_NODE )
 				{
-					String val = child.getNodeValue();
+					return child.getNodeValue();
 					// System.out.println( "whoot " + key + " " + val );
-					m.put( key, val );
+					// m.put( key, val );
 				}
 				//else {
 				//	m.put( key, "");
 				//}
 			}
+			return "";
 		}
 
 		void parseKeys( Node node, Map< String, String> m )
@@ -1184,7 +1185,8 @@ class DecodeXmlConfiguration
 				if( child.getNodeType() == Node.ELEMENT_NODE )
 				{
 					String key = child.getNodeName(); 
-					parseVals( key, child, m); 
+					String val = parseVal( child );
+					m.put( key, val );
 				}
 			}
 		}
