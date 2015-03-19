@@ -53,6 +53,29 @@ import java.util.regex.Pattern ;
 import java.util.regex.Matcher; 
 
 
+
+/*
+import au.org.emii.geoserver.extensions.filters.layer.data.FilterConfiguration;
+import org.apache.commons.io.IOUtils;
+import org.junit.Test;
+import org.xml.sax.SAXException;
+*/
+
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.ByteArrayInputStream;
+// import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 //import java.util.StringTokenizer;
 
 // string tokenizer isn't going to work because may not be strings.
@@ -1030,7 +1053,7 @@ class MyEncoder implements IEncoder
 	}
 
 
-	int[] toIntArray( List<Integer> list)
+	static int[] toIntArray( List<Integer> list)
 	{
 		// List.toArray() only supports Boxed Integers...
 		int[] ret = new int[list.size()];
@@ -1042,16 +1065,17 @@ class MyEncoder implements IEncoder
 
 	public void finish( NetcdfFileWriteable writer) throws Exception 
 	{ 
+		// change name to writeValues ?
 		// now we have to set up a loop ... over all the dimensions...   
 		// which means we have to assemble the dimensions again.
 		System.out.println( "finish " + variableName );
 
 		ArrayList< Integer> shape = new ArrayList< Integer>() ;
-		for( IDimension dimension : dimensions )
+		for( IDimension dimension : dimensions ) {
 			shape.add( dimension.getLength() );
+		}
 
 		Array A = Array.factory( encodeValue.targetType(), toIntArray(shape ) );
-
 
 		writeValues( dimensions,  0, 0 , A ); 
 
@@ -1098,6 +1122,70 @@ class CreateWritable implements  ICreateWritable
 }
 
 
+
+
+class DecodeXmlConfiguration
+{
+	public DecodeXmlConfiguration () { } 
+
+	private static String XML = "<?xml version=\"1.0\"?>\n" +
+		"<filters>\n" +
+		"    <filter>\n" +
+		"        <name>file_id</name>\n" +
+		"        <type>integer</type>\n" +
+		"    </filter>\n" +
+		"</filters>\n";
+
+
+
+	public void walk( Node node, int depth ) 
+	{
+
+		String s = node.getNodeName(); 
+		// String s = node.getNodeValue(); 
+
+		for( int i = 0; i < depth; ++i)
+			System.out.print( "   " );
+
+
+		System.out.println( "node value " + s );
+
+		NodeList lst = node.getChildNodes(); 
+		for( int i = 0; i < lst.getLength(); ++i )
+		{
+			walk( lst.item(i), depth + 1 );
+		}
+
+	}
+
+
+	public void test() throws Exception 
+	{	
+		InputStream stream = new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
+
+		Document document = getDocument( stream ); 
+
+		Node node =	document.getFirstChild(); 
+
+		walk( node, 0 );
+
+
+//		FiltersParser filtersParser = new FiltersParser( document.getFirstChild() );
+ //       return filtersParser.parse();
+
+	}
+/*
+	public FilterConfiguration read(InputStream inputStream) throws ParserConfigurationException, SAXException, IOException {
+        return new FilterConfiguration(dataDirectoryPath, new FiltersDocumentParser(getDocument(inputStream)).getFilters());
+    }   
+*/
+
+	public Document getDocument(InputStream inputStream) throws ParserConfigurationException, SAXException, IOException {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilder db = dbf.newDocumentBuilder();
+        return db.parse(inputStream);
+    }   
+}
 
 
 
@@ -1229,6 +1317,7 @@ class Timeseries1
 
 		long ts_id = (long) featureInstances.getObject(1); 
 
+
 		System.out.println( "whoot get(), ts_id is " + ts_id );
 
 		String selection = translate.process( selection_expr); // we ought to be caching the specific query ??? 
@@ -1307,6 +1396,7 @@ class Timeseries1
 
 		// yes and avoid having the two loops...
 		// we also ought to map values by index... rather than doing the complicated name lookup
+
 
 		populateValues( dimensions, encoders, "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id) );
 		populateValues( dimensions, encoders, "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
@@ -1412,6 +1502,14 @@ public class test2 {
 
     public static void main(String[] args) throws Exception
 	{
+
+		DecodeXmlConfiguration x = new DecodeXmlConfiguration(); 
+		x.test();
+
+
+
+/*
+
 		Parser parser = new Parser();
 
 		IDialectTranslate translate = new  PostgresDialectTranslate();
@@ -1430,7 +1528,7 @@ public class test2 {
 			writer = timeseries.get();	
 		}
 		while( writer != null );
-
+*/
 	}
 
 		//String s = "777 and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
