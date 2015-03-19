@@ -1165,28 +1165,17 @@ class DecodeXmlConfiguration
 	{	
 		InputStream stream = new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
 
-		Document document = getDocument( stream ); 
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilder db = dbf.newDocumentBuilder();
+		Document document = db.parse(stream );
+
 
 		Node node =	document.getFirstChild(); 
 
 		walk( node, 0 );
 
-
-//		FiltersParser filtersParser = new FiltersParser( document.getFirstChild() );
- //       return filtersParser.parse();
-
 	}
-/*
-	public FilterConfiguration read(InputStream inputStream) throws ParserConfigurationException, SAXException, IOException {
-        return new FilterConfiguration(dataDirectoryPath, new FiltersDocumentParser(getDocument(inputStream)).getFilters());
-    }   
-*/
-
-	public Document getDocument(InputStream inputStream) throws ParserConfigurationException, SAXException, IOException {
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db = dbf.newDocumentBuilder();
-        return db.parse(inputStream);
-    }   
+   
 }
 
 
