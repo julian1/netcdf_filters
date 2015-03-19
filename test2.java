@@ -1130,11 +1130,14 @@ class DecodeXmlConfiguration
 
 	private static String XML = "<?xml version=\"1.0\"?>\n" +
 
+		"<top>\n" +
 		"  <dimensions>\n" +
 		"    <dimension>\n" +
 		"        <name>TIME</name>\n" +
 		"    </dimension>\n" + 
-		"  </dimensions>\n"; 
+		"  </dimensions>\n" +
+		"  <encoder>floatEncoder</encoder>\n" +
+		"</top>\n";
 
 
 	// it actually has to be a bottom out node...
@@ -1163,9 +1166,12 @@ class DecodeXmlConfiguration
 				if( child.getNodeType() == Node.TEXT_NODE )
 				{
 					String val = child.getNodeValue();
-					System.out.println( "whoot " + key + " " + val );
+					// System.out.println( "whoot " + key + " " + val );
 					m.put( key, val );
 				}
+				//else {
+				//	m.put( key, "");
+				//}
 			}
 		}
 
@@ -1227,6 +1233,52 @@ class DecodeXmlConfiguration
 			return null;
 		}
 
+
+		IEncodeValue parseEncoder( Node node) 
+		{
+			// new NodeWrapper(node );
+			if( node.getNodeType() == Node.ELEMENT_NODE 
+				&& node.getNodeName() == "encoder" )
+			{
+				Node child = node.getFirstChild();
+				if( child != null && child.getNodeType() == Node.TEXT_NODE )
+				{
+					String val = child.getNodeValue();
+					if( val.equals( "floatEncoder")) {
+						System.out.println( "creating float encoder" );
+						return new EncodeFloatValue(); 
+					}
+					// System.out.println( "encoder type is " + val );
+				}
+	
+			}
+			return null;
+		}
+
+
+
+		void  parseTop( Node node )
+		{
+			if( node.getNodeType() == Node.ELEMENT_NODE 
+				&& node.getNodeName() == "top" )
+			{
+				// Map< String, String> m = parseKeyVals( node );
+
+
+				NodeList lst = node.getChildNodes(); 
+				for( int i = 0; i < lst.getLength(); ++i )
+				{
+					Node child = lst.item( i); 
+					parseDimensions( child );
+					
+					IEncodeValue encodeValue = parseEncoder( child ) ; 
+				}
+			}
+
+		}
+
+
+
 	}
 	
 
@@ -1240,7 +1292,8 @@ class DecodeXmlConfiguration
 //		IDimension d = new DimensionParser().parse( node );
 
 
-		Map< String, IDimension> dimensions = new DimensionParser().parseDimensions( node ); 
+		// Map< String, IDimension> dimensions = new DimensionParser().parseDimensions( node ); 
+		new DimensionParser().parseTop( node ); 
 
 //		parseComplexValue( node ) ;
 	
