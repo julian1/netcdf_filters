@@ -1169,7 +1169,7 @@ class DecodeXmlConfiguration
 			}
 		}
 
-		void parseKeys1( Node node, Map< String, String> m )
+		void parseKeys( Node node, Map< String, String> m )
 		{
 			NodeList lst = node.getChildNodes(); 
 			for( int i = 0; i < lst.getLength(); ++i )
@@ -1183,14 +1183,12 @@ class DecodeXmlConfiguration
 			}
 		}
 
-		Map< String, String> parseKeys( Node node )
+		Map< String, String> parseKeyVals( Node node )
 		{
 			Map< String, String> m = new HashMap< String, String>();	
-			parseKeys1( node, m );
+			parseKeys( node, m );
 			return m;
 		}
-
-
 
 		IDimension parseDimension( Node node) 
 		{
@@ -1198,12 +1196,15 @@ class DecodeXmlConfiguration
 			if( node.getNodeType() == Node.ELEMENT_NODE 
 				&& node.getNodeName() == "dimension" )
 			{
-				Map< String, String> m = parseKeys( node );
+				Map< String, String> m = parseKeyVals( node );
 				System.out.println( "whoot creating dimension " + m.get( "name" ) );
 				return new MyDimension( m.get( "name" ) );
 			}
 			return null;
 		}
+
+
+		// having a simple parse key-vals function, means we can do it with attributes as alternative syntax.
 
 		Map< String, IDimension> parseDimensions( Node node )
 		{
@@ -1211,7 +1212,6 @@ class DecodeXmlConfiguration
 				&& node.getNodeName() == "dimensions" )
 			{
 				Map< String, IDimension> dimensions = new HashMap< String, IDimension> () ;  
-
 				NodeList lst = node.getChildNodes(); 
 				for( int i = 0; i < lst.getLength(); ++i )
 				{
