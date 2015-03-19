@@ -1137,6 +1137,9 @@ class DecodeXmlConfiguration
 		"    </dimension>\n" + 
 		"  </dimensions>\n" +
 		"  <encoder>floatEncoder</encoder>\n" +
+		"  <attribute>\n" + 
+		"    <name>_FillValue</name>\n" +
+		"  </attribute>\n" + 
 		"</top>\n";
 
 
@@ -1157,48 +1160,30 @@ class DecodeXmlConfiguration
 
 	class DimensionParser
 	{
-		String parseVal( Node node  )
+		String nodeVal( Node node  )
 		{
-			NodeList lst = node.getChildNodes(); 
-			for( int i = 0; i < lst.getLength(); ++i )
+			Node child = node.getFirstChild();
+			if( child != null && child.getNodeType() == Node.TEXT_NODE )
 			{
-				Node child = lst.item(i);
-				if( child.getNodeType() == Node.TEXT_NODE )
-				{
-					return child.getNodeValue();
-				}
+				return child.getNodeValue();
 			}
 			return "";
 		}
 
 		Map< String, String> parseKeyVals( Node node )
-		//void parseKeys( Node node, Map< String, String> m )
 		{
-
 			Map< String, String> m = new HashMap< String, String>();	
-
 			NodeList lst = node.getChildNodes(); 
 			for( int i = 0; i < lst.getLength(); ++i )
 			{
 				Node child = lst.item(i);
 				if( child.getNodeType() == Node.ELEMENT_NODE )
 				{
-					String key = child.getNodeName(); 
-					String val = parseVal( child );
-					m.put( key, val );
+					m.put( child.getNodeName(), nodeVal( child ));
 				}
 			}
-
 			return m;
 		}
-/*
-		Map< String, String> parseKeyVals( Node node )
-		{
-			Map< String, String> m = new HashMap< String, String>();	
-			parseKeys( node, m );
-			return m;
-		}
-*/
 
 		IDimension parseDimension( Node node) 
 		{
@@ -1240,9 +1225,8 @@ class DecodeXmlConfiguration
 
 		IEncodeValue parseEncoder( Node node) 
 		{
-			// new NodeWrapper(node );
 			if( node.getNodeType() == Node.ELEMENT_NODE 
-				&& node.getNodeName() == "encoder" )
+				&& node.getNodeName().equals( "encoder") )
 			{
 				Node child = node.getFirstChild();
 				if( child != null && child.getNodeType() == Node.TEXT_NODE )
@@ -1259,6 +1243,35 @@ class DecodeXmlConfiguration
 		}
 
 
+		class Attribute
+		{
+			Attribute( String name, String type, String val )
+			{
+				this.name = name;
+				this.type = type;
+				this.val = val;
+			} 
+
+			final String name;
+			final String type;
+			final String val;
+		};
+
+		void parseAttribute( Node node )
+		{
+			if( node.getNodeType() == Node.ELEMENT_NODE 
+				&& node.getNodeName().equals("attribute"))
+			{
+				Map< String, String> m = parseKeyVals( node );
+	
+				System.out.println( "attribute name  " + m.get( "name" ));
+				System.out.println( "attribute value " + m.get( "value" ));
+			}
+			//return null;
+		}
+
+
+
 
 		void  parseTop( Node node )
 		{
@@ -1266,7 +1279,7 @@ class DecodeXmlConfiguration
 			IEncodeValue encodeValue = null; 
 
 			if( node.getNodeType() == Node.ELEMENT_NODE 
-				&& node.getNodeName() == "top" )
+				&& node.getNodeName().equals("top") )
 			{
 				// Map< String, String> m = parseKeyVals( node );
 
@@ -1281,6 +1294,9 @@ class DecodeXmlConfiguration
 	
 					if( encodeValue == null)
 						encodeValue = parseEncoder( child ) ; 
+
+
+					parseAttribute( child);
 				}
 			}
 
