@@ -1250,7 +1250,6 @@ class DecodeXmlConfiguration
 					}
 					// System.out.println( "encoder type is " + val );
 				}
-	
 			}
 			return null;
 		}
@@ -1457,7 +1456,6 @@ class Timeseries1
 
 
 
-		Map< String, IEncoder> encoders = new HashMap< String, IEncoder> ();
 
 
 		IEncodeValue floatEncoder = new EncodeFloatValue();
@@ -1501,7 +1499,10 @@ class Timeseries1
 		IEncoder temp = new MyEncoder ( "TEMP", idimensions, floatEncoder, floatAttributes ) ; 
 
 		IEncoder time_qc = new MyEncoder ( "TIME_quality_control", idimensions, byteEncoder, byteAttributes ) ; 
-		
+	
+
+		Map< String, IEncoder> encoders = new HashMap< String, IEncoder> ();
+	
 		//encoders.put( lat.getVariableName(), lat ) ; 
 		//encoders.put( lon.getVariableName(), lon ) ; 
 		//encoders.put( time.getVariableName(), time ) ; 
