@@ -949,19 +949,10 @@ class MyEncoder implements IEncoder
 	//public EncoderD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IEncodeValue encodeValue )
 	public MyEncoder( String variableName, ArrayList< IDimension> dimensions, IEncodeValue encodeValue, Map<String, Object> attributes )
 	{
-
 		this.variableName = variableName; 
-/*		// ease interface use
-		if( children == null ) {
-			this.children = new ArrayList< IEncoder>() ;
-		}
-		else {
-			this.children = children; 
-		}
-*/
 		this.encodeValue = encodeValue;
 		this.attributes = attributes;
-		this.dimensions = dimensions; //new ArrayList<Dimension>();
+		this.dimensions = dimensions; 
 
 		this.buffer = new ArrayList<Object>( );	
 
@@ -992,6 +983,7 @@ class MyEncoder implements IEncoder
 
 	public void define( NetcdfFileWriteable writer ) 
 	{ 
+		// write dims and attributes
 
 		// make sure children are defined already
 		List<Dimension> d = new ArrayList<Dimension>();
@@ -1010,7 +1002,7 @@ class MyEncoder implements IEncoder
 	// we're going to need to pass in our instantiated array
 	// or we use a modulo to produce the value ??? 
 
-	public void writeValues( ArrayList<Dimension> dims, int dimIndex, int acc, Array A  ) 
+	public void writeValues( ArrayList<IDimension> dims, int dimIndex, int acc, Array A  ) 
 	{
 		// ok, actually we only need to compute the Index that we will use...
 		// this is always going to generate a linear sequence...
@@ -1019,7 +1011,7 @@ class MyEncoder implements IEncoder
 		
 		if( dimIndex < dims.size() )
 		{
-			Dimension dim = dims.get( dimIndex ); 
+			Dimension dim = dims.get( dimIndex ).getDimension(); 
 			for( int i = 0; i < dim.getLength(); i++ )
 			{
 				writeValues( dims, dimIndex + 1, acc + i, A ); 
@@ -1060,13 +1052,13 @@ class MyEncoder implements IEncoder
 
 		Array A = Array.factory( encodeValue.targetType(), toIntArray(shape ) );
 
-/*
-		writeValues( dims,  0, 0 , A ); 
+
+		writeValues( dimensions,  0, 0 , A ); 
 
 		// int [] origin = new int[1];
 		// writer.write(variableName, origin, A);
 		writer.write(variableName, A);
-*/
+/**/
 	}
 
 	public void dump()
@@ -1181,8 +1173,8 @@ class Timeseries1
 	// so we could put it in a list...
 
 	public void populateValues(  
-		Map< String, IEncoder> encoders, 
 		Map< String, IDimension> dimensions, 
+		Map< String, IEncoder> encoders, 
 		String query  
 
 		)  throws Exception
@@ -1198,12 +1190,9 @@ class Timeseries1
 		// now we loop the main attributes 
 		ResultSetMetaData m = rs.getMetaData();
 		int numColumns = m.getColumnCount();
-		// encode values t,lat,lon are always indexes - so we should be able to delegate to the thing...
-//		int time = 0;
-
+		
 		// pre-map the encoders by index according to the column name 
-
-		ArrayList< IAddValue> [] processing = (ArrayList< IAddValue> []) new ArrayList [ (numColumns + 1) ]; 
+		ArrayList< IAddValue> [] processing = (ArrayList< IAddValue> []) new ArrayList [numColumns + 1]; 
 		// ArrayList< IAddValue> [] processing = (ArrayList< IAddValue> []) java.lang.reflect.Array.newInstance( ArrayList.class, numColumns + 1) ; 
 
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
@@ -1221,11 +1210,10 @@ class Timeseries1
 		}
 
 
-		// add values
+		// process result set rows
 		while ( rs.next() ) {  
 			for ( int i = 1 ; i <= numColumns ; i++ ) {
-				ArrayList< IAddValue>  processor = processing[ i];
-				for( IAddValue p : processor ) {
+				for( IAddValue p : processing[ i] ) {
 					p.addValueToBuffer( rs.getObject( i));
 				}
 			}
@@ -1320,9 +1308,8 @@ class Timeseries1
 		// yes and avoid having the two loops...
 		// we also ought to map values by index... rather than doing the complicated name lookup
 
-		populateValues( encoders, dimensions, "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id) );
-		populateValues( encoders, dimensions, "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
-
+		populateValues( dimensions, encoders, "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id) );
+		populateValues( dimensions, encoders, "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
 
 
 		/* IMPORTANT Issue - ordering criteria...
@@ -1359,10 +1346,9 @@ class Timeseries1
 
 		for ( IEncoder encoder: encoders.values())
 		{
+			// change name writeValues
 			encoder.finish( writer );
 		}
-
-
 
 
 		// close
