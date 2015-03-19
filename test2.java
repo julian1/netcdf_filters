@@ -1201,48 +1201,33 @@ class Timeseries1
 		// encode values t,lat,lon are always indexes - so we should be able to delegate to the thing...
 //		int time = 0;
 
+		// pre-map the encoders by index according to the column name 
 
 		ArrayList< IAddValue> [] processing = (ArrayList< IAddValue> []) new ArrayList [ (numColumns + 1) ]; 
 		// ArrayList< IAddValue> [] processing = (ArrayList< IAddValue> []) java.lang.reflect.Array.newInstance( ArrayList.class, numColumns + 1) ; 
 
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
-			 System.out.println( "column name "+ m.getColumnName(i) ); 
+			// System.out.println( "column name "+ m.getColumnName(i) ); 
 
 			processing[i] = new ArrayList< IAddValue> ();
-
-			IAddValue encoder = encoders.get(m.getColumnName(i)); 
-			if( encoder != null) 
-				processing[i].add( encoder );
 
 			IDimension dimension = dimensions.get( m.getColumnName(i)); 
 			if( dimension != null) 
 				processing[i].add( dimension );
+
+			IAddValue encoder = encoders.get(m.getColumnName(i)); 
+			if( encoder != null) 
+				processing[i].add( encoder );
 		}
 
 
+		// add values
 		while ( rs.next() ) {  
 			for ( int i = 1 ; i <= numColumns ; i++ ) {
-
 				ArrayList< IAddValue>  processor = processing[ i];
-				for( IAddValue p : processor )
-				{
+				for( IAddValue p : processor ) {
 					p.addValueToBuffer( rs.getObject( i));
 				}
-
-				// System.out.println( "column name " + m.getColumnName(i) );
-
-				// we should be getting rid of this horrible map lookup which is expensive for every row value...
-/*
-				IEncoder encoder = encoders.get( m.getColumnName(i)); 
-				if( encoder != null) 
-					encoder.addValueToBuffer( rs.getObject( i));
-
-				// if we did dimension first then we can handle this...				 
-				IDimension dimension = dimensions.get( m.getColumnName(i)); 
-				// this doesn't need to store values, only increment a count. 
-				if( dimension != null) 
-					dimension.addValueToBuffer( rs.getObject( i));
-*/
 			}
 		}
 	} 
