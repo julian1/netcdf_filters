@@ -1129,51 +1129,146 @@ class DecodeXmlConfiguration
 	public DecodeXmlConfiguration () { } 
 
 	private static String XML = "<?xml version=\"1.0\"?>\n" +
-		"<filters>\n" +
-		"    <filter>\n" +
-		"        <name>file_id</name>\n" +
-		"        <type>integer</type>\n" +
-		"    </filter>\n" +
-		"</filters>\n";
+		"    <dimension>\n" +
+		"        <name>TIME</name>\n" +
+		"        <name2>TIME</name2>\n" +
+		"    </dimension>\n" ;
 
 
+	// it actually has to be a bottom out node...
+	// ahh no, we can probably....
+	// select the child node by name ... explicitly...
+	// unless we want to simply be able to return the 
 
+	// 
+/*
+	public Map<String, Object> parseChildren( Node node )
+	{
+		if( node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName() == "dimension" ) 
+		{ // do dimen
+		}
+		return null;
+	} 
+	public Object parseVal( Node node) 
+	{
+		if( node.getNodeType() = Node.TEXT_NODE )
+		{ }
+	}
+
+	public void parseKeyVal( Node node) 
+	{
+		// we use this to get a list of key val objects to instantiate our class...
+		// if it ends in s we could pull a list 
+		// so we have to return a tuple.
+		String key = node.getNodeName();  // required...
+	}
+	public Object parseValue( Node node ) 
+	{
+		if( node.getNodeType() == Node.TEXT_NODE)
+		{
+			return  
+		}
+	}
+		if( node.getNodeType() == Node.ELEMENT_NODE) 
+			System.out.println( "node " + node.getNodeName() );
+		else if( node.getNodeType() == Node.TEXT_NODE) 
+			System.out.println( "text " + node.getNodeValue() );
+
+
+*/
+
+	public String parseSimpleStringValue( Node node ) 
+	{
+		// simple key value pair eg.   <name>value</name>	
+		String val = null;
+		NodeList lst = node.getChildNodes(); 
+		for( int i = 0; i < lst.getLength(); ++i )
+		{
+			Node child = lst.item( i);
+			if( child.getNodeType() == Node.TEXT_NODE)
+			{
+				val = child.getNodeValue();
+			}
+		}
+		return val;	
+	}
+
+	public Object parseComplexValue( Node node ) 
+	{
+		if( node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName() == "dimension" ) 
+		{
+			System.out.println( "whoot got dimension"  );
+
+			Map< String, Object> pairs  = new HashMap< String, Object>();
+			parseKeyValues( node, pairs ) ;
+
+			// instantiate
+						
+		}
+		// throw
+		return null;
+	}
+
+	public void parseKeyValue( Node node, Map< String, Object> pairs ) 
+	{
+		// we do the children...
+
+		String key = node.getNodeName();
+		Object val = parseSimpleStringValue( node ) ;
+
+		if( val == null ) {
+
+
+		}
+		System.out.println( "got pair " + key + " " + val );
+		pairs.put( key, val );
+	}
+
+	public void parseKeyValues( Node node, Map< String, Object> pairs ) 
+	{
+		NodeList lst = node.getChildNodes(); 
+		for( int i = 0; i < lst.getLength(); ++i )
+		{
+			Node child = lst.item( i);
+			if( child.getNodeType() == Node.ELEMENT_NODE )
+				parseKeyValue( child, pairs ) ;
+		}
+	}
+/*
 	public void walk( Node node, int depth ) 
 	{
-
-		String s = node.getNodeName(); 
-		// String s = node.getNodeValue(); 
-
 		for( int i = 0; i < depth; ++i)
 			System.out.print( "   " );
 
 
-		System.out.println( "node value " + s );
-
-		NodeList lst = node.getChildNodes(); 
-		for( int i = 0; i < lst.getLength(); ++i )
+		if( node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName() == "dimension" ) 
 		{
-			Node child = lst.item(i); 
-			if( child.getNodeType() == Node.ELEMENT_NODE) 
-				walk( child, depth + 1 );
+			System.out.println( "whoot got dimension"  );
+
+			Map< String, Object> pairs  = new HashMap< String, Object>();
+			parseKeyValues( node, pairs ) ;
 		}
 
+		else {
+			NodeList lst = node.getChildNodes(); 
+			for( int i = 0; i < lst.getLength(); ++i )
+			{
+				Node child = lst .item( i); 
+				walk( child, depth + 1 );
+			}
+		}
 	}
-
+*/
 
 	public void test() throws Exception 
 	{	
 		InputStream stream = new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
-
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db = dbf.newDocumentBuilder();
-		Document document = db.parse(stream );
-
-
+		Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream);
 		Node node =	document.getFirstChild(); 
 
-		walk( node, 0 );
-
+		parseComplexValue( node ) ;
+	
+//		walk( node, 0 );
 	}
    
 }
