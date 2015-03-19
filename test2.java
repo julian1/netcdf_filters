@@ -1153,8 +1153,8 @@ class DecodeXmlConfiguration
 		NodeList lst = node.getChildNodes(); 
 		for( int i = 0; i < lst.getLength(); ++i )
 		{
-			child = lst.item(i); 
-			if( child.getNodeType() = Node.ELEMENT_NODE) 
+			Node child = lst.item(i); 
+			if( child.getNodeType() == Node.ELEMENT_NODE) 
 				walk( child, depth + 1 );
 		}
 
