@@ -833,8 +833,12 @@ class EncodeByteValue implements IEncodeValue
 
 
 
+interface IAddValue
+{
+	public void addValueToBuffer( Object value ); 
+}
 
-interface IEncoder
+interface IEncoder extends IAddValue
 {
 	// change name VarEncoder
 
@@ -856,16 +860,13 @@ interface IEncoder
 }
 
 
-interface IDimension
+interface IDimension extends IAddValue
 {
-//	public void define();  // change name to start(); ?
-
-//	public Dimension define( NetcdfFileWriteable writer) ; 
-//	public void finish( NetcdfFileWriteable writer) throws Exception ; 
 	public void define( NetcdfFileWriteable writer) ;
 
-	public Dimension getDimension( ) ; // bad naming
-
+	public Dimension getDimension( ) ; // horrible to expose this...
+										// can't the caller create the dimension? 
+	// 
 	public int getLength();
 	
 	public void addValueToBuffer( Object value ); 
@@ -1004,50 +1005,9 @@ class MyEncoder implements IEncoder
 		for( Map.Entry< String, Object> entry : attributes.entrySet()) { 
 			writer.addVariableAttribute( variableName, entry.getKey(), entry.getValue().toString() ); 
 		}
-
-
-
-/*
-		// this is called recursively,
-
-		if( isDefined) {
-			return dimension;
-		}
-		isDefined = true;
-
-		System.out.println( "defining " + variableName );
-
-	
-		// make sure children are defined already
-		for( IEncoder child: children )
-		{
-			// get the children to populate...
-			Dimension d = child.define( writer );
-			if( d != null) 
-				dims.add( d );  
-		}
-
-		// System.out.println( "define - " + variableName );
-		// writer.addVariable(variableName, DataType.FLOAT, dims);
-		writer.addVariable(variableName, encodeValue.targetType(), dims);
-
-		for( Map.Entry< String, Object> entry : attributes.entrySet()) { 
-			writer.addVariableAttribute( variableName, entry.getKey(), entry.getValue().toString() ); 
-		}
-
-
-		if( children.size() == 0 )
-		{
-			// no children means it's a dimension... actually could still be a stand alone scalar, that's an array.
-			dimension = writer.addDimension( variableName, buffer.size() ); 
-		}
-
-		return dimension;
-*/
 	}
 
 	// we're going to need to pass in our instantiated array
-
 	// or we use a modulo to produce the value ??? 
 
 	public void writeValues( ArrayList<Dimension> dims, int dimIndex, int acc, Array A  ) 
@@ -1217,6 +1177,9 @@ class Timeseries1
 	// we should definitely pass a writable here ...
 	// rather than instantiate it
 
+	// hang on they share the same name...
+	// so we could put it in a list...
+
 	public void populateValues(  
 		Map< String, IEncoder> encoders, 
 		Map< String, IDimension> dimensions, 
@@ -1236,11 +1199,42 @@ class Timeseries1
 		ResultSetMetaData m = rs.getMetaData();
 		int numColumns = m.getColumnCount();
 		// encode values t,lat,lon are always indexes - so we should be able to delegate to the thing...
-		int time = 0;
+//		int time = 0;
+
+
+		//ArrayList< IAddValue> [] processing = new ArrayList< IAddValue > [ (numColumns + 1) ]; 
+//		Object  [] processing = new Object  [ (numColumns + 1) ]; 
+
+		ArrayList< IAddValue> [] processing = (ArrayList< IAddValue> []) new Object [ (numColumns + 1) ]; 
+
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+			 System.out.println( "column name "+ m.getColumnName(i) ); 
+
+			processing[i] = new ArrayList< IAddValue> ();
+
+			IAddValue encoder = encoders.get(m.getColumnName(i)); 
+			if( encoder != null) 
+				processing[i].add( encoder );
+
+			IDimension dimension = dimensions.get( m.getColumnName(i)); 
+			if( dimension != null) 
+				processing[i].add( dimension );
+		}
+
+
 		while ( rs.next() ) {  
 			for ( int i = 1 ; i <= numColumns ; i++ ) {
+
+				ArrayList< IAddValue>  processor = processing[ i];
+				for( IAddValue p : processor )
+				{
+					p.addValueToBuffer( rs.getObject( i));
+				}
+
 				// System.out.println( "column name " + m.getColumnName(i) );
 
+				// we should be getting rid of this horrible map lookup which is expensive for every row value...
+/*
 				IEncoder encoder = encoders.get( m.getColumnName(i)); 
 				if( encoder != null) 
 					encoder.addValueToBuffer( rs.getObject( i));
@@ -1250,7 +1244,7 @@ class Timeseries1
 				// this doesn't need to store values, only increment a count. 
 				if( dimension != null) 
 					dimension.addValueToBuffer( rs.getObject( i));
-
+*/
 			}
 		}
 	} 
@@ -1339,26 +1333,23 @@ class Timeseries1
 
 		// we could have a common interface for addValue...
 		// in order to avoid passing encoders and dimensions.
+
+		// yes and avoid having the two loops...
+		// we also ought to map values by index... rather than doing the complicated name lookup
+
 		populateValues( encoders, dimensions, "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id) );
 		populateValues( encoders, dimensions, "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
 
-/*		for ( IDimension dimension: dimensions.values())
-		{
-			dimension.dump();
-		}
 
-		if( true ) { 
-			throw new RuntimeException( "Finished" );
-		}
-*/
+
 		/* IMPORTANT Issue - ordering criteria...
 		*/
 
-		for ( IEncoder encoder: encoders.values())
+/*		for ( IEncoder encoder: encoders.values())
 		{
 			encoder.dump();
 		}
-
+*/
 		// now we loop the encoders and try to define...
 		// will need to pass a dimensions need if it's already defined
 		// 
@@ -1375,7 +1366,6 @@ class Timeseries1
 
 		for ( IEncoder encoder: encoders.values())
 		{
-			// actually recursive...
 			encoder.define( writer );
 		}
 
@@ -1383,12 +1373,12 @@ class Timeseries1
 		// finish netcdf definition
 		writer.create();
 
-/*
+
 		for ( IEncoder encoder: encoders.values())
 		{
 			encoder.finish( writer );
 		}
-*/
+
 
 
 
