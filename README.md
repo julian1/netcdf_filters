@@ -1,4 +1,17 @@
 
+Think we should be using the surefire plugin - to do tests. then just mvn exec
+
+mvn install
+time java -cp .:postgresql-9.1-901.jdbc4.jar:netcdfAll-4.2.jar:target/myartifcat-1.0.0.jar test2 | less
+
+mvn clean
+mvn install 
+mvn exec:java -Dexec.mainClass="au.org.emii.test2"
+
+- this isn't really right because the netcdf artifact should come from maven.
+
+
+---------
 IMportant
 	- do we want to encode the name in the attributes rather than pass explicitly...
 

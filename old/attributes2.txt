@@ -1,0 +1,118 @@
+
+Goal - To determine the best way to represent and make accessible variable and global attributes for encoding in Netcdf files for subsetting
+service.
+
+What are variable and global attributes?
+	- In terms of Netcdf representation they are simple key value pairs. Example of variable attributes from TEMP parameter with
+	some details about organisational source of information.
+
+double TEMP(TIME, LATITUDE, LONGITUDE) ;
+	TEMP:name = "TEMP" ;
+		- probably not going to be used
+
+	TEMP:standard_name = "sea_water_temperature" ;
+		= CF standard name. controlled vocabulary name.
+
+	TEMP:long_name = "sea_water_temperature" ;
+		- just a string
+		- not in current imos vocab currently
+
+	TEMP:units = "Celsius" ;
+		- essential attribute.
+		- "sort of controlled vocab". 'UD UNITS' - netcdf checking employed.(
+		- Everythign with a CF standard name, has a canonical unit. but only
+		coded informally in netcdf handbook, not vocab etc.
+
+	TEMP:_FillValue = 999999. ;
+		- mandatory in order to enable us to encode values
+
+	TEMP:valid_min = 0. ;
+	TEMP:valid_max = 50. ;
+		- apples across collection, not per file
+
+	TEMP:ancillary_variables = "TEMP_quality_control" ;
+		- metadata attribute about
+
+	TEMP:quality_control_set = 1. ;
+		-
+
+
+
+Option 1. -  Store in relational db
+
+	- Advantages
+		- single POT
+		- available to be read/modified by any service capable of managing a db connection (eg. harvester)
+		- ability to apply relational constraints with other database tables - eg. parameter_mappings (name,unit),
+		- same source can be used by netcdf collection-level conformance checking as well. eg. talend harvester can use db
+		connection, to query details of attributes at harvest time, and check netcdfs against.
+		- easy to modify 'metadata harvester' to harvest file attributes across data collections as a starting
+		point - eg. would produce values in the schema db. 
+
+	- Disadvantages
+		- information is disassociated with other configuration required to encode netcdfs - eg. type (timeseries/trajectory),
+			dimensions etc.
+		- cannot use indirection/seasame to lookup or cross-reference parameter, unit, analysis method etc in skos vocab files which
+		is authoritative source for many values. (consider how Geonetwork does it).
+		- more difficult to edit/update/maintain database table details compared with hand editing xml.
+		- another point of configuration (geoserver/geonetwork) required to be maintained by POs.
+
+	- Approaches
+		(1)
+		- A single attribute table in a dedicated schema representing all attribute key values
+		id(primary),   key          value                     (other refs?)
+		123,           long_name    "sea_water_temperature
+
+		- A mappings table (or multiple tables) in the same schema that references,
+
+         schema,    table/view,    column_name, attribute_id(foreignkey),
+        "anmn_ts"  "measurement", "TEMP",       123
+
+		- Advantages
+			- acknowledges attributes are a "cross-cutting' concern across schemas and collections.
+			- same/similar implementation already to reporting and parameter mappings.
+			- easier to join to get global view over all parameters and collections. identify orphaned
+			attributes.
+
+		(2)
+		- Same as above for main table
+		- but each data_collection/ schema maintains a table that indexes into primary attribute table
+		- Advantage is that can then be updated/ and maintained by harvester (in liquibase)
+
+
+
+
+Option 2.
+	- Use static xml configuration driving.
+
+	Advantages,
+	- possible to embed in geoserver, to make generalized (wps) extension
+	- ability to localize all configuration required for netcdf generation
+	- can write xpath queries to join vocabulary detail maintained in skos to output files
+	- supports use in a generalized geoserver service for encoding netcdf files.
+	- Possibility to use Spring configration to instantiate all encoder classes for each collection?
+	- Easier to prototype development (xml data is easier to maintain than db data for unit tests etc) .
+
+
+Notes
+
+	- It's not possible to encode netcdf values without having knowledge about some variable attributes,
+	eg. fillValue and timestamp epoch for encoding timestamps which have no native representation in netcdf. 
+	The prototype netcdf generator already uses key/val static representation to generate. 
+
+	- It's possible to extract a baseline xml configuration - eg. all variable names and types by interrogating
+	the database. (Code already working).
+
+	- Note the difference in scope for checking
+		- netcdf checker - checks file level
+			- check that it's a valid unit (C, K, F)
+		- across collections (eg. check at time of harvest ) -
+			- enfoce the same for the collection
+
+	should we be looking up long name via a skos file/ vocab which is the authoritative source
+
+- helpful to have a metadata harvest to identify initial starting attribute values
+    for a particular data collection. adapt the metadata harvester?  
+
+
+

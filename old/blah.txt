@@ -1,0 +1,280 @@
+
+		// then we need aq final loop ....
+
+		// write the actual data
+/*
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+
+			// Class clazz = Class.forName(m.getColumnClassName( i ));
+			String variableName = m.getColumnName(i); 
+			MyType type = typeMappings.get( variableName );
+
+	
+			if( type != null ) { 
+
+				if (type.targetType.equals(Float.class)) {
+				// if (clazz.equals(Float.class)) {
+					int [] origin = new int[3];
+					ArrayFloat.D3 A = (ArrayFloat.D3) map.get(variableName); 
+					writer.write(variableName, origin, A);
+				}
+
+				if (type.targetType.equals(Byte.class)) {
+					int [] origin = new int[3];
+					ArrayByte.D3 A = (ArrayByte.D3) map.get(variableName); 
+					writer.write(variableName, origin, A);
+				}
+			}	
+		}
+*/
+
+/*
+					if( type != null ) { 
+						if (type.targetType.equals(Float.class)) {
+							ArrayFloat.D3 A = (ArrayFloat.D3) map.get(variableName); 
+							Index ima = A.getIndex();
+							if( object != null) {
+								// we could make the type be responsible for all this stuff, 
+								// except passing the dimensions in is problematic.
+								A.setFloat( ima.set(t, lat,lon), (float) object);
+							} 
+							else {
+								A.setFloat( ima.set(t, lat,lon), (float)type.fillValue);
+							}
+						}
+						else if (type.targetType.equals(Byte.class)) {
+							ArrayByte.D3 A = (ArrayByte.D3) map.get(variableName); 
+							Index ima = A.getIndex();
+							if( object != null) {
+								// handle coercion from jdbc string to byte 
+								String s = (String) object; 
+								Byte ch =  s.getBytes()[0];
+								A.setByte( ima.set(t, lat,lon), ch );
+							} 
+							else {
+								A.setByte( ima.set(t, lat,lon), (Byte)type.fillValue);
+							}
+						}	
+						else {
+							// runtime exception
+						}
+					}
+*/
+//		Object j = dims.get( 0).getLength();
+
+		// we want to populate the vars	
+
+
+		// we'll construct a set of mappings
+		// change name array_mappings ? or something
+//		Map<String, Object> map = new HashMap<String, Object>();
+
+
+
+
+/*
+
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+
+			// System.out.print( "" + m.getColumnName(i ) + ", ");
+			// System.out.print( "" + m.getColumnClassName( i ) );
+
+			String variableName = m.getColumnName(i); 
+			MyType t = typeMappings.get( variableName );
+			if( t != null ) { 
+				if (t.targetType.equals(Float.class)) {
+					// add our array into the mappings
+					map.put(variableName, new ArrayFloat.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength()));
+					// add the var to definition
+					writer.addVariable(variableName, DataType.FLOAT, dims);
+				}
+				else if (t.targetType.equals(Byte.class)) {
+					System.out.print( "whoo a byte "  );
+					map.put(variableName, new ArrayByte.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength()));
+					writer.addVariable(variableName, DataType.BYTE, dims);
+				}
+			}
+		}
+*/
+/*
+			// convention that var names are upper cased
+			if( Character.isUpperCase(variableName.charAt(0))) {
+				if (clazz.equals(Float.class)) {
+					// add our array into the mappings
+					map.put(variableName, new ArrayFloat.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength()));
+					// add the var to definition
+					writer.addVariable(variableName, DataType.FLOAT, dims);
+				}
+				else if ( clazz.equals(String.class)) {
+
+
+					// ok, i think that we have to just stuff all the strings in there, then analyze
+					// them for max length... which will thus be handled var by var, or for eac file generated.
+				
+					// map.put(variableName, new ArrayString.D3( timeDim.getLength(), latDim.getLength(), lonDim.getLength()));
+					// writer.addVariable(variableName, DataType.STRING, dims);
+					map.put(variableName, new ArrayList<String> ( ));
+					// this is horrible.  we really need to do it at the end, where we can see the max string size;
+					writer.addStringVariable( variableName, dims, 1 ); 
+				}
+			}
+*/
+	
+
+/*			if( map.containsKey( variableName )) { 
+				if (clazz.equals(Float.class)) {
+					int [] origin = new int[3];
+					ArrayFloat.D3 A = (ArrayFloat.D3) map.get(variableName); 
+					writer.write(variableName, origin, A);
+				}
+*/
+/*				else if ( clazz.equals(String.class)) {
+					ArrayList<String> A = (ArrayList<String> ) map.get( variableName);
+
+					// what about nulls...
+
+					if( A.size() > 0 ) {					
+						Array data = Array.factory( String.class, new int [] {count, 1,1 }, A.toArray() );
+						System.out.println( "" + variableName + " length " + A.size()  );
+						writer.writeStringData(variableName, data ); 
+					}
+				}
+*/
+	
+/*					Class clazz = Class.forName( m.getColumnClassName( i ) );
+
+					if( map.containsKey( variableName )) { 
+
+						if (clazz.equals(Float.class)) {
+							ArrayFloat.D3 A = (ArrayFloat.D3) map.get( variableName); 
+							Index ima = A.getIndex();
+							Object object = rs.getObject(variableName);
+							if( object != null) {
+								A.setFloat( ima.set(t, lat,lon), (float) object);
+							} 
+							else 
+							{
+								// missing...
+								// System.out.println( "name " + variableName + " null" );
+							}
+						}
+						else if ( clazz.equals(String.class)) {
+							ArrayList<String> A = (ArrayList<String> ) map.get( variableName);
+							Object object = rs.getObject(variableName);
+							if( object != null) {
+								A.add( (String) object );
+							}
+						}
+					}	
+*/
+
+-----	
+
+		// we need to do this for all vars...
+		// and work within the context of the loop over the record set,
+
+		// need a kind of mapping, from parameter that we will process....
+		// then we instantiate all the arrays.
+		// do we really want to do it keeping all the arrays open?  
+	
+
+		// so we should map the arrays using the attribute names ... since they ought to be unique.	
+		// then we'll cast based upon the type.
+		// actually we ought to copy the sql metadata out completely and create two different arrays. 
+
+
+		// all dimensions are going to be time(n),lat(1),lon(1) for timeseries.
+
+		// call this arrays
+
+		// Map<String, Object> map = new HashMap<String, Object>();
+		// X x = new X();
+		// if( x.map != null){ ;  } 
+
+
+		// why not do it by attribute instead?  // and we would have the type stored... 
+
+
+// we're going to have to specialize all this for the different types
+		// and loop it...
+		// uggh.
+
+		// we have to write the TIME, LAT, LON arrays as well...
+
+		// I don't want a file, so why is it not possible to put it in 'data mode' explicitly.
+		// why isn't there some
+
+
+
+/*
+
+		ResultSetMetaData m = rs.getMetaData();
+		int numColumns = m.getColumnCount();
+
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+			System.out.print( "" + m.getColumnClassName( i ) + ", ");
+		}
+		System.out.println( "" );
+
+
+		for ( int i = 1 ; i <= numColumns ; i++ ) {
+			System.out.print( "" + m.getColumnName(i ) + ", ");
+		}
+		System.out.println( "" );
+*/
+
+		// need cursors ...
+
+
+		// assume we only have a single feature ...
+		// so lets try encoding that.
+
+		// remember that we actually want to pull individual files out. 
+		// except lat,lon come from timeseries ...
+	
+		// one-per-file. 	
+		
+		// order by ts, id...
+		// streaming means need to be able to request the next file...
+
+
+
+
+	
+		//String s = "(and (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-28T00:40:01Z )) (or (equals ts_id 6341) (equals ts_id 6342)) )"; 
+		String s = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
+
+
+//String query = "SELECT * FROM anmn_ts.measurement where " + selection + " order by ts_id, \"TIME\" " ;//+ " limit 10";
+		// String query = "SELECT * FROM anmn_ts.measurement where " + selection + " order by ts_id, \"TIME\" " ;//+ " limit 10";
+		// String query = "SELECT * FROM anmn_ts.measurement where " + selection + " order by ts_id";   // 
+//		String query = "SELECT * FROM anmn_ts.measurement where " + selection ; // + " order by ts_id";   // 
+
+		// this is lightening fast and tells us all the ft instances we need to encode...
+		// SELECT distinct ts_id  FROM anmn_ts.measurement where (("TIME" > '2013-06-28T00:35:01Z') and ("TIME" < '2013-06-29T00:40:01Z')) ;
+
+		// getting all timeseries data.
+		// select * from anmn_ts.timeseries where id in ( SELECT distinct ts_id  FROM anmn_ts.measurement where (("TIME" > '2013-06-28T00:35:01Z') and ("TIME" < '2013-06-29T00:40:01Z')) ) ; 
+
+
+		// String query = "SELECT distinct ( m.ts_id) FROM anmn_ts.measurement m join anmn_ts.timeseries ts on m.ts_id = ts.id  where " + selection + " order by ts_id " ;//+ " limit 10";
+		// String query = "SELECT ts.* FROM anmn_ts.timeseries ts join anmn_ts.measurement m on m.ts_id = ts.id  where " + selection ;// + " order by ts_id " ;//+ " limit 10";
+
+		// how long does it take to actually get the subset of ids.
+
+
+		// we are going to process file by file - therefore - we can sort everything locally not using the db. 
+	
+		// having order by ts_id, means that it has to retrieve the lowest... 
+
+		// perhaps we should do a query for every feature ? 
+
+		// there's a bunch of different sql strategies to get stuff...
+		// more queries - immediate streaming.
+		// less queries - with 2nd table sort - needs to compute order by 
+
+		// i think we really need to be able to have several strategy classes that we can just inject into the computation.
+
+		// advantage of doing 
+
+

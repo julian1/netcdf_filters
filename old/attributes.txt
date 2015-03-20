@@ -1,0 +1,129 @@
+
+        double TEMP(TIME, LATITUDE, LONGITUDE) ;
+                TEMP:name = "TEMP" ;
+
+                TEMP:standard_name = "sea_water_temperature" ;
+					= CF standard name . controlled vocabulary name 
+
+                TEMP:long_name = "sea_water_temperature" ;
+					- just a string
+					- not in current vocab? 
+
+                TEMP:units = "Celsius" ;
+					- essential attribute.   
+					- sort of controlled vocab. 'UD UNITS' - netcdf checking.( 
+					- Everythign with a CF standard name, has a canonical unit. will be checked 
+					- jjj
+
+                TEMP:_FillValue = 999999. ;
+					- required to enable us to encode
+
+
+                TEMP:valid_min = 0. ;
+                TEMP:valid_max = 50. ;
+
+                TEMP:ancillary_variables = "TEMP_quality_control" ;
+                TEMP:quality_control_set = 1. ;
+
+
+
+
+consistency of netcdf attributes
+	- each files (netcdf checker)
+		- check that it's a valid unit (C, K, F)
+	- across collections (eg. check at time of harvest ) - 
+		- enfoce single unit for the collection
+
+
+valid min and max 
+	- whether it's a valid data value for the collection. 
+	
+------
+	possible to up with, default values across collections. eg. temperature valid min/max . 
+-----
+	reporting (views across other schemas) tables 
+
+	schema - 
+		- table default_values_anmn  
+		- parameter id, TEMP
+
+		TABLE
+		- standard_name,	       units     fill value   valid_min valid_max, 
+		1.  sea_water_temperature   Celcius	 xxx		  0         50	
+		
+		MAPPING TABLE - either in anmn_ts schema, or separate table in same schema as attribute metadata. 
+		anmn_ts,  "TEMP" , i ->  1
+
+		- actual need is per column.
+
+	
+- single table
+------
+
+See.
+	 select * from  parameters_mapping.parameters_mapping  ;
+
+	- except mapping to the specific schema and table/view . (eg. timeseries/measurement tables)
+		rather than using facility / subfacility. 
+
+	- view_map 
+	- view_data	
+	- view_metadata <- mappings into netcdf attribute metadata. (managed liquibase) 
+	
+		- **** harvester needs to be able to at least read to validate.
+		hence why better inside the schema, and in harvester liquibase.
+
+
+anmn_ts
+	mappings_table *_metadata,  ->  points into attributes table
+
+	id, column name, attribute_id
+		"TEMP"	     xxx
+
+attributes
+	id, standard name, unit, fill value, valid_min, valid_max 
+
+Issue - is having a clean view that associates which schema is being used with which values.	
+		so that it's possible to edit the right value, knowing that it's not going to 
+		effect another schema/facility attribute information.
+
+
+Alternatively the mapping table provides an entry for everything
+-----
+Attribute Table in its own schema
+
+
+Choices,
+(1)
+	anmn_ts.anmn_ts_attribute_mapping (harvester/liquibase)	
+		column_name,  attribute_id
+		"TEMP",       123 
+
+(2)
+	attribute_mappings table in same schema as attribute table 
+
+	schema,    table/view,    column_name, attribute_id, 
+   "anmn_ts"  "measurement", "TEMP",       123    (unqiue tuple) 
+
+	- can be edited manually independently of harvester changes
+
+	- hard to create global view. But harvester knows what schema and table it's responsible for, and
+	the netcdf generator knows as well. 
+
+- issue. if change an entry. then result of netcdf checking is inconsistent/invalid with 
+	attribute definitions.  need to reharvest.  be careful.
+
+
+- issue - helpful, to have a metadata harvest to identify initial starting attribute values
+	for a particular data collection. adapt the metadata harvester?  
+
+-----
+issues - if want to push into geoserver. then attributes will really need to be xml configuration rather  than db.
+			to be db agnostic. 
+
+		aodn scalability?  
+
+		if standalone. 
+
+
+
