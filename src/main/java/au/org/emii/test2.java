@@ -608,7 +608,7 @@ class PostgresDialectTranslate implements IDialectTranslate
 	*/
 
 
-
+/*
 class Timeseries2
 {
 	Parser parser;				
@@ -644,6 +644,7 @@ class Timeseries2
 		System.out.println( "count " + count );
 	}
 }
+
 
 
 class Timeseries3
@@ -691,7 +692,7 @@ class Timeseries3
 }
 
 
-
+*/
 
 
 class MyType
@@ -1578,6 +1579,8 @@ class Timeseries1
 	// id's of feature instances we will need
 	ResultSet featureInstances;
 
+	String table1;
+	String table2;
 
 	public Timeseries1( 
 		Parser parser, 
@@ -1596,6 +1599,9 @@ class Timeseries1
 	
 		featureInstances = null;
 		selection_expr = null;
+
+		table1 = null;  
+		table2 = null;  
 	}
 
 	// init, get, close
@@ -1605,6 +1611,12 @@ class Timeseries1
 	public void init() throws Exception
 	{
 		// avoiding ordering clauses that will prevent immediate stream response
+
+		// we're going to need to sanitize this 	
+		// note that we can wrap in double quotes 
+		table1 = "anmn_ts.timeseries";
+		table2 = "anmn_ts.measurement";
+
 
 
 		// set up the featureInstances that we will need to process 
@@ -1616,7 +1628,7 @@ class Timeseries1
 			throw new RuntimeException( "failed to parse expression" );
 		}
 		String selection = translate.process( selection_expr);
-		String query = "SELECT distinct ts_id  FROM anmn_ts.measurement where " + selection ; 
+		String query = "SELECT distinct ts_id  FROM " + table2 + " where " + selection ; 
 		System.out.println( "first query " + query  );
 
 		PreparedStatement stmt = conn.prepareStatement( query );
@@ -1772,8 +1784,8 @@ class Timeseries1
 		// we also ought to map values by index... rather than doing the complicated name lookup
 
 
-		populateValues( description.dimensions, description.encoders, "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id) );
-		populateValues( description.dimensions, description.encoders, "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
+		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + table1 + " where id = " + Long.toString( ts_id) );
+		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + table2 + " where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
 
 
 		/* IMPORTANT Issue - ordering criteria...
