@@ -1569,10 +1569,14 @@ class DecodeXmlConfiguration
 
 /*
 	virtual projections...
-
 	select * from ( select 1 as x) as table1 
-
 */
+
+
+
+
+
+
 
 class Timeseries1
 {
@@ -1645,9 +1649,7 @@ class Timeseries1
 		// try ...
 		// change name featureInstancesToProcess ?
 		featureInstances = stmt.executeQuery();
-
 		System.out.println( "done determining feature instances " );
-
 		// should determine our target types here
 	}
 
@@ -1655,7 +1657,6 @@ class Timeseries1
 		Map< String, IDimension> dimensions, 
 		Map< String, IVariableEncoder> encoders, 
 		String query  
-
 		)  throws Exception
 	{
 		// sql stuff
@@ -1720,7 +1721,6 @@ class Timeseries1
 		for ( IVariableEncoder encoder: description.encoders.values()) {
 			encoder.define( writer );
 		}
-
 		// finish netcdf definition
 		writer.create();
 
