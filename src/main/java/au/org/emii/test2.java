@@ -1559,6 +1559,15 @@ class DecodeXmlConfiguration
 
 
 
+// we need the query or the selection to be exposed, so we can formulate
+// like a fold, with an init and transform
+// we should definitely pass a writable here ...
+// rather than instantiate it
+
+// hang on they share the same name...
+// so we could put it in a list...
+
+
 class Timeseries1
 {
 	final Parser parser;				// change name to expressionParser or SelectionParser
@@ -1566,9 +1575,7 @@ class Timeseries1
 	final Connection conn;
 
 	final ICreateWritable createWritable; // generate a writiable 
-
 	final Description description ;
-	
 
 	// Encoder
 	// Order criterion (actually a projection bit) 
@@ -1599,26 +1606,21 @@ class Timeseries1
 	
 		featureInstances = null;
 		selection_expr = null;
-
 		table1 = null;  
 		table2 = null;  
 	}
 
-	// init, get, close
-
-
-
 	public void init() throws Exception
 	{
 		// avoiding ordering clauses that will prevent immediate stream response
-
 		// we're going to need to sanitize this 	
 		// note that we can wrap in double quotes 
 		table1 = "anmn_ts.timeseries";
 		table2 = "anmn_ts.measurement";
-
-
-
+/*
+		table1 = "anmn_nrs_ctd_profiles.deployments";
+		table2 = "anmn_nrs_ctd_profiles.measurements";
+*/
 		// set up the featureInstances that we will need to process 
 		String s = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
 
@@ -1642,15 +1644,6 @@ class Timeseries1
 
 		// should determine our target types here
 	}
-
-
-	// we need the query or the selection to be exposed, so we can formulate
-	// like a fold, with an init and transform
-	// we should definitely pass a writable here ...
-	// rather than instantiate it
-
-	// hang on they share the same name...
-	// so we could put it in a list...
 
 	public void populateValues(  
 		Map< String, IDimension> dimensions, 
@@ -1689,7 +1682,6 @@ class Timeseries1
 				processing[i].add( encoder );
 		}
 
-
 		// process result set rows
 		while ( rs.next() ) {  
 			for ( int i = 1 ; i <= numColumns ; i++ ) {
@@ -1700,147 +1692,40 @@ class Timeseries1
 		}
 	} 
 
-
 	public NetcdfFileWriteable get() throws Exception
 	{
-		// code organized so we only iterate over the recordset returned by the query once
-
-/*
-	we really should throw if we reference a var that doesn't exist. 
-
-*/
 		featureInstances.next();
 
 		long ts_id = (long)(Long) featureInstances.getObject(1); 
-
 
 		System.out.println( "whoot get(), ts_id is " + ts_id );
 
 		String selection = translate.process( selection_expr); // we ought to be caching the specific query ??? 
 					
-		// we'll add them all to a List 
-//		IVariableEncoder e = new MyEncoder ( "LATITUDE", null ) ; 
-
-
-
-/*
-		Map< String, IDimension> dimensions = new HashMap< String, IDimension> ();
-
-
-		IDimension time_ = new MyDimension( "TIME" );
-		dimensions.put( time_.getName(), time_ );
-
-
-
-
-
-		IEncodeValue floatEncoder = new EncodeFloatValue();
-		IEncodeValue byteEncoder = new EncodeByteValue();
-		IEncodeValue timestampEncoder = new EncodeTimestampValue();
-
-
-		Map<String, Object> timestampAttributes = new HashMap<String, Object>();
-		timestampAttributes.put( "units", "days since 1950-01-01 00:00:00 UTC" );
-		timestampAttributes.put( "_FillValue", (float) 999999. ); 
-
-		Map<String, Object> floatAttributes = new HashMap<String, Object>();
-		floatAttributes.put( "_FillValue", (float) 999999. ); 
-
-		Map<String, Object> byteAttributes = new HashMap<String, Object>();
-		byteAttributes.put( "_FillValue", (byte) 0xff ); 
-
-		// the dimensions 
-		// time dimension and time variable 
-
-		// where on earth are the attributes coming from ? 
-		// VERY IMPORTANT - dimensions are the same as sql ordering criteria. order by TIME. they decide the encode order.
-
-		ArrayList< IDimension> idimensions = new ArrayList<IDimension>(); 
-		idimensions.add( time_ );
-
-		// OK
-
-		//IVariableEncoder temp = new MyEncoder ( "TEMP", new ArrayList< IVariableEncoder>( Arrays.asList( u )), floatEncoder, floatAttributes ) ; 
-		IVariableEncoder temp = new MyEncoder ( "TEMP", idimensions, floatEncoder, floatAttributes ) ; 
-
-		IVariableEncoder time_qc = new MyEncoder ( "TIME_quality_control", idimensions, byteEncoder, byteAttributes ) ; 
-
-		Map< String, IVariableEncoder> encoders = new HashMap< String, IVariableEncoder> ();
-	
-		//encoders.put( lat.getName(), lat ) ; 
-		//encoders.put( lon.getName(), lon ) ; 
-		//encoders.put( time.getName(), time ) ; 
-		encoders.put( temp.getName(), temp ) ; 
-		encoders.put( time_qc.getName(), time_qc ) ; 
-*/
-		/*
-			For timeseries - we may only need a 
-		*/
-
-		// we could have a common interface for addValue...
-		// in order to avoid passing encoders and dimensions.
-
-		// yes and avoid having the two loops...
-		// we also ought to map values by index... rather than doing the complicated name lookup
-
-
 		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + table1 + " where id = " + Long.toString( ts_id) );
 		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + table2 + " where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
 
-
-		/* IMPORTANT Issue - ordering criteria...
-		*/
-
-/*		for ( IVariableEncoder encoder: encoders.values())
-		{
-			encoder.dump();
-		}
-*/
-		// now we loop the encoders and try to define...
-		// will need to pass a dimensions need if it's already defined
-		// 
-
-
 		NetcdfFileWriteable writer = createWritable.create();
 
-
-		for ( IDimension dimension: description.dimensions.values())
-		{
+		for ( IDimension dimension: description.dimensions.values()) {
 			dimension.define(writer);
 		}
 
-
-		for ( IVariableEncoder encoder: description.encoders.values())
-		{
+		for ( IVariableEncoder encoder: description.encoders.values()) {
 			encoder.define( writer );
 		}
-
 
 		// finish netcdf definition
 		writer.create();
 
-
-		for ( IVariableEncoder encoder: description.encoders.values())
-		{
+		for ( IVariableEncoder encoder: description.encoders.values()) {
 			// change name writeValues
 			encoder.finish( writer );
 		}
-
-
 		// close
 		writer.close();
-	
-
-/*
-		// close
-		writer.close();
-	
-		return writer; 
-*/
 		return null;
 	}
-
-
 }
 
 
