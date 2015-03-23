@@ -1,4 +1,19 @@
 
+Ok, we've got issues. with the two table approach - would require virtual linking.
+
+0) try to use complex attributes - to 
+1) virtual tables - and link
+2) change to using the data view .   
+	- if we always have an instance variable, then just use it.
+	- will probably change the streaming characteristics.
+
+	- 
+
+	can probably maintain the two view thing. using a unique file_id thing...
+	- eg. get the set of instances as unique. need to test the speed of this.
+
+
+-------
 Think we should be using the surefire plugin - to do tests. then just mvn exec
 
 mvn clean

@@ -1567,6 +1567,12 @@ class DecodeXmlConfiguration
 // hang on they share the same name...
 // so we could put it in a list...
 
+/*
+	virtual projections...
+
+	select * from ( select 1 as x) as table1 
+
+*/
 
 class Timeseries1
 {
