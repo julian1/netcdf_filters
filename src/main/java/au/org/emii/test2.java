@@ -1660,9 +1660,6 @@ class Timeseries1
 		)  throws Exception
 	{
 		// sql stuff
-		// need to encode the additional parameter...
-		//String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
-		// String query = "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id); 
 		PreparedStatement stmt = conn.prepareStatement( query ); 
 		stmt.setFetchSize(1000);
 		ResultSet rs = stmt.executeQuery();

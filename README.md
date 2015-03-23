@@ -1,4 +1,9 @@
 
+\d+ anmn_ts.anmn_ts_timeseries_data
+
+we have timeseries_id as var.
+
+----
 Ok, we've got issues. with the two table approach - would require virtual linking.
 
 0) try to use complex attributes - to 
