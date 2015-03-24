@@ -1583,22 +1583,14 @@ class Timeseries1
 	final Parser parser;				// change name to expressionParser or SelectionParser
 	final IDialectTranslate translate ;		// will also load up the parameters?
 	final Connection conn;
-
 	final ICreateWritable createWritable; // generate a writiable 
 	final Description description ;
-
 	final String instanceTable;
 	final String dataTable;
-
+	final String filterExpr; 
 
 	int fetchSize;
-	// Encoder
-	// Order criterion (actually a projection bit) 
-
-	//  state required for streaming..
-	// should we cache the result of the translation or the translator??
 	IExpression selection_expr;
-	// id's of feature instances we will need
 	ResultSet featureInstances;
 
 	public Timeseries1( 
@@ -1607,23 +1599,20 @@ class Timeseries1
 		Connection conn, 
 		ICreateWritable createWritable, 
 		Description description, 
-
 		String instanceTable,
-		String dataTable
+		String dataTable,
+		String filterExpr
 	) {
-		// we need to inject the selector ...
-		// 
 		this.parser = parser;
 		this.translate = translate; // sqlEncode.. dialect... specialization
 		this.conn = conn;
 		this.createWritable = createWritable;
 		this.description = description;
-
 		this.instanceTable = instanceTable;
 		this.dataTable = dataTable;
+		this.filterExpr = filterExpr;
 
-		this.fetchSize = 1000;
-	
+		fetchSize = 1000;
 		featureInstances = null;
 		selection_expr = null;
 	}
@@ -1788,12 +1777,8 @@ public class test2 {
 
 		DecodeXmlConfiguration x = new DecodeXmlConfiguration(); 
 
-
 		// ok, think we want a pair for encoders and dimensions pair. 
-
 		Description description = x.test();
-
-
 
 		// change name exprParser
 		Parser parser = new Parser();
@@ -1804,7 +1789,6 @@ public class test2 {
 
 		ICreateWritable createWritable = new CreateWritable();  
 
-
 		// avoiding ordering clauses that will prevent immediate stream response
 		// we're going to need to sanitize this 	
 		// note that we can wrap in double quotes 
@@ -1813,8 +1797,11 @@ public class test2 {
 		String instanceTable = "(select * from anmn_ts.timeseries)";
 		String dataTable = "(select ts_id as instance_id, * from anmn_ts.measurement)";
 
+		String filterExpr = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
+
 	
-		Timeseries1 timeseries = new Timeseries1( parser, translate, conn, createWritable, description, instanceTable, dataTable ); 
+		Timeseries1 timeseries = new Timeseries1( 
+			parser, translate, conn, createWritable, description, instanceTable, dataTable, filterExpr ); 
 
 		timeseries.init();	
 
