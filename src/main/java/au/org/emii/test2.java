@@ -1798,8 +1798,11 @@ public class test2 {
 		String instanceTable = "(select * from anmn_ts.timeseries)";
 		String dataTable = "(select ts_id as instance_id, * from anmn_ts.measurement)";
 
-		String filterExpr = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
+		// Get rid of this and look it up as the dimension, 
 		String dimensionVar = "TIME";
+
+		String filterExpr = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
+
 
 	
 		Timeseries1 timeseries = new Timeseries1( 
