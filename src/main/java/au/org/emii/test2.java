@@ -1711,8 +1711,8 @@ class Timeseries1
 
 		String selection = translate.process( selection_expr); // we ought to be caching the specific query ??? 
 					
-		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + instanceTable + "as instance where id = " + Long.toString( ts_id) );
-		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + dataTable + " as data where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
+		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + instanceTable + "as instance where instance.id = " + Long.toString( ts_id) );
+		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + dataTable + " as data where " + selection +  " and instance_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
 
 		NetcdfFileWriteable writer = createWritable.create();
 
