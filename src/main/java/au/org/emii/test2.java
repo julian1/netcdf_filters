@@ -1587,6 +1587,10 @@ class Timeseries1
 	final ICreateWritable createWritable; // generate a writiable 
 	final Description description ;
 
+	final String instanceTable;
+	final String dataTable;
+
+
 	int fetchSize;
 	// Encoder
 	// Order criterion (actually a projection bit) 
@@ -1597,15 +1601,15 @@ class Timeseries1
 	// id's of feature instances we will need
 	ResultSet featureInstances;
 
-	String instanceTable;
-	String dataTable;
-
 	public Timeseries1( 
 		Parser parser, 
 		IDialectTranslate translate, 
 		Connection conn, 
 		ICreateWritable createWritable, 
-		Description description 
+		Description description, 
+
+		String instanceTable,
+		String dataTable
 	) {
 		// we need to inject the selector ...
 		// 
@@ -1615,23 +1619,17 @@ class Timeseries1
 		this.createWritable = createWritable;
 		this.description = description;
 
+		this.instanceTable = instanceTable;
+		this.dataTable = dataTable;
+
 		this.fetchSize = 1000;
 	
 		featureInstances = null;
 		selection_expr = null;
-	
-		// must be passed as an external dep
-		instanceTable = null;  
-		dataTable = null;  
 	}
 
 	public void init() throws Exception
 	{
-		// avoiding ordering clauses that will prevent immediate stream response
-		// we're going to need to sanitize this 	
-		// note that we can wrap in double quotes 
-		instanceTable = "(select * from anmn_ts.timeseries)";
-		dataTable = "(select ts_id as instance_id, * from anmn_ts.measurement)";
 /*
 		instanceTable = "anmn_nrs_ctd_profiles.deployments";
 		dataTable = "anmn_nrs_ctd_profiles.measurements";
@@ -1664,6 +1662,9 @@ class Timeseries1
 		String query  
 		)  throws Exception
 	{
+
+		System.out.println( "query " + query  );
+
 		// sql stuff
 		PreparedStatement stmt = conn.prepareStatement( query ); 
 		stmt.setFetchSize(fetchSize);
@@ -1794,7 +1795,7 @@ public class test2 {
 
 
 
-
+		// change name exprParser
 		Parser parser = new Parser();
 
 		IDialectTranslate translate = new  PostgresDialectTranslate();
@@ -1802,9 +1803,18 @@ public class test2 {
 		Connection conn = getConn();
 
 		ICreateWritable createWritable = new CreateWritable();  
+
+
+		// avoiding ordering clauses that will prevent immediate stream response
+		// we're going to need to sanitize this 	
+		// note that we can wrap in double quotes 
+
+		// change name virtualTable
+		String instanceTable = "(select * from anmn_ts.timeseries)";
+		String dataTable = "(select ts_id as instance_id, * from anmn_ts.measurement)";
+
 	
-		Timeseries1 timeseries = new Timeseries1( parser, translate, conn, createWritable, description ); 
-		// Timeseries timeseries = new Timeseries( parser, translate, conn ); 
+		Timeseries1 timeseries = new Timeseries1( parser, translate, conn, createWritable, description, instanceTable, dataTable ); 
 
 		timeseries.init();	
 
