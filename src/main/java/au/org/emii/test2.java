@@ -1626,7 +1626,7 @@ class Timeseries1
 		// we're going to need to sanitize this 	
 		// note that we can wrap in double quotes 
 		instanceTable = "(select * from anmn_ts.timeseries)";
-		dataTable = "(select * from anmn_ts.measurement)";
+		dataTable = "(select ts_id as instance_id, * from anmn_ts.measurement)";
 /*
 		instanceTable = "anmn_nrs_ctd_profiles.deployments";
 		dataTable = "anmn_nrs_ctd_profiles.measurements";
@@ -1640,7 +1640,7 @@ class Timeseries1
 			throw new RuntimeException( "failed to parse expression" );
 		}
 		String selection = translate.process( selection_expr);
-		String query = "SELECT distinct data.ts_id  FROM " + dataTable + " as data where " + selection ; 
+		String query = "SELECT distinct data.instance_id  FROM " + dataTable + " as data where " + selection ; 
 		System.out.println( "first query " + query  );
 
 		PreparedStatement stmt = conn.prepareStatement( query );
@@ -1695,6 +1695,9 @@ class Timeseries1
 			}
 		}
 	} 
+
+	// we could make the TIME explicit in the query. 
+	// as the data.dimension      and data.instance_id 
 
 	public NetcdfFileWriteable get() throws Exception
 	{
