@@ -1587,6 +1587,7 @@ class Timeseries1
 	final ICreateWritable createWritable; // generate a writiable 
 	final Description description ;
 
+	int fetchSize;
 	// Encoder
 	// Order criterion (actually a projection bit) 
 
@@ -1613,6 +1614,8 @@ class Timeseries1
 		this.conn = conn;
 		this.createWritable = createWritable;
 		this.description = description;
+
+		this.fetchSize = 1000;
 	
 		featureInstances = null;
 		selection_expr = null;
@@ -1646,7 +1649,7 @@ class Timeseries1
 		System.out.println( "first query " + query  );
 
 		PreparedStatement stmt = conn.prepareStatement( query );
-		stmt.setFetchSize(1000);
+		stmt.setFetchSize(fetchSize);
 
 		// try ...
 		// change name featureInstancesToProcess ?
@@ -1663,7 +1666,7 @@ class Timeseries1
 	{
 		// sql stuff
 		PreparedStatement stmt = conn.prepareStatement( query ); 
-		stmt.setFetchSize(1000);
+		stmt.setFetchSize(fetchSize);
 		ResultSet rs = stmt.executeQuery();
 
 		// now we loop the main attributes 
@@ -1705,14 +1708,14 @@ class Timeseries1
 	{
 		featureInstances.next();
 
-		long ts_id = (long)(Long) featureInstances.getObject(1); 
+		long instance_id = (long)(Long) featureInstances.getObject(1); 
 
-		System.out.println( "whoot get(), ts_id is " + ts_id );
+		System.out.println( "whoot get(), instance_id is " + instance_id );
 
 		String selection = translate.process( selection_expr); // we ought to be caching the specific query ??? 
 					
-		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + instanceTable + "as instance where instance.id = " + Long.toString( ts_id) );
-		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + dataTable + " as data where " + selection +  " and data.instance_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
+		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + instanceTable + "as instance where instance.id = " + Long.toString( instance_id) );
+		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + dataTable + " as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by \"TIME\" "  );
 
 		NetcdfFileWriteable writer = createWritable.create();
 
