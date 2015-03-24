@@ -1588,6 +1588,7 @@ class Timeseries1
 	final Description description ;
 	final String instanceTable;
 	final String dataTable;
+	final String dimensionVar; 
 	final String filterExpr; 
 
 	final int fetchSize;
@@ -1602,6 +1603,7 @@ class Timeseries1
 		Description description, 
 		String instanceTable,
 		String dataTable,
+		String dimensionVar,
 		String filterExpr
 	) {
 		this.exprParser = exprParser;
@@ -1611,6 +1613,7 @@ class Timeseries1
 		this.description = description;
 		this.instanceTable = instanceTable;
 		this.dataTable = dataTable;
+		this.dimensionVar = dimensionVar;
 		this.filterExpr = filterExpr;
 
 		fetchSize = 1000;
@@ -1685,6 +1688,13 @@ class Timeseries1
 	// we could make the TIME explicit in the query. 
 	// as the data.dimension      and data.instance_id 
 
+	// How do we represent the dimension order?  
+
+	// probably better to lookit up in the input.xml
+
+	// for testing
+
+
 	public NetcdfFileWriteable get() throws Exception
 	{
 		featureInstancesRS.next();
@@ -1696,7 +1706,7 @@ class Timeseries1
 		String selection = translate.process( selection_expr); // we ought to be caching the specific query ??? 
 					
 		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + instanceTable + "as instance where instance.id = " + Long.toString( instance_id) );
-		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + dataTable + " as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by \"TIME\" "  );
+		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + dataTable + " as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by \"" + dimensionVar + "\""  );
 
 		NetcdfFileWriteable writer = createWritable.create();
 
@@ -1789,10 +1799,11 @@ public class test2 {
 		String dataTable = "(select ts_id as instance_id, * from anmn_ts.measurement)";
 
 		String filterExpr = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
+		String dimensionVar = "TIME";
 
 	
 		Timeseries1 timeseries = new Timeseries1( 
-			parser, translate, conn, createWritable, description, instanceTable, dataTable, filterExpr ); 
+			parser, translate, conn, createWritable, description, instanceTable, dataTable, dimensionVar, filterExpr );
 
 		timeseries.init();	
 
