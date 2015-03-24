@@ -1699,7 +1699,7 @@ class Timeseries1
 	{
 		featureInstancesRS.next();
 
-		long instance_id = (long)(Long) featureInstancesRS.getObject(1); 
+		long instance_id = (long)(Integer) featureInstancesRS.getObject(1); 
 
 		System.out.println( "whoot get(), instance_id is " + instance_id );
 
@@ -1795,14 +1795,14 @@ public class test2 {
 		// note that we can wrap in double quotes 
 
 		// change name virtualTable
-		String instanceTable = "(select * from anmn_ts.timeseries)";
-		String dataTable = "(select ts_id as instance_id, * from anmn_ts.measurement)";
+		String instanceTable = "(select * from anmn_nrs_ctd_profiles.indexed_file )";
+		String dataTable = "(select file_id as instance_id, * from anmn_nrs_ctd_profiles.measurements)";
 
 		// Get rid of this and look it up as the dimension, 
-		String dimensionVar = "TIME";
+		String dimensionVar = "DEPTH";
 
-		String filterExpr = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
-
+//		String filterExpr = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
+		String filterExpr = " (lt TIME 2013-6-29T00:40:01Z ) "; 
 
 	
 		Timeseries1 timeseries = new Timeseries1( 

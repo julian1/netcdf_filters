@@ -1,4 +1,24 @@
 
+
+arvest=# \dt anmn_nrs_ctd_profiles.
+                        List of relations
+        Schema         |         Name          | Type  |  Owner   
+-----------------------+-----------------------+-------+----------
+ anmn_nrs_ctd_profiles | attribute             | table | postgres
+ anmn_nrs_ctd_profiles | databasechangelog     | table | postgres
+ anmn_nrs_ctd_profiles | databasechangeloglock | table | postgres
+ anmn_nrs_ctd_profiles | deployments           | table | postgres
+ anmn_nrs_ctd_profiles | file                  | table | postgres
+ anmn_nrs_ctd_profiles | file_harvest          | table | postgres
+ anmn_nrs_ctd_profiles | index_job             | table | postgres
+ anmn_nrs_ctd_profiles | indexed_file          | table | postgres
+ anmn_nrs_ctd_profiles | measurements          | table | postgres
+ anmn_nrs_ctd_profiles | variable              | table | postgres
+
+
+\d anmn_nrs_ctd_profiles.anmn_nrs_ctd_profiles_data
+
+------
 example using virtual table,
 
 select  distinct instance.ts_id   from (select * from anmn_ts.measurement) as instance where (("TIME" > '2013-06-28T00:35:01Z') and ("TIME" < '2013-06-29T00:40:01Z')) ;
