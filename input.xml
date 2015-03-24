@@ -2,7 +2,7 @@
 <definition>
 
   <dimensions>
-    <dimension name="TIME"/>
+    <dimension name="DEPTH"/>
   </dimensions>
 
   <variables>
@@ -19,7 +19,7 @@
       <name>TEMP</name>
       <encoder>float</encoder>
       <dimensions>
-        <dimension name="TIME"/>
+        <dimension name="DEPTH"/>
       </dimensions>
       <attributes>
         <attribute name="_FillValue" value="99999."/>
@@ -28,10 +28,10 @@
 	  </variable>
 
 	  <variable>
-      <name>TIME_quality_control</name>
+      <name>DEPTH_quality_control</name>
       <encoder>byte</encoder>
       <dimensions>
-        <dimension name="TIME"/>
+        <dimension name="DEPTH"/>
       </dimensions>
       <attributes>
         <attribute name="_FillValue" value="0xffb"/>
@@ -39,10 +39,10 @@
 	  </variable>
 
 	  <variable>
-      <name>TIME</name>
-      <encoder>time</encoder>
+      <name>DEPTH</name>
+      <encoder>float</encoder>
       <dimensions>
-        <dimension name="TIME"/>
+        <dimension name="DEPTH"/>
       </dimensions>
       <attributes>
         <attribute name="_FillValue" value="99999."/>

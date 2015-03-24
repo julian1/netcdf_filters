@@ -1567,81 +1567,78 @@ class DecodeXmlConfiguration
 // hang on they share the same name...
 // so we could put it in a list...
 
+/*
+	virtual projections...
+	select * from ( select 1 as x) as table1 
+*/
+
+
+
+
+/*
+	ok, lets try profile.
+*/
 
 class Timeseries1
 {
-	final Parser parser;				// change name to expressionParser or SelectionParser
+	final Parser exprParser;				// change name to expressionParser or SelectionParser
 	final IDialectTranslate translate ;		// will also load up the parameters?
 	final Connection conn;
-
 	final ICreateWritable createWritable; // generate a writiable 
 	final Description description ;
+	final String instanceTable;
+	final String dataTable;
+	final String dimensionVar; 
+	final String filterExpr; 
 
-	// Encoder
-	// Order criterion (actually a projection bit) 
-
-	//  state required for streaming..
-	// should we cache the result of the translation or the translator??
+	final int fetchSize;
 	IExpression selection_expr;
-	// id's of feature instances we will need
-	ResultSet featureInstances;
-
-	String table1;
-	String table2;
+	ResultSet featureInstancesRS;
 
 	public Timeseries1( 
-		Parser parser, 
+		Parser exprParser, 
 		IDialectTranslate translate, 
 		Connection conn, 
 		ICreateWritable createWritable, 
-		Description description 
+		Description description, 
+		String instanceTable,
+		String dataTable,
+		String dimensionVar,
+		String filterExpr
 	) {
-		// we need to inject the selector ...
-		// 
-		this.parser = parser;
+		this.exprParser = exprParser;
 		this.translate = translate; // sqlEncode.. dialect... specialization
 		this.conn = conn;
 		this.createWritable = createWritable;
 		this.description = description;
-	
-		featureInstances = null;
+		this.instanceTable = instanceTable;
+		this.dataTable = dataTable;
+		this.dimensionVar = dimensionVar;
+		this.filterExpr = filterExpr;
+
+		fetchSize = 1000;
+		featureInstancesRS = null;
 		selection_expr = null;
-		table1 = null;  
-		table2 = null;  
 	}
 
 	public void init() throws Exception
 	{
-		// avoiding ordering clauses that will prevent immediate stream response
-		// we're going to need to sanitize this 	
-		// note that we can wrap in double quotes 
-		table1 = "anmn_ts.timeseries";
-		table2 = "anmn_ts.measurement";
-/*
-		table1 = "anmn_nrs_ctd_profiles.deployments";
-		table2 = "anmn_nrs_ctd_profiles.measurements";
-*/
-		// set up the featureInstances that we will need to process 
-		String s = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
-
-		selection_expr = parser.parseExpression( s, 0);
+		selection_expr = exprParser.parseExpression( filterExpr, 0);
 		// bad, should return expr or throw
 		if(selection_expr == null) {
 			throw new RuntimeException( "failed to parse expression" );
 		}
 		String selection = translate.process( selection_expr);
-		String query = "SELECT distinct ts_id  FROM " + table2 + " where " + selection ; 
+		String query = "SELECT distinct data.instance_id  FROM " + dataTable + " as data where " + selection ; 
 		System.out.println( "first query " + query  );
 
 		PreparedStatement stmt = conn.prepareStatement( query );
-		stmt.setFetchSize(1000);
+		stmt.setFetchSize(fetchSize);
 
 		// try ...
-		// change name featureInstancesToProcess ?
-		featureInstances = stmt.executeQuery();
-
+		// change name featureInstancesRSToProcess ?
+		featureInstancesRS = stmt.executeQuery();
 		System.out.println( "done determining feature instances " );
-
 		// should determine our target types here
 	}
 
@@ -1649,15 +1646,13 @@ class Timeseries1
 		Map< String, IDimension> dimensions, 
 		Map< String, IVariableEncoder> encoders, 
 		String query  
-
 		)  throws Exception
 	{
+		System.out.println( "query " + query  );
+
 		// sql stuff
-		// need to encode the additional parameter...
-		//String query = "SELECT * FROM anmn_ts.measurement where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "; 
-		// String query = "SELECT * FROM anmn_ts.timeseries where id = " + Long.toString( ts_id); 
 		PreparedStatement stmt = conn.prepareStatement( query ); 
-		stmt.setFetchSize(1000);
+		stmt.setFetchSize(fetchSize);
 		ResultSet rs = stmt.executeQuery();
 
 		// now we loop the main attributes 
@@ -1666,11 +1661,9 @@ class Timeseries1
 		
 		// pre-map the encoders by index according to the column name 
 		ArrayList< IAddValue> [] processing = (ArrayList< IAddValue> []) new ArrayList [numColumns + 1]; 
-		// ArrayList< IAddValue> [] processing = (ArrayList< IAddValue> []) java.lang.reflect.Array.newInstance( ArrayList.class, numColumns + 1) ; 
 
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
 			// System.out.println( "column name "+ m.getColumnName(i) ); 
-
 			processing[i] = new ArrayList< IAddValue> ();
 
 			IDimension dimension = dimensions.get( m.getColumnName(i)); 
@@ -1692,18 +1685,28 @@ class Timeseries1
 		}
 	} 
 
+	// we could make the TIME explicit in the query. 
+	// as the data.dimension      and data.instance_id 
+
+	// How do we represent the dimension order?  
+
+	// probably better to lookit up in the input.xml
+
+	// for testing
+
+
 	public NetcdfFileWriteable get() throws Exception
 	{
-		featureInstances.next();
+		featureInstancesRS.next();
 
-		long ts_id = (long)(Long) featureInstances.getObject(1); 
+		long instance_id = (long)(Integer) featureInstancesRS.getObject(1); 
 
-		System.out.println( "whoot get(), ts_id is " + ts_id );
+		System.out.println( "whoot get(), instance_id is " + instance_id );
 
 		String selection = translate.process( selection_expr); // we ought to be caching the specific query ??? 
 					
-		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + table1 + " where id = " + Long.toString( ts_id) );
-		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + table2 + " where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
+		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + instanceTable + "as instance where instance.id = " + Long.toString( instance_id) );
+		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + dataTable + " as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by \"" + dimensionVar + "\""  );
 
 		NetcdfFileWriteable writer = createWritable.create();
 
@@ -1714,7 +1717,6 @@ class Timeseries1
 		for ( IVariableEncoder encoder: description.encoders.values()) {
 			encoder.define( writer );
 		}
-
 		// finish netcdf definition
 		writer.create();
 
@@ -1776,14 +1778,10 @@ public class test2 {
 
 		DecodeXmlConfiguration x = new DecodeXmlConfiguration(); 
 
-
 		// ok, think we want a pair for encoders and dimensions pair. 
-
 		Description description = x.test();
 
-
-
-
+		// change name exprParser
 		Parser parser = new Parser();
 
 		IDialectTranslate translate = new  PostgresDialectTranslate();
@@ -1791,9 +1789,24 @@ public class test2 {
 		Connection conn = getConn();
 
 		ICreateWritable createWritable = new CreateWritable();  
+
+		// avoiding ordering clauses that will prevent immediate stream response
+		// we're going to need to sanitize this 	
+		// note that we can wrap in double quotes 
+
+		// change name virtualTable
+		String instanceTable = "(select * from anmn_nrs_ctd_profiles.indexed_file )";
+		String dataTable = "(select file_id as instance_id, * from anmn_nrs_ctd_profiles.measurements)";
+
+		// Get rid of this and look it up as the dimension, 
+		String dimensionVar = "DEPTH";
+
+//		String filterExpr = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
+		String filterExpr = " (lt TIME 2013-6-29T00:40:01Z ) "; 
+
 	
-		Timeseries1 timeseries = new Timeseries1( parser, translate, conn, createWritable, description ); 
-		// Timeseries timeseries = new Timeseries( parser, translate, conn ); 
+		Timeseries1 timeseries = new Timeseries1( 
+			parser, translate, conn, createWritable, description, instanceTable, dataTable, dimensionVar, filterExpr );
 
 		timeseries.init();	
 
