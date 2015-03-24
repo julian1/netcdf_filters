@@ -1596,8 +1596,8 @@ class Timeseries1
 	// id's of feature instances we will need
 	ResultSet featureInstances;
 
-	String table1;
-	String table2;
+	String instanceTable;
+	String dataTable;
 
 	public Timeseries1( 
 		Parser parser, 
@@ -1616,8 +1616,8 @@ class Timeseries1
 	
 		featureInstances = null;
 		selection_expr = null;
-		table1 = null;  
-		table2 = null;  
+		instanceTable = null;  
+		dataTable = null;  
 	}
 
 	public void init() throws Exception
@@ -1625,11 +1625,11 @@ class Timeseries1
 		// avoiding ordering clauses that will prevent immediate stream response
 		// we're going to need to sanitize this 	
 		// note that we can wrap in double quotes 
-		table1 = "anmn_ts.timeseries";
-		table2 = "anmn_ts.measurement";
+		instanceTable = "(select * from anmn_ts.timeseries)";
+		dataTable = "(select * from anmn_ts.measurement)";
 /*
-		table1 = "anmn_nrs_ctd_profiles.deployments";
-		table2 = "anmn_nrs_ctd_profiles.measurements";
+		instanceTable = "anmn_nrs_ctd_profiles.deployments";
+		dataTable = "anmn_nrs_ctd_profiles.measurements";
 */
 		// set up the featureInstances that we will need to process 
 		String s = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
@@ -1640,7 +1640,7 @@ class Timeseries1
 			throw new RuntimeException( "failed to parse expression" );
 		}
 		String selection = translate.process( selection_expr);
-		String query = "SELECT distinct ts_id  FROM " + table2 + " where " + selection ; 
+		String query = "SELECT distinct data.ts_id  FROM " + dataTable + " as data where " + selection ; 
 		System.out.println( "first query " + query  );
 
 		PreparedStatement stmt = conn.prepareStatement( query );
@@ -1706,8 +1706,8 @@ class Timeseries1
 
 		String selection = translate.process( selection_expr); // we ought to be caching the specific query ??? 
 					
-		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + table1 + " where id = " + Long.toString( ts_id) );
-		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + table2 + " where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
+		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + instanceTable + "as instance where id = " + Long.toString( ts_id) );
+		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + dataTable + " as data where " + selection +  " and ts_id = " + Long.toString( ts_id) + " order by \"TIME\" "  );
 
 		NetcdfFileWriteable writer = createWritable.create();
 

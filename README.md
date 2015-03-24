@@ -1,4 +1,24 @@
 
+example using virtual table,
+
+select  distinct instance.ts_id   from (select * from anmn_ts.measurement) as instance where (("TIME" > '2013-06-28T00:35:01Z') and ("TIME" < '2013-06-29T00:40:01Z')) ;
+
+------
+
+
+ SELECT distinct ts_id  FROM anmn_ts.measurement where (("TIME" > '2013-06-28T00:35:01Z') and ("TIME" < '2013-06-29T00:40:01Z'))
+
+This completes instantly to give us the id's of instances we want 
+
+select distinct( timeseries_id)  from  anmn_ts.anmn_ts_timeseries_data where (("TIME" > '2013-06-28T00:35:01Z') and ("TIME" < '2013-06-29T00:40:01Z')) ;
+(runs forever)	
+
+Trying to do the query on the joined view, won't complete
+
+
+
+----------------
+
 \d+ anmn_ts.anmn_ts_timeseries_data
 
 we have timeseries_id as var.
@@ -6,16 +26,31 @@ we have timeseries_id as var.
 ----
 Ok, we've got issues. with the two table approach - would require virtual linking.
 
-0) try to use complex attributes - to 
-1) virtual tables - and link
-2) change to using the data view .   
+0) 
+	try to use complex attributes - becomes very complicated to express.
+	eg. specifying the table, and the linking ids which change names
+	on each collection/ feature type.
+
+1) virtual projections - and link. eg. create intermediate tables.
+	- simple sql - for the two tables .
+		- can unify the id's
+
+
+2) change to use the data view that already joins the tables.   
 	- if we always have an instance variable, then just use it.
 	- will probably change the streaming characteristics.
 
-	- 
-
 	can probably maintain the two view thing. using a unique file_id thing...
 	- eg. get the set of instances as unique. need to test the speed of this.
+
+	- issue that queries are not getting optimised.
+
+
+4) 
+	use the data view 
+	but use single query -  
+
+
 
 
 -------
