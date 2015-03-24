@@ -1575,8 +1575,9 @@ class DecodeXmlConfiguration
 
 
 
-
-
+/*
+	ok, lets try profile.
+*/
 
 class Timeseries1
 {
@@ -1624,9 +1625,9 @@ class Timeseries1
 		dataTable = "anmn_nrs_ctd_profiles.measurements";
 */
 		// set up the featureInstances that we will need to process 
-		String s = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
+//		String s = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
 
-		selection_expr = parser.parseExpression( s, 0);
+		selection_expr = parser.parseExpression( filterExpr, 0);
 		// bad, should return expr or throw
 		if(selection_expr == null) {
 			throw new RuntimeException( "failed to parse expression" );
