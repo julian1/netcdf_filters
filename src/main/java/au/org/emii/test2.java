@@ -1616,6 +1616,8 @@ class Timeseries1
 	
 		featureInstances = null;
 		selection_expr = null;
+	
+		// must be passed as an external dep
 		instanceTable = null;  
 		dataTable = null;  
 	}
