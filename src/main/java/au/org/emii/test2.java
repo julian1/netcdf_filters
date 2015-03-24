@@ -1581,7 +1581,7 @@ class DecodeXmlConfiguration
 
 class Timeseries1
 {
-	final Parser parser;				// change name to expressionParser or SelectionParser
+	final Parser exprParser;				// change name to expressionParser or SelectionParser
 	final IDialectTranslate translate ;		// will also load up the parameters?
 	final Connection conn;
 	final ICreateWritable createWritable; // generate a writiable 
@@ -1590,12 +1590,12 @@ class Timeseries1
 	final String dataTable;
 	final String filterExpr; 
 
-	int fetchSize;
+	final int fetchSize;
 	IExpression selection_expr;
-	ResultSet featureInstances;
+	ResultSet featureInstancesRS;
 
 	public Timeseries1( 
-		Parser parser, 
+		Parser exprParser, 
 		IDialectTranslate translate, 
 		Connection conn, 
 		ICreateWritable createWritable, 
@@ -1604,7 +1604,7 @@ class Timeseries1
 		String dataTable,
 		String filterExpr
 	) {
-		this.parser = parser;
+		this.exprParser = exprParser;
 		this.translate = translate; // sqlEncode.. dialect... specialization
 		this.conn = conn;
 		this.createWritable = createWritable;
@@ -1614,20 +1614,13 @@ class Timeseries1
 		this.filterExpr = filterExpr;
 
 		fetchSize = 1000;
-		featureInstances = null;
+		featureInstancesRS = null;
 		selection_expr = null;
 	}
 
 	public void init() throws Exception
 	{
-/*
-		instanceTable = "anmn_nrs_ctd_profiles.deployments";
-		dataTable = "anmn_nrs_ctd_profiles.measurements";
-*/
-		// set up the featureInstances that we will need to process 
-//		String s = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
-
-		selection_expr = parser.parseExpression( filterExpr, 0);
+		selection_expr = exprParser.parseExpression( filterExpr, 0);
 		// bad, should return expr or throw
 		if(selection_expr == null) {
 			throw new RuntimeException( "failed to parse expression" );
@@ -1640,8 +1633,8 @@ class Timeseries1
 		stmt.setFetchSize(fetchSize);
 
 		// try ...
-		// change name featureInstancesToProcess ?
-		featureInstances = stmt.executeQuery();
+		// change name featureInstancesRSToProcess ?
+		featureInstancesRS = stmt.executeQuery();
 		System.out.println( "done determining feature instances " );
 		// should determine our target types here
 	}
@@ -1652,7 +1645,6 @@ class Timeseries1
 		String query  
 		)  throws Exception
 	{
-
 		System.out.println( "query " + query  );
 
 		// sql stuff
@@ -1666,11 +1658,9 @@ class Timeseries1
 		
 		// pre-map the encoders by index according to the column name 
 		ArrayList< IAddValue> [] processing = (ArrayList< IAddValue> []) new ArrayList [numColumns + 1]; 
-		// ArrayList< IAddValue> [] processing = (ArrayList< IAddValue> []) java.lang.reflect.Array.newInstance( ArrayList.class, numColumns + 1) ; 
 
 		for ( int i = 1 ; i <= numColumns ; i++ ) {
 			// System.out.println( "column name "+ m.getColumnName(i) ); 
-
 			processing[i] = new ArrayList< IAddValue> ();
 
 			IDimension dimension = dimensions.get( m.getColumnName(i)); 
@@ -1697,9 +1687,9 @@ class Timeseries1
 
 	public NetcdfFileWriteable get() throws Exception
 	{
-		featureInstances.next();
+		featureInstancesRS.next();
 
-		long instance_id = (long)(Long) featureInstances.getObject(1); 
+		long instance_id = (long)(Long) featureInstancesRS.getObject(1); 
 
 		System.out.println( "whoot get(), instance_id is " + instance_id );
 
