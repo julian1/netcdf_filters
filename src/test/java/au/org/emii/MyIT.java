@@ -10,6 +10,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 
 
@@ -55,6 +56,10 @@ public class MyIT {
     @Test
     public void newListIT() {
 		System.out.println( "**** whoot" );
+
+
+		assertTrue(123 == 123 );
+		assertTrue(457 == 456 );
 
 /*
 		DecodeXmlConfiguration x = new DecodeXmlConfiguration(); 
