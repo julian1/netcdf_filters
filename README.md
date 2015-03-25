@@ -1,5 +1,10 @@
 
 
+mvn verify			   - will show FAILURE if an integration test failed
+mvn integration-test   - will show SUCCESS even if if a test failed, since goal is simply to run. 
+
+
+
 arvest=# \dt anmn_nrs_ctd_profiles.
                         List of relations
         Schema         |         Name          | Type  |  Owner   

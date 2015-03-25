@@ -15,7 +15,7 @@ public class MyTest {
 
     @Before
     public void merge() {
-		System.out.println( "**** whoot" );
+		System.out.println( "**** whoot UNIT test" );
     }   
 
 
