@@ -1,8 +1,10 @@
 
+mvn verify will run both unit and integration tests
 
-mvn verify			   - will show FAILURE if an integration test failed
-mvn integration-test   - will show SUCCESS even if if a test failed, since goal is simply to run. 
+mvn test			   - run just surefire tests
+mvn integration-test   - failesafe - will show SUCCESS even if if a test failed, since goal is simply to run. 
 
+mvn verify			   - surefire + failsafe - will show if a unit or integration test failed
 
 
 arvest=# \dt anmn_nrs_ctd_profiles.

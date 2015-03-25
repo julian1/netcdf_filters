@@ -49,17 +49,17 @@ public class MyIT {
 
     @Before
     public void mergeIT() {
-		System.out.println( "**** whoot" );
+		System.out.println( "**** whoot INTEGRATION" );
     }   
 
 
     @Test
     public void newListIT() {
-		System.out.println( "**** whoot" );
+		System.out.println( "**** whoot INTEGRATION" );
 
 
 		assertTrue(123 == 123 );
-		assertTrue(457 == 456 );
+		assertTrue(456 == 456 );
 
 /*
 		DecodeXmlConfiguration x = new DecodeXmlConfiguration(); 
