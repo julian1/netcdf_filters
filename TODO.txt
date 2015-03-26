@@ -1,7 +1,15 @@
 
+
+
+----
 PRIORITY
 - push the sql projections into the xml. 
 - need to be able to select different inputs - either surefile or command line arguments
+
+- have a timeseries, need a trajectory. failsafe to run a specific integration test... 
+
+- connection pool in the unit tests.
+- xml config.
 
 ----
 prototype demonstrate end-to-end filter to subset netcdf generation, with streaming 
