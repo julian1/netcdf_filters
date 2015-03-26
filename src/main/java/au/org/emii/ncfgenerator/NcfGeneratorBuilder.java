@@ -1615,7 +1615,12 @@ class NcfGenerator
 			throw new RuntimeException( "failed to parse expression" );
 		}
 
+
+		System.out.println( "setting search_path to " + schema );
+
 		PreparedStatement s = conn.prepareStatement("set search_path='" + schema + "'");
+		// PreparedStatement s = conn.prepareStatement("set search_path='" + schema + "',public");
+		// PreparedStatement s = conn.prepareStatement("set search_path=" + schema + ",public");
 		s.execute(); 
 		s.close();
 
@@ -1780,6 +1785,8 @@ class NcfGeneratorBuilder
 		Properties props = new Properties();
 		props.setProperty("user","meteo");
 		props.setProperty("password","meteo");
+		
+//		props.setProperty("search_path","soop_sst,public");
 /*
 		String url = "jdbc:postgresql://dbprod.emii.org.au/harvest";
 		Properties props = new Properties();

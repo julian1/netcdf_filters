@@ -1,6 +1,8 @@
 
 Run an individual test,
 
+mvn install -Dmaven.test.skip=true 
+
 mvn -Dtest=MyIT#test1_IT test
 
 ------
