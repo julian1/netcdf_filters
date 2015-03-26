@@ -1725,13 +1725,17 @@ class NcfGenerator
 			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + instanceTable + ") as instance where instance.id = " + Long.toString( instance_id) );
 
 
-
+			// eg. concat "," $ map (\x -> x.getName) dimensions.values ...
+			String dimensionVar = "";
 			for( IDimension dimension : description.dimensions.values() )
 			{
-
+				if( dimensionVar.equals("")){
+					dimensionVar += "\"" + dimension.getName() + "\"" ;
+				} else {
+					dimensionVar += "," + dimension.getName();
+				}
 			}
 
-			String dimensionVar  = "whoot" ; 
 
 			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + dataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by \"" + dimensionVar + "\""  );
 
