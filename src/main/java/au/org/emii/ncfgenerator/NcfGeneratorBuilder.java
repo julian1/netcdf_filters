@@ -1694,7 +1694,20 @@ class NcfGenerator
 
 		// we ay have an Integer or Long or anything ? 
 		//long instance_id = (long)(Integer) featureInstancesRS.getObject(1); 
-		long instance_id = (long)(Long) featureInstancesRS.getObject(1); 
+
+		long instance_id = -1234;
+		Object o = featureInstancesRS.getObject(1);
+		Class clazz = o.getClass(); 
+		if( clazz.equals( Integer.class )) {
+			instance_id = (long)(Integer)o;
+		}
+		else if( clazz.equals( Long.class )) {
+			instance_id = (long)(Long)o;
+		} else { 
+			throw new RuntimeException( "Can't convert intance_id type to integer" );
+		}
+
+//		long instance_id = (long)(Long) featureInstancesRS.getObject(1); 
 
 		System.out.println( "whoot get(), instance_id is " + instance_id );
 
