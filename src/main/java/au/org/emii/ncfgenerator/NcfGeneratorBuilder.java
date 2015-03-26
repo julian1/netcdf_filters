@@ -1695,6 +1695,7 @@ class NcfGenerator
 		// we ay have an Integer or Long or anything ? 
 		//long instance_id = (long)(Integer) featureInstancesRS.getObject(1); 
 
+		// munge 
 		long instance_id = -1234;
 		Object o = featureInstancesRS.getObject(1);
 		Class clazz = o.getClass(); 
@@ -1735,11 +1736,10 @@ class NcfGenerator
 		// close
 		writer.close();
 
-
 		// TODO must close other record sets.
 		// and if early termination.
-
-		return null;
+//		return null;
+		return writer;
 	}
 }
 
@@ -1811,31 +1811,21 @@ class NcfGeneratorBuilder
 		} finally {
 			stream.close();
 		}
-		// ok, think we want a pair for encoders and dimensions pair. 
-		// Description description = x.test();
 
 		// change name exprParser
 		Parser parser = new Parser();
-
 		IDialectTranslate translate = new  PostgresDialectTranslate();
-
 		Connection conn = getConn();
-
 		ICreateWritable createWritable = new CreateWritable();  
 
 		// avoiding ordering clauses that will prevent immediate stream response
 		// we're going to need to sanitize this 	
 		// note that we can wrap in double quotes 
-
 		/*
 			VERY IMPORTANT - all this stuff is going to be pushed into the xml config.
 			except for the filter expression.
-
-
 			- need to set the schema independently....  for this...
 		*/
-
-		// ok, hang on we're missing the main xml configuration.
 	
 		NcfGenerator generator = new NcfGenerator( 
 			parser, translate, conn, createWritable, description, schema, instanceTable, dataTable, dimensionVar, filterExpr );
@@ -1844,7 +1834,6 @@ class NcfGeneratorBuilder
 
 		return generator ; 	
 	}
-
 }
 
 

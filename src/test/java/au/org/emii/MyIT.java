@@ -63,7 +63,8 @@ public class MyIT {
 			"select * from timeseries",
 		    "select ts_id as instance_id, * from measurement",
 			"TIME",
-			" (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "
+			 " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "
+			// " (lt TIME 2013-6-29T00:40:01Z ) "
 		);
 
 		NetcdfFileWriteable writer = null;
