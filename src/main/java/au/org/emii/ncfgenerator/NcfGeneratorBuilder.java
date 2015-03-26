@@ -5,7 +5,7 @@
 // time java -cp .:postgresql-9.1-901.jdbc4.jar:netcdfAll-4.2.jar  test2 
 
 
-package au.org.emii;
+package au.org.emii.ncfgenerator;
 
 //import java.io.BufferedReader;
 import java.io.FileReader;
@@ -1692,6 +1692,7 @@ class NcfGenerator
 	{
 		featureInstancesRS.next();
 
+		// we may have an Integer or Long or anything ? 
 		long instance_id = (long)(Integer) featureInstancesRS.getObject(1); 
 
 		System.out.println( "whoot get(), instance_id is " + instance_id );
