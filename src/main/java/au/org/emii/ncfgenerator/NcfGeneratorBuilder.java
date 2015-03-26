@@ -957,6 +957,9 @@ class MyDimension implements IDimension
 		// shouldn't do all this at the same time...
 		// uggh.
 		// no children means it's a dimension... actually could still be a stand alone scalar, that's an array.
+
+		System.out.println( "** before writing dimension " + name + " " + size );
+
 		dimension = writer.addDimension( name, size ); 
 		//return null;
 	} 
@@ -1723,6 +1726,9 @@ class NcfGenerator
 			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + dataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by \"" + dimensionVar + "\""  );
 
 			NetcdfFileWriteable writer = createWritable.create();
+
+
+				
 
 			for ( IDimension dimension: description.dimensions.values()) {
 				dimension.define(writer);

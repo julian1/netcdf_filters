@@ -88,7 +88,7 @@ public class MyIT {
 			"select * from indexed_file",
 		    "select trajectory_id as instance_id, * from measurements",
 			"TIME",
-			 " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "
+			 " (and (gt TIME 2013-6-27T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "
 			// " (lt TIME 2013-6-29T00:40:01Z ) "
 		);
 
