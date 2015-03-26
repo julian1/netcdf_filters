@@ -1,5 +1,5 @@
 
-
+Make the sort dimension explicit as var if not already.
 
 ----
 PRIORITY
