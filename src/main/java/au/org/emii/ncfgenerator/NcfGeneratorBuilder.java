@@ -1602,6 +1602,8 @@ class NcfGenerator
 		this.schema = schema;
 		this.instanceTable = instanceTable;
 		this.dataTable = dataTable;
+
+		// why are we passing this in?? 
 		this.dimensionVar = dimensionVar;
 		this.filterExpr = filterExpr;
 
@@ -1618,7 +1620,6 @@ class NcfGenerator
 			throw new RuntimeException( "failed to parse expression" );
 		}
 
-
 		System.out.println( "setting search_path to " + schema );
 
 		PreparedStatement s = conn.prepareStatement("set search_path='" + schema + "'");
@@ -1631,7 +1632,6 @@ class NcfGenerator
 
 		String query = "SELECT distinct data.instance_id  FROM (" + dataTable + ") as data where " + selection + ";" ; 
 		System.out.println( "first query " + query  );
-
 
 		PreparedStatement stmt = conn.prepareStatement( query );
 		stmt.setFetchSize(fetchSize);
@@ -1820,8 +1820,9 @@ class NcfGeneratorBuilder
 		) throws Exception
 	{
 
-	//	DecodeXmlConfiguration x = new DecodeXmlConfiguration(); 
+		System.out.println( "WHOOT here0 " );
 
+		//	DecodeXmlConfiguration x = new DecodeXmlConfiguration(); 
 	
 		// MUST CLOSE - and finally handling of resource...
 		InputStream stream = new FileInputStream( "input.xml" )	; 
@@ -1850,13 +1851,23 @@ class NcfGeneratorBuilder
 			except for the filter expression.
 			- need to set the schema independently....  for this...
 		*/
+
+		// we are specifying a particular dimension var here...
+		// but we need to suck it out of the jkljlkj;lkjklj
+
+
+		System.out.println( "WHOOT here " );
 	
+		return null;
+		
+/*	
 		NcfGenerator generator = new NcfGenerator( 
 			parser, translate, conn, createWritable, description, schema, instanceTable, dataTable, dimensionVar, filterExpr );
 
 		generator.init();	
 
 		return generator ; 	
+*/
 	}
 }
 

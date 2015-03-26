@@ -90,7 +90,7 @@ public class MyIT {
 
 		System.out.println( "stream is " + is );
 
-/*
+
 		NcfGenerator generator = new NcfGeneratorBuilder().create(	
 			"soop_sst", 
 			"select * from indexed_file",
@@ -99,7 +99,7 @@ public class MyIT {
 			 " (and (gt TIME 2013-6-27T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "
 			// " (lt TIME 2013-6-29T00:40:01Z ) "
 		);
-
+/*
 		NetcdfFileWriteable writer = null;
 		do {  
 			// should try and get lots...

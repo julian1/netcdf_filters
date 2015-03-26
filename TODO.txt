@@ -1,10 +1,13 @@
 
 SO MUST MAKE THE DIMS input configured. which means local file. for each one.
-	then combine.
+	then combine. 
+
+	1. use dimension to set the order clause
+	2. use config.
 
 Make the sort dimension explicit as var if not already.
 
-- check IT naming convention. change test names to ITtimeseries with IT first 
+- check integration test IT naming conventions. change test names to ITtimeseries with IT first 
 
 ----
 PRIORITY
