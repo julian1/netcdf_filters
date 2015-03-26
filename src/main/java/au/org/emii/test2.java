@@ -1761,6 +1761,10 @@ class Builder
 		// we're going to need to sanitize this 	
 		// note that we can wrap in double quotes 
 
+		/*
+			VERY IMPORTANT - all this stuff is going to be pushed into the xml config.
+			except for the filter expression.
+		*/
 		// get rid of the parenthesis in these expressions,
 		// change name virtualTable
 		String instanceTable = "(select * from anmn_nrs_ctd_profiles.indexed_file )";
@@ -1824,9 +1828,14 @@ public class test2 {
     public static void main(String[] args) throws Exception
 	{
 
-		new Builder().build(	getConn()  );
+		Timeseries1 timeseries = new Builder().build(	getConn()  );
 
-	
+		NetcdfFileWriteable writer = null;
+		do {  
+			writer = timeseries.get();	
+		}
+		while( writer != null );
+
 
 /*
 		// these really needs to be gg
