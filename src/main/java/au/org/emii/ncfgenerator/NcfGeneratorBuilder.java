@@ -1692,8 +1692,9 @@ class NcfGenerator
 	{
 		featureInstancesRS.next();
 
-		// we may have an Integer or Long or anything ? 
-		long instance_id = (long)(Integer) featureInstancesRS.getObject(1); 
+		// we ay have an Integer or Long or anything ? 
+		//long instance_id = (long)(Integer) featureInstancesRS.getObject(1); 
+		long instance_id = (long)(Long) featureInstancesRS.getObject(1); 
 
 		System.out.println( "whoot get(), instance_id is " + instance_id );
 

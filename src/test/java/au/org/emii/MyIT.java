@@ -46,6 +46,8 @@ public class MyIT {
 			writer = generator.get();	
 		}
 		while( writer != null );
+
+		System.out.println( "finished test" );
     }   
 
 	@Test
@@ -70,6 +72,8 @@ public class MyIT {
 			writer = generator.get();	
 		}
 		while( writer != null );
+
+		System.out.println( "finished test" );
     }   
 
 }
