@@ -1481,10 +1481,6 @@ class Description
 
 
 
-class DecodeXmlConfiguration
-{
-	public DecodeXmlConfiguration () { } 
-
 	// type of the attribute comes from the encoder type target type
 
 	// IMPORTANT - the way to handle this. is to take it as isSimpleNodeValue pair... 
@@ -1543,7 +1539,6 @@ class DecodeXmlConfiguration
 	}
 */
 
-}
 
 
 
@@ -1828,6 +1823,10 @@ public class test2 {
 
     public static void main(String[] args) throws Exception
 	{
+
+		new Builder().build(	getConn()  );
+
+	
 
 /*
 		// these really needs to be gg
