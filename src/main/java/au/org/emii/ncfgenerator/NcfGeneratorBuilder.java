@@ -1690,56 +1690,67 @@ class NcfGenerator
 
 	public NetcdfFileWriteable get() throws Exception
 	{
-		featureInstancesRS.next();
+		if( featureInstancesRS.next()) {
 
-		// we ay have an Integer or Long or anything ? 
-		//long instance_id = (long)(Integer) featureInstancesRS.getObject(1); 
+			// we ay have an Integer or Long or anything ? 
+			//long instance_id = (long)(Integer) featureInstancesRS.getObject(1); 
 
-		// munge 
-		long instance_id = -1234;
-		Object o = featureInstancesRS.getObject(1);
-		Class clazz = o.getClass(); 
-		if( clazz.equals( Integer.class )) {
-			instance_id = (long)(Integer)o;
+			// munge 
+			long instance_id = -1234;
+			Object o = featureInstancesRS.getObject(1);
+			Class clazz = o.getClass(); 
+			if( clazz.equals( Integer.class )) {
+				instance_id = (long)(Integer)o;
+			}
+			else if( clazz.equals( Long.class )) {
+				instance_id = (long)(Long)o;
+			} else { 
+				throw new RuntimeException( "Can't convert intance_id type to integer" );
+			}
+
+	//		long instance_id = (long)(Long) featureInstancesRS.getObject(1); 
+
+			System.out.println( "whoot get(), instance_id is " + instance_id );
+
+			String selection = translate.process( selection_expr); // we ought to be caching the specific query ??? 
+						
+			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + instanceTable + ") as instance where instance.id = " + Long.toString( instance_id) );
+			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + dataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by \"" + dimensionVar + "\""  );
+
+			NetcdfFileWriteable writer = createWritable.create();
+
+			for ( IDimension dimension: description.dimensions.values()) {
+				dimension.define(writer);
+			}
+
+			for ( IVariableEncoder encoder: description.encoders.values()) {
+				encoder.define( writer );
+			}
+			// finish netcdf definition
+			writer.create();
+
+			for ( IVariableEncoder encoder: description.encoders.values()) {
+				// change name writeValues
+				encoder.finish( writer );
+			}
+			// write the file 
+			writer.close();
+
+			// TODO must close other record sets.
+			// and if early termination.
+	//		return null;
+
+			// TODO we should be returning a filestream here...
+			// the caller doesn't care that it's a netcdf
+
+			return writer;
 		}
-		else if( clazz.equals( Long.class )) {
-			instance_id = (long)(Long)o;
-		} else { 
-			throw new RuntimeException( "Can't convert intance_id type to integer" );
+		else {
+
+			// close close close !!!@!
+
+			return null;
 		}
-
-//		long instance_id = (long)(Long) featureInstancesRS.getObject(1); 
-
-		System.out.println( "whoot get(), instance_id is " + instance_id );
-
-		String selection = translate.process( selection_expr); // we ought to be caching the specific query ??? 
-					
-		populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + instanceTable + ") as instance where instance.id = " + Long.toString( instance_id) );
-		populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + dataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by \"" + dimensionVar + "\""  );
-
-		NetcdfFileWriteable writer = createWritable.create();
-
-		for ( IDimension dimension: description.dimensions.values()) {
-			dimension.define(writer);
-		}
-
-		for ( IVariableEncoder encoder: description.encoders.values()) {
-			encoder.define( writer );
-		}
-		// finish netcdf definition
-		writer.create();
-
-		for ( IVariableEncoder encoder: description.encoders.values()) {
-			// change name writeValues
-			encoder.finish( writer );
-		}
-		// close
-		writer.close();
-
-		// TODO must close other record sets.
-		// and if early termination.
-//		return null;
-		return writer;
 	}
 }
 
