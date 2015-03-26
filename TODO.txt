@@ -4,6 +4,8 @@ SO MUST MAKE THE DIMS input configured. which means local file. for each one.
 
 Make the sort dimension explicit as var if not already.
 
+- check IT naming convention. change test names to ITtimeseries with IT first 
+
 ----
 PRIORITY
 - push the sql projections into the xml. 
