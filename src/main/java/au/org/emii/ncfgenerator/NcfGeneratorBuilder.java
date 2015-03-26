@@ -1204,7 +1204,7 @@ class NodeWrapper implements Iterable<Node> {
 }
 
 
-
+// Change name NcdfDescription
 class Description
 {
 	Description( 
@@ -1575,7 +1575,7 @@ class NcfGenerator
 	final String schema;
 	final String instanceTable;
 	final String dataTable;
-	final String dimensionVar; 
+//	final String dimensionVar; 
 	final String filterExpr; 
 
 	final int fetchSize;
@@ -1591,7 +1591,7 @@ class NcfGenerator
 		String schema,
 		String instanceTable,
 		String dataTable,
-		String dimensionVar,
+//		String dimensionVar,
 		String filterExpr
 	) {
 		this.exprParser = exprParser;
@@ -1604,7 +1604,7 @@ class NcfGenerator
 		this.dataTable = dataTable;
 
 		// why are we passing this in?? 
-		this.dimensionVar = dimensionVar;
+//		this.dimensionVar = dimensionVar;
 		this.filterExpr = filterExpr;
 
 		fetchSize = 1000;
@@ -1723,6 +1723,16 @@ class NcfGenerator
 			String selection = translate.process( selection_expr); // we ought to be caching the specific query ??? 
 						
 			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + instanceTable + ") as instance where instance.id = " + Long.toString( instance_id) );
+
+
+
+			for( IDimension dimension : description.dimensions.values() )
+			{
+
+			}
+
+			String dimensionVar  = "whoot" ; 
+
 			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + dataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by \"" + dimensionVar + "\""  );
 
 			NetcdfFileWriteable writer = createWritable.create();
@@ -1815,12 +1825,10 @@ class NcfGeneratorBuilder
 		String schema, 
 		String instanceTable, 
 		String dataTable, 
-		String dimensionVar, 
+//		String dimensionVar, 
 		String filterExpr 
 		) throws Exception
 	{
-
-		System.out.println( "WHOOT here0 " );
 
 		//	DecodeXmlConfiguration x = new DecodeXmlConfiguration(); 
 	
@@ -1855,19 +1863,21 @@ class NcfGeneratorBuilder
 		// we are specifying a particular dimension var here...
 		// but we need to suck it out of the jkljlkj;lkjklj
 
+		description.dimensions.size( ); 
 
-		System.out.println( "WHOOT here " );
+		System.out.println( "WHOOT here " + description.dimensions.size( ) );
 	
-		return null;
 		
-/*	
+	
 		NcfGenerator generator = new NcfGenerator( 
-			parser, translate, conn, createWritable, description, schema, instanceTable, dataTable, dimensionVar, filterExpr );
-
-		generator.init();	
+			parser, translate, conn, createWritable, description, schema, instanceTable, dataTable, /*, dimensionVar,*/ filterExpr );
+/*
+		generator.init();	 // change name initGenerator..., distinct action from assembling the dependencies of the class.
 
 		return generator ; 	
 */
+
+		return null;
 	}
 }
 

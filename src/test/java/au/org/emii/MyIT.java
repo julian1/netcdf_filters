@@ -39,7 +39,7 @@ public class MyIT {
 			"anmn_nrs_ctd_profiles", 
 			"select * from indexed_file",
 		    "select file_id as instance_id, * from measurements",
-			"DEPTH",
+//			"DEPTH",
 			" (lt TIME 2013-6-29T00:40:01Z ) " 
 		);
 
@@ -65,7 +65,7 @@ public class MyIT {
 			"anmn_ts", 
 			"select * from timeseries",
 		    "select ts_id as instance_id, * from measurement",
-			"TIME",
+//			"TIME",
 			 " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "
 			// " (lt TIME 2013-6-29T00:40:01Z ) "
 		);
@@ -95,7 +95,6 @@ public class MyIT {
 			"soop_sst", 
 			"select * from indexed_file",
 		    "select trajectory_id as instance_id, * from measurements",
-			"TIME",
 			 " (and (gt TIME 2013-6-27T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "
 			// " (lt TIME 2013-6-29T00:40:01Z ) "
 		);
