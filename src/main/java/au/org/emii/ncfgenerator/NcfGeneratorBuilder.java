@@ -1220,50 +1220,7 @@ class Description
 
 
 
-class DecodeXmlConfiguration
-{
-	public DecodeXmlConfiguration () { } 
 
-	// type of the attribute comes from the encoder type target type
-
-	// IMPORTANT - the way to handle this. is to take it as isSimpleNodeValue pair... 
-	// eg. <name>value<name>  
-	// more complicated stuff can be parsed explicitly.
-
-/*
-	private static String XML = "<?xml version=\"1.0\"?>\n" +
-		"<top>\n" +
-		"  <dimensions>\n" +
-		"    <dimension name=\"TIME\"/>\n" +
-		"  </dimensions>\n" +
-		"  <myencoder  >\n" +
-		"    <name>TEMP</name>\n" +
-		"    <encoder>floatEncoder</encoder>\n" +
-		"    <dimensions>\n" +
-		"      <dimension name=\"TIME\"/>\n" +
-		"    </dimensions>\n" +
-		"    <attributes>\n" +
-		"      <attribute name=\"_FillValue\" value=\"99999.\"/>\n" +
-		"    </attributes>\n" +
-		"  </myencoder>\n" +
-		"</top>\n"
-	;
-*/
-
-	// it actually has to be a bottom out node...
-	// ahh no, we can probably....
-	// select the child node by name ... explicitly...
-	// unless we want to simply be able to return the 
-
-	// we may need property setters - to completely integrate into geoserver 
-	// but we'll try to do this with constructor 
-
-
-	// TJ's stuff is built on the assumption that everything is a simple object 
-
-	// why don't we build a setter  object  that's what the key pair is
-
-	// so we should pass the map in...
 
 	class ConfigParser
 	{
@@ -1522,6 +1479,50 @@ class DecodeXmlConfiguration
 	}
 
 
+
+
+	// type of the attribute comes from the encoder type target type
+
+	// IMPORTANT - the way to handle this. is to take it as isSimpleNodeValue pair... 
+	// eg. <name>value<name>  
+	// more complicated stuff can be parsed explicitly.
+
+/*
+	private static String XML = "<?xml version=\"1.0\"?>\n" +
+		"<top>\n" +
+		"  <dimensions>\n" +
+		"    <dimension name=\"TIME\"/>\n" +
+		"  </dimensions>\n" +
+		"  <myencoder  >\n" +
+		"    <name>TEMP</name>\n" +
+		"    <encoder>floatEncoder</encoder>\n" +
+		"    <dimensions>\n" +
+		"      <dimension name=\"TIME\"/>\n" +
+		"    </dimensions>\n" +
+		"    <attributes>\n" +
+		"      <attribute name=\"_FillValue\" value=\"99999.\"/>\n" +
+		"    </attributes>\n" +
+		"  </myencoder>\n" +
+		"</top>\n"
+	;
+*/
+
+	// it actually has to be a bottom out node...
+	// ahh no, we can probably....
+	// select the child node by name ... explicitly...
+	// unless we want to simply be able to return the 
+
+	// we may need property setters - to completely integrate into geoserver 
+	// but we'll try to do this with constructor 
+
+
+	// TJ's stuff is built on the assumption that everything is a simple object 
+
+	// why don't we build a setter  object  that's what the key pair is
+
+	// so we should pass the map in...
+
+
 	/*
 		- things like table name are also going to be in here.		
 		So i think that we need a context.  
@@ -1538,24 +1539,6 @@ class DecodeXmlConfiguration
 	}
 */
 
-	public Description  test() throws Exception 
-	{
-		// MUST CLOSE - and finally handling of resource...
-		InputStream stream = new FileInputStream( "input.xml" )	; 
-		Description description = null;
-		try { 
-			// new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
-			Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream);
-			Node node =	document.getFirstChild(); 
-			description = new ConfigParser().parseDefinition( node ); 
-
-		} finally {
-			stream.close();
-		}
-
-			return description;
-	} 
-}
 
 
 
@@ -1579,13 +1562,14 @@ class DecodeXmlConfiguration
 	ok, lets try profile.
 */
 
-class Timeseries1
+class NcfGenerator
 {
 	final Parser exprParser;				// change name to expressionParser or SelectionParser
 	final IDialectTranslate translate ;		// will also load up the parameters?
 	final Connection conn;
 	final ICreateWritable createWritable; // generate a writiable 
 	final Description description ;
+	final String schema;
 	final String instanceTable;
 	final String dataTable;
 	final String dimensionVar; 
@@ -1595,12 +1579,13 @@ class Timeseries1
 	IExpression selection_expr;
 	ResultSet featureInstancesRS;
 
-	public Timeseries1( 
+	public NcfGenerator( 
 		Parser exprParser, 
 		IDialectTranslate translate, 
 		Connection conn, 
 		ICreateWritable createWritable, 
 		Description description, 
+		String schema,
 		String instanceTable,
 		String dataTable,
 		String dimensionVar,
@@ -1611,6 +1596,7 @@ class Timeseries1
 		this.conn = conn;
 		this.createWritable = createWritable;
 		this.description = description;
+		this.schema = schema;
 		this.instanceTable = instanceTable;
 		this.dataTable = dataTable;
 		this.dimensionVar = dimensionVar;
@@ -1628,9 +1614,16 @@ class Timeseries1
 		if(selection_expr == null) {
 			throw new RuntimeException( "failed to parse expression" );
 		}
+
+		PreparedStatement s = conn.prepareStatement("set search_path='" + schema + "'");
+		s.execute(); 
+		s.close();
+
 		String selection = translate.process( selection_expr);
-		String query = "SELECT distinct data.instance_id  FROM " + dataTable + " as data where " + selection ; 
+
+		String query = "SELECT distinct data.instance_id  FROM (" + dataTable + ") as data where " + selection + ";" ; 
 		System.out.println( "first query " + query  );
+
 
 		PreparedStatement stmt = conn.prepareStatement( query );
 		stmt.setFetchSize(fetchSize);
@@ -1705,8 +1698,8 @@ class Timeseries1
 
 		String selection = translate.process( selection_expr); // we ought to be caching the specific query ??? 
 					
-		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + instanceTable + "as instance where instance.id = " + Long.toString( instance_id) );
-		populateValues( description.dimensions, description.encoders, "SELECT * FROM " + dataTable + " as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by \"" + dimensionVar + "\""  );
+		populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + instanceTable + ") as instance where instance.id = " + Long.toString( instance_id) );
+		populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + dataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by \"" + dimensionVar + "\""  );
 
 		NetcdfFileWriteable writer = createWritable.create();
 
@@ -1726,24 +1719,31 @@ class Timeseries1
 		}
 		// close
 		writer.close();
+
+
+		// TODO must close other record sets.
+		// and if early termination.
+
 		return null;
 	}
 }
 
 
+// two interfaces a builder to generate, and then a class to use.
 
+class NcfGeneratorBuilder
+{
+	// default instance creation
 
+	// the assembly of all this, 
+	// need to distinguish the user data from inbuild data.
 
+	public NcfGeneratorBuilder() 
+	{
 
+	}
 
-
-
-public class test2 {
-
-	// if we're going to need more than one connection. No it's actually not clear that this is the case. 
-	// we can handle multiple record sets on the same connection.
-	// we need to expose the actual Driver manager.
-
+	// not sure if we should do this here...
     public static Connection getConn() throws Exception
 	{
 		//String url = "jdbc:postgresql://127.0.0.1/postgres";
@@ -1772,14 +1772,32 @@ public class test2 {
 		return conn;
 	}
 
-
-    public static void main(String[] args) throws Exception
+	public NcfGenerator create (
+		String schema, 
+		String instanceTable, 
+		String dataTable, 
+		String dimensionVar, 
+		String filterExpr 
+		) throws Exception
 	{
 
-		DecodeXmlConfiguration x = new DecodeXmlConfiguration(); 
+	//	DecodeXmlConfiguration x = new DecodeXmlConfiguration(); 
 
+	
+		// MUST CLOSE - and finally handling of resource...
+		InputStream stream = new FileInputStream( "input.xml" )	; 
+		Description description = null;
+		try { 
+			// new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
+			Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream);
+			Node node =	document.getFirstChild(); 
+			description = new ConfigParser().parseDefinition( node ); 
+
+		} finally {
+			stream.close();
+		}
 		// ok, think we want a pair for encoders and dimensions pair. 
-		Description description = x.test();
+		// Description description = x.test();
 
 		// change name exprParser
 		Parser parser = new Parser();
@@ -1794,43 +1812,24 @@ public class test2 {
 		// we're going to need to sanitize this 	
 		// note that we can wrap in double quotes 
 
-		// change name virtualTable
-		String instanceTable = "(select * from anmn_nrs_ctd_profiles.indexed_file )";
-		String dataTable = "(select file_id as instance_id, * from anmn_nrs_ctd_profiles.measurements)";
+		/*
+			VERY IMPORTANT - all this stuff is going to be pushed into the xml config.
+			except for the filter expression.
 
-		// Get rid of this and look it up as the dimension, 
-		String dimensionVar = "DEPTH";
 
-//		String filterExpr = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
-		String filterExpr = " (lt TIME 2013-6-29T00:40:01Z ) "; 
+			- need to set the schema independently....  for this...
+		*/
 
+		// ok, hang on we're missing the main xml configuration.
 	
-		Timeseries1 timeseries = new Timeseries1( 
-			parser, translate, conn, createWritable, description, instanceTable, dataTable, dimensionVar, filterExpr );
+		NcfGenerator generator = new NcfGenerator( 
+			parser, translate, conn, createWritable, description, schema, instanceTable, dataTable, dimensionVar, filterExpr );
 
-		timeseries.init();	
+		generator.init();	
 
-		NetcdfFileWriteable writer = null;
-		do {  
-			writer = timeseries.get();	
-		}
-		while( writer != null );
-
+		return generator ; 	
 	}
 
-		//String s = "777 and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
-		//String s = "(contains 123 (geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
-		//String s = "(contains  (uuu 123 789) 456) ";
-		//String s = "(contains (f 456) 789 888) ";
-		//String s = "(contains 123 (f 456 789) (f2 999) 1000 1001)";
-		// String s = "(and (equals instrument 'SEABIRD SBE37SM + P') (equals instrument 'SEABIRD SBE37SM + P'))";
-		// String s = "(equals instrument 2012-01-01T00:00:00Z)";
-		//	select *  from anmn_ts.measurement where "TIME" = 2013-03-24T21:35:01Z limit 2; 
-//		String s = "(and (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-28T01:35:01Z )) (equals ts_id 6341))"; 
-//		String s = "(equals ts_id 6341)"; 
-		// select *  from anmn_ts.measurement where "TIME" > '2013-6-28T21:35:01Z' and ts_id = 6341 ;
-
 }
-
 
 
