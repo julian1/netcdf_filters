@@ -62,6 +62,9 @@ public class MyIT {
 		assertTrue(456 == 456 );
 
 /*
+		// all of this stuff is just configuration, of the class we'll use.
+		// it should be being created with a builder. 
+
 		DecodeXmlConfiguration x = new DecodeXmlConfiguration(); 
 
 		// ok, think we want a pair for encoders and dimensions pair. 

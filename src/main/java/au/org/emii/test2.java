@@ -1220,50 +1220,7 @@ class Description
 
 
 
-class DecodeXmlConfiguration
-{
-	public DecodeXmlConfiguration () { } 
 
-	// type of the attribute comes from the encoder type target type
-
-	// IMPORTANT - the way to handle this. is to take it as isSimpleNodeValue pair... 
-	// eg. <name>value<name>  
-	// more complicated stuff can be parsed explicitly.
-
-/*
-	private static String XML = "<?xml version=\"1.0\"?>\n" +
-		"<top>\n" +
-		"  <dimensions>\n" +
-		"    <dimension name=\"TIME\"/>\n" +
-		"  </dimensions>\n" +
-		"  <myencoder  >\n" +
-		"    <name>TEMP</name>\n" +
-		"    <encoder>floatEncoder</encoder>\n" +
-		"    <dimensions>\n" +
-		"      <dimension name=\"TIME\"/>\n" +
-		"    </dimensions>\n" +
-		"    <attributes>\n" +
-		"      <attribute name=\"_FillValue\" value=\"99999.\"/>\n" +
-		"    </attributes>\n" +
-		"  </myencoder>\n" +
-		"</top>\n"
-	;
-*/
-
-	// it actually has to be a bottom out node...
-	// ahh no, we can probably....
-	// select the child node by name ... explicitly...
-	// unless we want to simply be able to return the 
-
-	// we may need property setters - to completely integrate into geoserver 
-	// but we'll try to do this with constructor 
-
-
-	// TJ's stuff is built on the assumption that everything is a simple object 
-
-	// why don't we build a setter  object  that's what the key pair is
-
-	// so we should pass the map in...
 
 	class ConfigParser
 	{
@@ -1522,6 +1479,54 @@ class DecodeXmlConfiguration
 	}
 
 
+
+
+class DecodeXmlConfiguration
+{
+	public DecodeXmlConfiguration () { } 
+
+	// type of the attribute comes from the encoder type target type
+
+	// IMPORTANT - the way to handle this. is to take it as isSimpleNodeValue pair... 
+	// eg. <name>value<name>  
+	// more complicated stuff can be parsed explicitly.
+
+/*
+	private static String XML = "<?xml version=\"1.0\"?>\n" +
+		"<top>\n" +
+		"  <dimensions>\n" +
+		"    <dimension name=\"TIME\"/>\n" +
+		"  </dimensions>\n" +
+		"  <myencoder  >\n" +
+		"    <name>TEMP</name>\n" +
+		"    <encoder>floatEncoder</encoder>\n" +
+		"    <dimensions>\n" +
+		"      <dimension name=\"TIME\"/>\n" +
+		"    </dimensions>\n" +
+		"    <attributes>\n" +
+		"      <attribute name=\"_FillValue\" value=\"99999.\"/>\n" +
+		"    </attributes>\n" +
+		"  </myencoder>\n" +
+		"</top>\n"
+	;
+*/
+
+	// it actually has to be a bottom out node...
+	// ahh no, we can probably....
+	// select the child node by name ... explicitly...
+	// unless we want to simply be able to return the 
+
+	// we may need property setters - to completely integrate into geoserver 
+	// but we'll try to do this with constructor 
+
+
+	// TJ's stuff is built on the assumption that everything is a simple object 
+
+	// why don't we build a setter  object  that's what the key pair is
+
+	// so we should pass the map in...
+
+
 	/*
 		- things like table name are also going to be in here.		
 		So i think that we need a context.  
@@ -1538,23 +1543,6 @@ class DecodeXmlConfiguration
 	}
 */
 
-	public Description  test() throws Exception 
-	{
-		// MUST CLOSE - and finally handling of resource...
-		InputStream stream = new FileInputStream( "input.xml" )	; 
-		Description description = null;
-		try { 
-			// new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
-			Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream);
-			Node node =	document.getFirstChild(); 
-			description = new ConfigParser().parseDefinition( node ); 
-
-		} finally {
-			stream.close();
-		}
-
-			return description;
-	} 
 }
 
 
@@ -1731,10 +1719,75 @@ class Timeseries1
 }
 
 
+// two interfaces a builder to generate, and then a class to use.
+
+class Builder
+{
+	// default instance creation
+
+	// the assembly of all this, 
+	// need to distinguish the user data from inbuild data.
+
+	Timeseries1 build(
+		Connection conn
 
 
+		) throws Exception
+	{	
+	//	DecodeXmlConfiguration x = new DecodeXmlConfiguration(); 
 
+	
+		// MUST CLOSE - and finally handling of resource...
+		InputStream stream = new FileInputStream( "input.xml" )	; 
+		Description description = null;
+		try { 
+			// new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
+			Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream);
+			Node node =	document.getFirstChild(); 
+			description = new ConfigParser().parseDefinition( node ); 
 
+		} finally {
+			stream.close();
+		}
+
+		// ok, think we want a pair for encoders and dimensions pair. 
+		// Description description = x.test();
+
+		// change name exprParser
+		Parser parser = new Parser();
+
+		IDialectTranslate translate = new  PostgresDialectTranslate();
+
+		// Connection conn = getConn();
+
+		ICreateWritable createWritable = new CreateWritable();  
+
+		// avoiding ordering clauses that will prevent immediate stream response
+		// we're going to need to sanitize this 	
+		// note that we can wrap in double quotes 
+
+		// get rid of the parenthesis in these expressions,
+		// change name virtualTable
+		String instanceTable = "(select * from anmn_nrs_ctd_profiles.indexed_file )";
+		String dataTable = "(select file_id as instance_id, * from anmn_nrs_ctd_profiles.measurements)";
+
+		// Get rid of this and look it up as the dimension, 
+		String dimensionVar = "DEPTH";
+
+		// String filterExpr = " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "; 
+		String filterExpr = " (lt TIME 2013-6-29T00:40:01Z ) "; 
+
+		// ok, hang on we're missing the main xml configuration.
+	
+		Timeseries1 timeseries = new Timeseries1( 
+			parser, translate, conn, createWritable, description, instanceTable, dataTable, dimensionVar, filterExpr );
+
+		timeseries.init();	
+
+		return timeseries ; 	
+	}
+
+}
 
 
 
@@ -1776,10 +1829,13 @@ public class test2 {
     public static void main(String[] args) throws Exception
 	{
 
-		DecodeXmlConfiguration x = new DecodeXmlConfiguration(); 
+/*
+		// these really needs to be gg
+
+		// DecodeXmlConfiguration x = new DecodeXmlConfiguration(); 
 
 		// ok, think we want a pair for encoders and dimensions pair. 
-		Description description = x.test();
+		// Description description = x.test();
 
 		// change name exprParser
 		Parser parser = new Parser();
@@ -1815,7 +1871,7 @@ public class test2 {
 			writer = timeseries.get();	
 		}
 		while( writer != null );
-
+*/
 	}
 
 		//String s = "777 and ( contains(geom, box( (0,0), ... ), less ( time , 1.1.2015 )";
