@@ -98,7 +98,7 @@ public class MyIT {
 			 " (and (gt TIME 2013-6-27T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "
 			// " (lt TIME 2013-6-29T00:40:01Z ) "
 		);
-/*
+
 		NetcdfFileWriteable writer = null;
 		do {  
 			// should try and get lots...
@@ -106,7 +106,7 @@ public class MyIT {
 		}
 		while( writer != null );
 		System.out.println( "finished test" );
-*/
+
     }   
 
 

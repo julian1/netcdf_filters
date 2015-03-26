@@ -1725,19 +1725,19 @@ class NcfGenerator
 			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + instanceTable + ") as instance where instance.id = " + Long.toString( instance_id) );
 
 
+			// is the order clause in sql part of projection or selection ? 
+
 			// eg. concat "," $ map (\x -> x.getName) dimensions.values ...
 			String dimensionVar = "";
 			for( IDimension dimension : description.dimensions.values() )
 			{
-				if( dimensionVar.equals("")){
-					dimensionVar += "\"" + dimension.getName() + "\"" ;
-				} else {
-					dimensionVar += "," + dimension.getName();
-				}
+				if( ! dimensionVar.equals("")){
+					dimensionVar += ",";
+				} 
+				dimensionVar += "\"" + dimension.getName() + "\"" ;
 			}
 
-
-			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + dataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by \"" + dimensionVar + "\""  );
+			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + dataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by " + dimensionVar  );
 
 			NetcdfFileWriteable writer = createWritable.create();
 
@@ -1875,13 +1875,13 @@ class NcfGeneratorBuilder
 	
 		NcfGenerator generator = new NcfGenerator( 
 			parser, translate, conn, createWritable, description, schema, instanceTable, dataTable, /*, dimensionVar,*/ filterExpr );
-/*
+
 		generator.init();	 // change name initGenerator..., distinct action from assembling the dependencies of the class.
 
 		return generator ; 	
-*/
 
-		return null;
+
+//		return null;
 	}
 }
 
