@@ -1,4 +1,7 @@
 
+SO MUST MAKE THE DIMS input configured. which means local file. for each one.
+	then combine.
+
 Make the sort dimension explicit as var if not already.
 
 ----

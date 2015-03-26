@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<definition>
+
+  <dimensions>
+    <dimension name="TIME"/>
+  </dimensions>
+
+  <variables>
+
+	  <variable>
+      <name>LATITUDE</name>
+      <encoder>float</encoder>
+      <attributes>
+        <attribute name="_FillValue" value="99999."/>
+      </attributes>
+	  </variable>
+
+	  <variable>
+      <name>TEMP</name>
+      <encoder>float</encoder>
+      <dimensions>
+        <dimension name="TIME"/>
+      </dimensions>
+      <attributes>
+        <attribute name="_FillValue" value="99999."/>
+        <attribute name="whoot" value="whootvalue"/>
+      </attributes>
+	  </variable>
+
+
+  </variables>
+
+</definition>
+

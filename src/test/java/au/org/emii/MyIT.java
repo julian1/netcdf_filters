@@ -9,6 +9,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 
+import java.io.InputStream ;
+
+// use a stream here. 
 import ucar.nc2.NetcdfFileWriteable; 
 
 //import java.sql.*;
@@ -83,6 +86,11 @@ public class MyIT {
 
 		System.out.println( "**** whoot INTEGRATION 3 ****" );
 
+		InputStream is = getClass().getResourceAsStream("/input.xml");
+
+		System.out.println( "stream is " + is );
+
+/*
 		NcfGenerator generator = new NcfGeneratorBuilder().create(	
 			"soop_sst", 
 			"select * from indexed_file",
@@ -98,8 +106,8 @@ public class MyIT {
 			writer = generator.get();	
 		}
 		while( writer != null );
-
 		System.out.println( "finished test" );
+*/
     }   
 
 
