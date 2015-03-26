@@ -1,4 +1,10 @@
 
+Run an individual test,
+
+mvn -Dtest=MyIT#test1_IT test
+
+------
+
 mvn verify will run both unit and integration tests
 
 mvn test			   - run just surefire tests
