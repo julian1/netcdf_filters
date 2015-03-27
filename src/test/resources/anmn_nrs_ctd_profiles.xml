@@ -12,13 +12,44 @@
     <dimension name="DEPTH"/>
   </dimensions>
   <variables>
+	<!-- LAT and LON vary with depth for profile -->
     <variable>
       <name>LATITUDE</name>
+      <dimensions>
+        <dimension name="DEPTH"/>
+      </dimensions>
+
+
       <encoder>float</encoder>
       <attributes>
         <attribute name="_FillValue" value="99999."/>
       </attributes>
     </variable>
+    <variable>
+      <name>LONGITUDE</name>
+      <dimensions>
+        <dimension name="DEPTH"/>
+      </dimensions>
+
+      <encoder>float</encoder>
+      <attributes>
+        <attribute name="_FillValue" value="99999."/>
+      </attributes>
+    </variable>
+
+	  <variable>
+		  <name>TIME</name>
+		  <encoder>time</encoder>
+		  <dimensions>
+			<dimension name="DEPTH"/>
+		  </dimensions>
+		  <attributes>
+			<attribute name="_FillValue" value="99999."/>
+			<attribute name="units" value="days since 1950-01-01 00:00:00 UTC"/>
+		  </attributes>
+	  </variable>
+
+
     <variable>
       <name>TEMP</name>
       <encoder>float</encoder>
