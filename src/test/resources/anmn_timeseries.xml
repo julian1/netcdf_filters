@@ -1,14 +1,11 @@
 <?xml version="1.0"?>
 <definition>
-	<!-- anmn_timeseries --> 
+  <!-- anmn_timeseries -->
   <source>
-
-	<schema>anmn_ts</schema>
-	<dataTable>select ts_id as instance_id, * from measurement</dataTable>
-	<instanceTable>select * from timeseries</instanceTable>
+    <schema>anmn_ts</schema>
+    <dataTable>select ts_id as instance_id, * from measurement</dataTable>
+    <instanceTable>select * from timeseries</instanceTable>
   </source>
-
-
   <dimensions>
     <dimension name="TIME"/>
   </dimensions>
@@ -27,7 +24,6 @@
         <attribute name="_FillValue" value="99999."/>
       </attributes>
     </variable>
-
     <variable>
       <name>TEMP</name>
       <encoder>float</encoder>
@@ -39,7 +35,6 @@
         <attribute name="whoot" value="whootvalue"/>
       </attributes>
     </variable>
-
     <variable>
       <name>DEPTH</name>
       <encoder>float</encoder>
@@ -60,6 +55,5 @@
         <attribute name="_FillValue" value="0xffb"/>
       </attributes>
     </variable>
-
   </variables>
 </definition>

@@ -1,67 +1,54 @@
 <?xml version="1.0"?>
 <definition>
-
-	<!-- soop_sst_trajectory --> 
-
+  <!-- soop_sst_trajectory -->
   <source>
-	<schema>soop_sst</schema>
-	<dataTable>select trajectory_id as instance_id, * from measurements</dataTable>
-	<instanceTable>select * from indexed_file</instanceTable>
+    <schema>soop_sst</schema>
+    <dataTable>select trajectory_id as instance_id, * from measurements</dataTable>
+    <instanceTable>select * from indexed_file</instanceTable>
   </source>
-
   <dimensions>
     <dimension name="TIME"/>
   </dimensions>
-
   <variables>
-
-	  <variable>
-		  <name>job_id</name>
-		  <encoder>float</encoder>
-		  <attributes>
-			<attribute name="_FillValue" value="99999."/>
-		  </attributes>
-	  </variable>
-
-	  <variable>
-		  <name>TIME</name>
-		  <encoder>time</encoder>
-		  <dimensions>
-			<dimension name="TIME"/>
-		  </dimensions>
-		  <attributes>
-			<attribute name="_FillValue" value="99999."/>
-			<attribute name="units" value="days since 1950-01-01 00:00:00 UTC"/>
-		  </attributes>
-	  </variable>
-
-	  <variable>
-		  <name>LATITUDE</name>
-		  <encoder>float</encoder>
-
-		  <dimensions>
-			<dimension name="TIME"/>
-		  </dimensions>
-
-		  <attributes>
-			<attribute name="_FillValue" value="99999."/>
-		  </attributes>
-	  </variable>
-
-	  <variable>
-		  <name>LONGITUDE</name>
-		  <encoder>float</encoder>
-
-		  <dimensions>
-			<dimension name="TIME"/>
-		  </dimensions>
-
-		  <attributes>
-			<attribute name="_FillValue" value="99999."/>
-		  </attributes>
-	  </variable>
-
-	  <variable>
+    <variable>
+      <name>job_id</name>
+      <encoder>float</encoder>
+      <attributes>
+        <attribute name="_FillValue" value="99999."/>
+      </attributes>
+    </variable>
+    <variable>
+      <name>TIME</name>
+      <encoder>time</encoder>
+      <dimensions>
+        <dimension name="TIME"/>
+      </dimensions>
+      <attributes>
+        <attribute name="_FillValue" value="99999."/>
+        <attribute name="units" value="days since 1950-01-01 00:00:00 UTC"/>
+      </attributes>
+    </variable>
+    <variable>
+      <name>LATITUDE</name>
+      <encoder>float</encoder>
+      <dimensions>
+        <dimension name="TIME"/>
+      </dimensions>
+      <attributes>
+        <attribute name="_FillValue" value="99999."/>
+      </attributes>
+    </variable>
+    <variable>
+      <name>LONGITUDE</name>
+      <encoder>float</encoder>
+      <dimensions>
+        <dimension name="TIME"/>
+      </dimensions>
+      <attributes>
+        <attribute name="_FillValue" value="99999."/>
+      </attributes>
+    </variable>
+    <variable>
       <name>TEMP</name>
       <encoder>float</encoder>
       <dimensions>
@@ -71,9 +58,6 @@
         <attribute name="_FillValue" value="99999."/>
         <attribute name="whoot" value="whootvalue"/>
       </attributes>
-	  </variable>
-
+    </variable>
   </variables>
-
 </definition>
-
