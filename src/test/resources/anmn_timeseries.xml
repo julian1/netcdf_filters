@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <definition>
+	<!-- anmn_timeseries --> 
   <source>
 
 	<schema>anmn_ts</schema>
@@ -27,7 +28,7 @@
       </attributes>
     </variable>
 
-    <variable>
+    <VARIable>
       <name>TEMP</name>
       <encoder>float</encoder>
       <dimensions>

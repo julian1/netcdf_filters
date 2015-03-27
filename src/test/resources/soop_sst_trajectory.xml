@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <definition>
 
+	<!-- soop_sst_trajectory --> 
+
   <source>
 	<schema>soop_sst</schema>
 	<dataTable>select trajectory_id as instance_id, * from measurements</dataTable>
