@@ -28,7 +28,7 @@
       </attributes>
     </variable>
 
-    <VARIable>
+    <variable>
       <name>TEMP</name>
       <encoder>float</encoder>
       <dimensions>
@@ -39,6 +39,7 @@
         <attribute name="whoot" value="whootvalue"/>
       </attributes>
     </variable>
+
     <variable>
       <name>DEPTH</name>
       <encoder>float</encoder>
