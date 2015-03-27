@@ -1232,7 +1232,7 @@ class Description
 
 
 
-class ConfigParser
+class NcfDescriptionParser
 {
 	private boolean isNodeName( Node node, String name )
 	{
@@ -1553,7 +1553,7 @@ class ConfigParser
 		Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream);
 		Node node =	document.getFirstChild();
 
-		return new ConfigParser().parseDefinition( node );
+		return new NcfDescriptionParser().parseDefinition( node );
 	}
 */
 
@@ -1843,23 +1843,15 @@ class NcfGeneratorBuilder
 		return conn;
 	}
 
-	public NcfGenerator create (
-		InputStream config,
-/*		String schema,
-		String instanceTable,
-		String dataTable, */
-
-//		String dimensionVar,
-		String filterExpr
-		) throws Exception
+	public NcfGenerator create ( InputStream config, String filterExpr) throws Exception
 	{
-
+		// not sure if description decoding should be done here...
 		Description description = null;
 		try {
 			// new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
 			Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(config);
 			Node node =	document.getFirstChild();
-			description = new ConfigParser().parseDefinition( node );
+			description = new NcfDescriptionParser().parseDefinition( node );
 
 		} finally {
 			config.close();
