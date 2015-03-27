@@ -20,10 +20,18 @@
       </attributes>
     </variable>
     <variable>
+      <name>LONGITUDE</name>
+      <encoder>float</encoder>
+      <attributes>
+        <attribute name="_FillValue" value="99999."/>
+      </attributes>
+    </variable>
+
+    <variable>
       <name>TEMP</name>
       <encoder>float</encoder>
       <dimensions>
-        <dimension name="DEPTH"/>
+        <dimension name="TIME"/>
       </dimensions>
       <attributes>
         <attribute name="_FillValue" value="99999."/>
@@ -34,7 +42,7 @@
       <name>DEPTH_quality_control</name>
       <encoder>byte</encoder>
       <dimensions>
-        <dimension name="DEPTH"/>
+        <dimension name="TIME"/>
       </dimensions>
       <attributes>
         <attribute name="_FillValue" value="0xffb"/>
@@ -44,11 +52,10 @@
       <name>DEPTH</name>
       <encoder>float</encoder>
       <dimensions>
-        <dimension name="DEPTH"/>
+        <dimension name="TIME"/>
       </dimensions>
       <attributes>
         <attribute name="_FillValue" value="99999."/>
-        <attribute name="units" value="days since 1950-01-01 00:00:00 UTC"/>
       </attributes>
     </variable>
   </variables>

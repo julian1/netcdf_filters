@@ -21,8 +21,6 @@
 		  </attributes>
 	  </variable>
 
-
-
 	  <variable>
 		  <name>TIME</name>
 		  <encoder>time</encoder>
