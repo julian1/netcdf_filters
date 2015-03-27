@@ -1,5 +1,11 @@
 <?xml version="1.0"?>
 <definition>
+  <!-- anmn_timeseries -->
+  <source>
+    <schema>anmn_ts</schema>
+    <dataTable>select ts_id as instance_id, * from measurement</dataTable>
+    <instanceTable>select * from timeseries</instanceTable>
+  </source>
   <dimensions>
     <dimension name="TIME"/>
   </dimensions>
@@ -12,10 +18,17 @@
       </attributes>
     </variable>
     <variable>
+      <name>LONGITUDE</name>
+      <encoder>float</encoder>
+      <attributes>
+        <attribute name="_FillValue" value="99999."/>
+      </attributes>
+    </variable>
+    <variable>
       <name>TEMP</name>
       <encoder>float</encoder>
       <dimensions>
-        <dimension name="DEPTH"/>
+        <dimension name="TIME"/>
       </dimensions>
       <attributes>
         <attribute name="_FillValue" value="99999."/>
@@ -23,24 +36,23 @@
       </attributes>
     </variable>
     <variable>
-      <name>DEPTH_quality_control</name>
-      <encoder>byte</encoder>
-      <dimensions>
-        <dimension name="DEPTH"/>
-      </dimensions>
-      <attributes>
-        <attribute name="_FillValue" value="0xffb"/>
-      </attributes>
-    </variable>
-    <variable>
       <name>DEPTH</name>
       <encoder>float</encoder>
       <dimensions>
-        <dimension name="DEPTH"/>
+        <dimension name="TIME"/>
       </dimensions>
       <attributes>
         <attribute name="_FillValue" value="99999."/>
-        <attribute name="units" value="days since 1950-01-01 00:00:00 UTC"/>
+      </attributes>
+    </variable>
+    <variable>
+      <name>DEPTH_quality_control</name>
+      <encoder>byte</encoder>
+      <dimensions>
+        <dimension name="TIME"/>
+      </dimensions>
+      <attributes>
+        <attribute name="_FillValue" value="0xffb"/>
       </attributes>
     </variable>
   </variables>

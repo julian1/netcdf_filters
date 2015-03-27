@@ -1,14 +1,45 @@
 <?xml version="1.0"?>
 <definition>
+  <!-- anmn_nrs_ctd_profiles -->
+  <source>
+    <schema>anmn_nrs_ctd_profiles</schema>
+    <dataTable>select file_id as instance_id, * from measurements</dataTable>
+    <instanceTable>select * from indexed_file</instanceTable>
+  </source>
   <dimensions>
     <dimension name="DEPTH"/>
   </dimensions>
   <variables>
+    <!-- LAT and LON vary with depth for profile -->
     <variable>
       <name>LATITUDE</name>
+      <dimensions>
+        <dimension name="DEPTH"/>
+      </dimensions>
       <encoder>float</encoder>
       <attributes>
         <attribute name="_FillValue" value="99999."/>
+      </attributes>
+    </variable>
+    <variable>
+      <name>LONGITUDE</name>
+      <dimensions>
+        <dimension name="DEPTH"/>
+      </dimensions>
+      <encoder>float</encoder>
+      <attributes>
+        <attribute name="_FillValue" value="99999."/>
+      </attributes>
+    </variable>
+    <variable>
+      <name>TIME</name>
+      <encoder>time</encoder>
+      <dimensions>
+        <dimension name="DEPTH"/>
+      </dimensions>
+      <attributes>
+        <attribute name="_FillValue" value="99999."/>
+        <attribute name="units" value="days since 1950-01-01 00:00:00 UTC"/>
       </attributes>
     </variable>
     <variable>
@@ -36,7 +67,7 @@
       <name>DEPTH</name>
       <encoder>float</encoder>
       <dimensions>
-        <dimension name="DEPTH"/>
+        <dimension NAME="DEPTH"/>
       </dimensions>
       <attributes>
         <attribute name="_FillValue" value="99999."/>
