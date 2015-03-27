@@ -1,5 +1,13 @@
 <?xml version="1.0"?>
 <definition>
+  <source>
+
+	<schema>anmn_ts</schema>
+	<dataTable>select ts_id as instance_id, * from measurement</dataTable>
+	<instanceTable>select * from timeseries</instanceTable>
+  </source>
+
+
   <dimensions>
     <dimension name="TIME"/>
   </dimensions>

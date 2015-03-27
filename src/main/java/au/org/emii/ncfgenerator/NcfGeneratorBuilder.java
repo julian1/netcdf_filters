@@ -1587,10 +1587,6 @@ class NcfGenerator
 	final Connection conn;
 	final ICreateWritable createWritable; // generate a writiable
 	final Description description ;
-//	final String schema;
-//	final String instanceTable;
-//	final String dataTable;
-//	final String dimensionVar;
 	final String filterExpr;
 
 	final int fetchSize;
@@ -1603,10 +1599,6 @@ class NcfGenerator
 		Connection conn,
 		ICreateWritable createWritable,
 		Description description,
-//		String schema,
-//		String instanceTable,
-//		String dataTable,
-//		String dimensionVar,
 		String filterExpr
 	) {
 		this.exprParser = exprParser;
@@ -1614,12 +1606,6 @@ class NcfGenerator
 		this.conn = conn;
 		this.createWritable = createWritable;
 		this.description = description;
-//		this.schema = schema;
-//		this.instanceTable = instanceTable;
-//		this.dataTable = dataTable;
-
-		// why are we passing this in??
-//		this.dimensionVar = dimensionVar;
 		this.filterExpr = filterExpr;
 
 		fetchSize = 1000;
