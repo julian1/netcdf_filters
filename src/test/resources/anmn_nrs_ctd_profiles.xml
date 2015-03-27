@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<definition>
+  <dimensions>
+    <dimension name="DEPTH"/>
+  </dimensions>
+  <variables>
+    <variable>
+      <name>LATITUDE</name>
+      <encoder>float</encoder>
+      <attributes>
+        <attribute name="_FillValue" value="99999."/>
+      </attributes>
+    </variable>
+    <variable>
+      <name>TEMP</name>
+      <encoder>float</encoder>
+      <dimensions>
+        <dimension name="DEPTH"/>
+      </dimensions>
+      <attributes>
+        <attribute name="_FillValue" value="99999."/>
+        <attribute name="whoot" value="whootvalue"/>
+      </attributes>
+    </variable>
+    <variable>
+      <name>DEPTH_quality_control</name>
+      <encoder>byte</encoder>
+      <dimensions>
+        <dimension name="DEPTH"/>
+      </dimensions>
+      <attributes>
+        <attribute name="_FillValue" value="0xffb"/>
+      </attributes>
+    </variable>
+    <variable>
+      <name>DEPTH</name>
+      <encoder>float</encoder>
+      <dimensions>
+        <dimension name="DEPTH"/>
+      </dimensions>
+      <attributes>
+        <attribute name="_FillValue" value="99999."/>
+        <attribute name="units" value="days since 1950-01-01 00:00:00 UTC"/>
+      </attributes>
+    </variable>
+  </variables>
+</definition>

@@ -957,6 +957,9 @@ class MyDimension implements IDimension
 		// shouldn't do all this at the same time...
 		// uggh.
 		// no children means it's a dimension... actually could still be a stand alone scalar, that's an array.
+
+		System.out.println( "** before writing dimension " + name + " " + size );
+
 		dimension = writer.addDimension( name, size ); 
 		//return null;
 	} 
@@ -1201,7 +1204,7 @@ class NodeWrapper implements Iterable<Node> {
 }
 
 
-
+// Change name NcdfDescription
 class Description
 {
 	Description( 
@@ -1572,7 +1575,7 @@ class NcfGenerator
 	final String schema;
 	final String instanceTable;
 	final String dataTable;
-	final String dimensionVar; 
+//	final String dimensionVar; 
 	final String filterExpr; 
 
 	final int fetchSize;
@@ -1588,7 +1591,7 @@ class NcfGenerator
 		String schema,
 		String instanceTable,
 		String dataTable,
-		String dimensionVar,
+//		String dimensionVar,
 		String filterExpr
 	) {
 		this.exprParser = exprParser;
@@ -1599,7 +1602,9 @@ class NcfGenerator
 		this.schema = schema;
 		this.instanceTable = instanceTable;
 		this.dataTable = dataTable;
-		this.dimensionVar = dimensionVar;
+
+		// why are we passing this in?? 
+//		this.dimensionVar = dimensionVar;
 		this.filterExpr = filterExpr;
 
 		fetchSize = 1000;
@@ -1615,7 +1620,11 @@ class NcfGenerator
 			throw new RuntimeException( "failed to parse expression" );
 		}
 
+		System.out.println( "setting search_path to " + schema );
+
 		PreparedStatement s = conn.prepareStatement("set search_path='" + schema + "'");
+		// PreparedStatement s = conn.prepareStatement("set search_path='" + schema + "',public");
+		// PreparedStatement s = conn.prepareStatement("set search_path=" + schema + ",public");
 		s.execute(); 
 		s.close();
 
@@ -1623,7 +1632,6 @@ class NcfGenerator
 
 		String query = "SELECT distinct data.instance_id  FROM (" + dataTable + ") as data where " + selection + ";" ; 
 		System.out.println( "first query " + query  );
-
 
 		PreparedStatement stmt = conn.prepareStatement( query );
 		stmt.setFetchSize(fetchSize);
@@ -1690,42 +1698,84 @@ class NcfGenerator
 
 	public NetcdfFileWriteable get() throws Exception
 	{
-		featureInstancesRS.next();
+		if( featureInstancesRS.next()) {
 
-		// we may have an Integer or Long or anything ? 
-		long instance_id = (long)(Integer) featureInstancesRS.getObject(1); 
+			// we ay have an Integer or Long or anything ? 
+			//long instance_id = (long)(Integer) featureInstancesRS.getObject(1); 
 
-		System.out.println( "whoot get(), instance_id is " + instance_id );
+			// munge 
+			long instance_id = -1234;
+			Object o = featureInstancesRS.getObject(1);
+			Class clazz = o.getClass(); 
+			if( clazz.equals( Integer.class )) {
+				instance_id = (long)(Integer)o;
+			}
+			else if( clazz.equals( Long.class )) {
+				instance_id = (long)(Long)o;
+			} else { 
+				throw new RuntimeException( "Can't convert intance_id type to integer" );
+			}
 
-		String selection = translate.process( selection_expr); // we ought to be caching the specific query ??? 
-					
-		populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + instanceTable + ") as instance where instance.id = " + Long.toString( instance_id) );
-		populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + dataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by \"" + dimensionVar + "\""  );
+	//		long instance_id = (long)(Long) featureInstancesRS.getObject(1); 
 
-		NetcdfFileWriteable writer = createWritable.create();
+			System.out.println( "whoot get(), instance_id is " + instance_id );
 
-		for ( IDimension dimension: description.dimensions.values()) {
-			dimension.define(writer);
+			String selection = translate.process( selection_expr); // we ought to be caching the specific query ??? 
+						
+			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + instanceTable + ") as instance where instance.id = " + Long.toString( instance_id) );
+
+
+			// is the order clause in sql part of projection or selection ? 
+
+			// eg. concat "," $ map (\x -> x.getName) dimensions.values ...
+			String dimensionVar = "";
+			for( IDimension dimension : description.dimensions.values() )
+			{
+				if( ! dimensionVar.equals("")){
+					dimensionVar += ",";
+				} 
+				dimensionVar += "\"" + dimension.getName() + "\"" ;
+			}
+
+			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + dataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by " + dimensionVar  );
+
+			NetcdfFileWriteable writer = createWritable.create();
+
+
+				
+
+			for ( IDimension dimension: description.dimensions.values()) {
+				dimension.define(writer);
+			}
+
+			for ( IVariableEncoder encoder: description.encoders.values()) {
+				encoder.define( writer );
+			}
+			// finish netcdf definition
+			writer.create();
+
+			for ( IVariableEncoder encoder: description.encoders.values()) {
+				// change name writeValues
+				encoder.finish( writer );
+			}
+			// write the file 
+			writer.close();
+
+			// TODO must close other record sets.
+			// and if early termination.
+	//		return null;
+
+			// TODO we should be returning a filestream here...
+			// the caller doesn't care that it's a netcdf
+
+			return writer;
 		}
+		else {
 
-		for ( IVariableEncoder encoder: description.encoders.values()) {
-			encoder.define( writer );
+			// close close close !!!@!
+
+			return null;
 		}
-		// finish netcdf definition
-		writer.create();
-
-		for ( IVariableEncoder encoder: description.encoders.values()) {
-			// change name writeValues
-			encoder.finish( writer );
-		}
-		// close
-		writer.close();
-
-
-		// TODO must close other record sets.
-		// and if early termination.
-
-		return null;
 	}
 }
 
@@ -1745,6 +1795,9 @@ class NcfGeneratorBuilder
 	}
 
 	// not sure if we should do this here...
+
+	// certainly configuration should be pulled out... and put in resources.
+
     public static Connection getConn() throws Exception
 	{
 		//String url = "jdbc:postgresql://127.0.0.1/postgres";
@@ -1755,6 +1808,8 @@ class NcfGeneratorBuilder
 		Properties props = new Properties();
 		props.setProperty("user","meteo");
 		props.setProperty("password","meteo");
+		
+//		props.setProperty("search_path","soop_sst,public");
 /*
 		String url = "jdbc:postgresql://dbprod.emii.org.au/harvest";
 		Properties props = new Properties();
@@ -1774,63 +1829,64 @@ class NcfGeneratorBuilder
 	}
 
 	public NcfGenerator create (
+		InputStream config,
 		String schema, 
 		String instanceTable, 
 		String dataTable, 
-		String dimensionVar, 
+//		String dimensionVar, 
 		String filterExpr 
 		) throws Exception
 	{
 
-	//	DecodeXmlConfiguration x = new DecodeXmlConfiguration(); 
-
+		//	DecodeXmlConfiguration x = new DecodeXmlConfiguration(); 
 	
 		// MUST CLOSE - and finally handling of resource...
-		InputStream stream = new FileInputStream( "input.xml" )	; 
+//		InputStream stream = new FileInputStream( "input.xml" )	; 
+
 		Description description = null;
 		try { 
 			// new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
-			Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream);
+			Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(config);
 			Node node =	document.getFirstChild(); 
 			description = new ConfigParser().parseDefinition( node ); 
 
 		} finally {
-			stream.close();
+			config.close();
 		}
-		// ok, think we want a pair for encoders and dimensions pair. 
-		// Description description = x.test();
 
 		// change name exprParser
 		Parser parser = new Parser();
-
 		IDialectTranslate translate = new  PostgresDialectTranslate();
-
 		Connection conn = getConn();
-
 		ICreateWritable createWritable = new CreateWritable();  
 
 		// avoiding ordering clauses that will prevent immediate stream response
 		// we're going to need to sanitize this 	
 		// note that we can wrap in double quotes 
-
 		/*
 			VERY IMPORTANT - all this stuff is going to be pushed into the xml config.
 			except for the filter expression.
-
-
 			- need to set the schema independently....  for this...
 		*/
 
-		// ok, hang on we're missing the main xml configuration.
+		// we are specifying a particular dimension var here...
+		// but we need to suck it out of the jkljlkj;lkjklj
+
+		/*
+			description.dimensions.size( ); 
+			System.out.println( "WHOOT here " + description.dimensions.size( ) );
+		*/	
 	
 		NcfGenerator generator = new NcfGenerator( 
-			parser, translate, conn, createWritable, description, schema, instanceTable, dataTable, dimensionVar, filterExpr );
+			parser, translate, conn, createWritable, description, schema, instanceTable, dataTable, /*, dimensionVar,*/ filterExpr );
 
-		generator.init();	
+		generator.init();	 // change name initGenerator..., distinct action from assembling the dependencies of the class.
 
 		return generator ; 	
-	}
 
+
+//		return null;
+	}
 }
 
 

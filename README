@@ -1,4 +1,12 @@
 
+Run an individual test,
+
+mvn install -Dmaven.test.skip=true 
+
+mvn -Dtest=MyIT#test1_IT test
+
+------
+
 mvn verify will run both unit and integration tests
 
 mvn test			   - run just surefire tests
