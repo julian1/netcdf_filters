@@ -19,7 +19,6 @@
 		  <dimensions>
 			<dimension name="TIME"/>
 		  </dimensions>
-	
 		  <attributes>
 			<attribute name="_FillValue" value="99999."/>
 			<attribute name="units" value="days since 1950-01-01 00:00:00 UTC"/>
