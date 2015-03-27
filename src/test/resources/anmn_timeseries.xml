@@ -39,16 +39,6 @@
       </attributes>
     </variable>
     <variable>
-      <name>DEPTH_quality_control</name>
-      <encoder>byte</encoder>
-      <dimensions>
-        <dimension name="TIME"/>
-      </dimensions>
-      <attributes>
-        <attribute name="_FillValue" value="0xffb"/>
-      </attributes>
-    </variable>
-    <variable>
       <name>DEPTH</name>
       <encoder>float</encoder>
       <dimensions>
@@ -58,5 +48,16 @@
         <attribute name="_FillValue" value="99999."/>
       </attributes>
     </variable>
+    <variable>
+      <name>DEPTH_quality_control</name>
+      <encoder>byte</encoder>
+      <dimensions>
+        <dimension name="TIME"/>
+      </dimensions>
+      <attributes>
+        <attribute name="_FillValue" value="0xffb"/>
+      </attributes>
+    </variable>
+
   </variables>
 </definition>
