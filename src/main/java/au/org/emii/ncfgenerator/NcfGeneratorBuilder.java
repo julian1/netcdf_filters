@@ -1845,18 +1845,14 @@ class NcfGeneratorBuilder
 
 	public NcfGenerator create (
 		InputStream config,
-		String schema,
+/*		String schema,
 		String instanceTable,
-		String dataTable,
+		String dataTable, */
+
 //		String dimensionVar,
 		String filterExpr
 		) throws Exception
 	{
-
-		//	DecodeXmlConfiguration x = new DecodeXmlConfiguration();
-
-		// MUST CLOSE - and finally handling of resource...
-//		InputStream stream = new FileInputStream( "input.xml" )	;
 
 		Description description = null;
 		try {
@@ -1877,30 +1873,12 @@ class NcfGeneratorBuilder
 
 		// avoiding ordering clauses that will prevent immediate stream response
 		// we're going to need to sanitize this
-		// note that we can wrap in double quotes
-		/*
-			VERY IMPORTANT - all this stuff is going to be pushed into the xml config.
-			except for the filter expression.
-			- need to set the schema independently....  for this...
-		*/
 
-		// we are specifying a particular dimension var here...
-		// but we need to suck it out of the jkljlkj;lkjklj
-
-		/*
-			description.dimensions.size( );
-			System.out.println( "WHOOT here " + description.dimensions.size( ) );
-		*/
-
-		NcfGenerator generator = new NcfGenerator(
-			parser, translate, conn, createWritable, description, /*schema, instanceTable, dataTable,*/ /*, dimensionVar,*/ filterExpr );
+		NcfGenerator generator = new NcfGenerator( parser, translate, conn, createWritable, description, filterExpr );
 
 		generator.init();	 // change name initGenerator..., distinct action from assembling the dependencies of the class.
 
 		return generator ;
-
-
-//		return null;
 	}
 }
 

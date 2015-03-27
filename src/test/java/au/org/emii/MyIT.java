@@ -47,10 +47,10 @@ public class MyIT {
 		InputStream config = getClass().getResourceAsStream("/anmn_nrs_ctd_profiles.xml");
 		NcfGenerator generator = new NcfGeneratorBuilder().create(	
 			config,
-			"anmn_nrs_ctd_profiles", 
+/*			"anmn_nrs_ctd_profiles", 
 			"select * from indexed_file",
 		    "select file_id as instance_id, * from measurements",
-			" (lt TIME 2013-6-29T00:40:01Z ) " 
+*/			" (lt TIME 2013-6-29T00:40:01Z ) " 
 		);
 
 		streamData( generator ); 
@@ -66,9 +66,10 @@ public class MyIT {
 		InputStream config = getClass().getResourceAsStream("/anmn_timeseries.xml");
 		NcfGenerator generator = new NcfGeneratorBuilder().create(	
 			config,
-			"anmn_ts", 
+/*			"anmn_ts", 
 			"select * from timeseries",
 		    "select ts_id as instance_id, * from measurement",
+*/
 			 " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "
 			// " (lt TIME 2013-6-29T00:40:01Z ) "
 		);
@@ -84,9 +85,10 @@ public class MyIT {
 		InputStream config = getClass().getResourceAsStream("/soop_sst_trajectory.xml");
 		NcfGenerator generator = new NcfGeneratorBuilder().create(	
 			config,
-			"soop_sst", 
+/*			"soop_sst", 
 			"select * from indexed_file",
 		    "select trajectory_id as instance_id, * from measurements",
+*/
 			 " (and (gt TIME 2013-6-27T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "
 			// " (lt TIME 2013-6-29T00:40:01Z ) "
 		);
