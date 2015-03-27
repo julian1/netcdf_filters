@@ -79,7 +79,7 @@ public class MyIT {
 		System.out.println( "finished test" );
     }   
 
-
+	// we should be able to reinstate the other tests now ...
 
    
 	@Test
@@ -87,7 +87,7 @@ public class MyIT {
 
 		System.out.println( "**** whoot INTEGRATION 3 ****" );
 
-		InputStream config = getClass().getResourceAsStream("/input.xml");
+		InputStream config = getClass().getResourceAsStream("/soop_sst_trajectory.xml");
 
 		System.out.println( "stream config " + config );
 
@@ -100,6 +100,7 @@ public class MyIT {
 			// " (lt TIME 2013-6-29T00:40:01Z ) "
 		);
 
+		// can expect a count ...
 		streamData( generator ); 
 		System.out.println( "finished test" );
 
