@@ -36,8 +36,10 @@ public class MyIT {
 		while( writer != null );
 	}
 
+	// we should expose the db... 
+
     @Test
-    public void test1_IT() throws Exception {
+    public void anmn_nrs_ctd_profiles_IT() throws Exception {
 
 		System.out.println( "**** whoot INTEGRATION 1 **** " );
 		// exception handling needs to be improved a lot...
@@ -55,7 +57,7 @@ public class MyIT {
     }   
 
 	@Test
-    public void test2_IT() throws Exception {
+    public void anmn_timeseries_IT() throws Exception {
 
 		System.out.println( "**** anmn timeseries ****" );
 		// assertTrue(123 == 123 );
@@ -72,7 +74,7 @@ public class MyIT {
     }   
 
 	@Test
-    public void test3_IT() throws Exception {
+    public void soop_sst_trajectory_IT() throws Exception {
 
 		System.out.println( "**** sst trajectory ****" );
 		InputStream config = getClass().getResourceAsStream("/soop_sst_trajectory.xml");
