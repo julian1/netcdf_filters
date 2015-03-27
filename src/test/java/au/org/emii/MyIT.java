@@ -65,8 +65,10 @@ public class MyIT {
 		assertTrue(123 == 123 );
 		assertTrue(456 == 456 );
 
+		InputStream config = getClass().getResourceAsStream("/anmn_timeseries.xml");
+
 		NcfGenerator generator = new NcfGeneratorBuilder().create(	
-			null,
+			config,
 			"anmn_ts", 
 			"select * from timeseries",
 		    "select ts_id as instance_id, * from measurement",
@@ -88,8 +90,6 @@ public class MyIT {
 		System.out.println( "**** whoot INTEGRATION 3 ****" );
 
 		InputStream config = getClass().getResourceAsStream("/soop_sst_trajectory.xml");
-
-		System.out.println( "stream config " + config );
 
 		NcfGenerator generator = new NcfGeneratorBuilder().create(	
 			config,
