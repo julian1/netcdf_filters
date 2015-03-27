@@ -81,15 +81,24 @@ public class MyIT {
     }   
 
 
+
+    public void streamData( NcfGenerator generator ) throws Exception {
+		NetcdfFileWriteable writer = null;
+		do {  
+			// should try and get lots...
+			writer = generator.get();	
+		}
+		while( writer != null );
+	}
+
 	@Test
     public void test3_IT() throws Exception {
 
 		System.out.println( "**** whoot INTEGRATION 3 ****" );
 
-		InputStream is = getClass().getResourceAsStream("/input.xml");
+		InputStream config = getClass().getResourceAsStream("/input.xml");
 
-		System.out.println( "stream is " + is );
-
+		System.out.println( "stream config " + config );
 
 		NcfGenerator generator = new NcfGeneratorBuilder().create(	
 			"soop_sst", 
@@ -99,12 +108,8 @@ public class MyIT {
 			// " (lt TIME 2013-6-29T00:40:01Z ) "
 		);
 
-		NetcdfFileWriteable writer = null;
-		do {  
-			// should try and get lots...
-			writer = generator.get();	
-		}
-		while( writer != null );
+		streamData( generator ); 
+
 		System.out.println( "finished test" );
 
     }   
