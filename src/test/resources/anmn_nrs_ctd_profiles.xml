@@ -3,8 +3,8 @@
   <!-- anmn_nrs_ctd_profiles -->
   <source>
     <schema>anmn_nrs_ctd_profiles</schema>
-    <dataTable>select file_id as instance_id, * from measurements</dataTable>
-    <instanceTable>select * from indexed_file</instanceTable>
+    <virtualDataTable>select file_id as instance_id, * from measurements</virtualDataTable>
+    <virtualInstanceTable>select * from indexed_file</virtualInstanceTable>
   </source>
   <dimensions>
     <dimension name="DEPTH"/>

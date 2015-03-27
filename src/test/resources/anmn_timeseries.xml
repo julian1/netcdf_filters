@@ -3,8 +3,8 @@
   <!-- anmn_timeseries -->
   <source>
     <schema>anmn_ts</schema>
-    <dataTable>select ts_id as instance_id, * from measurement</dataTable>
-    <instanceTable>select * from timeseries</instanceTable>
+    <virtualDataTable>select ts_id as instance_id, * from measurement</virtualDataTable>
+    <virtualInstanceTable>select * from timeseries</virtualInstanceTable>
   </source>
   <dimensions>
     <dimension name="TIME"/>

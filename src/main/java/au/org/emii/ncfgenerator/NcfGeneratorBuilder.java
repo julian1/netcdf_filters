@@ -1212,21 +1212,21 @@ class Description
 {
 	Description(
 		String schema,
-		String dataTable,
-		String instanceTable,
+		String virtualDataTable,
+		String virtualInstanceTable,
 		Map< String, IDimension> dimensions,
 		Map< String, IVariableEncoder> encoders
 	) {
 		this.schema = schema;
-		this.dataTable = dataTable;
-		this.instanceTable = instanceTable;
+		this.virtualDataTable = virtualDataTable;
+		this.virtualInstanceTable = virtualInstanceTable;
 		this.dimensions = dimensions;
 		this.encoders = encoders;
 	}
 
 	final String schema;
-	final String dataTable;
-	final String instanceTable;
+	final String virtualDataTable;
+	final String virtualInstanceTable;
 	final Map< String, IDimension> dimensions;
 	final Map< String, IVariableEncoder> encoders;
 }
@@ -1490,10 +1490,10 @@ class NcfDescriptionParser
 			}
 
 			String schema = source.get( "schema" );
-			String dataTable = source.get( "dataTable" );
-			String instanceTable =source.get( "instanceTable" );
+			String virtualDataTable = source.get( "virtualDataTable" );
+			String virtualInstanceTable =source.get( "virtualInstanceTable" );
 
-			return new Description( schema, dataTable, instanceTable, dimensions, encoders );
+			return new Description( schema, virtualDataTable, virtualInstanceTable, dimensions, encoders );
 		}
 		return null;
 	}
@@ -1634,7 +1634,7 @@ class NcfGenerator
 
 		String selection = translate.process( selection_expr);
 
-		String query = "SELECT distinct data.instance_id  FROM (" + description.dataTable + ") as data where " + selection + ";" ;
+		String query = "SELECT distinct data.instance_id  FROM (" + description.virtualDataTable + ") as data where " + selection + ";" ;
 		System.out.println( "first query " + query  );
 
 		PreparedStatement stmt = conn.prepareStatement( query );
@@ -1726,7 +1726,7 @@ class NcfGenerator
 
 			String selection = translate.process( selection_expr); // we ought to be caching the specific query ???
 
-			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + description.instanceTable + ") as instance where instance.id = " + Long.toString( instance_id) );
+			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + description.virtualInstanceTable + ") as instance where instance.id = " + Long.toString( instance_id) );
 
 
 			// is the order clause in sql part of projection or selection ?
@@ -1741,7 +1741,7 @@ class NcfGenerator
 				dimensionVar += "\"" + dimension.getName() + "\"" ;
 			}
 
-			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + description.dataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by " + dimensionVar  );
+			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + description.virtualDataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by " + dimensionVar  );
 
 			NetcdfFileWriteable writer = createWritable.create();
 

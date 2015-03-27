@@ -3,8 +3,8 @@
   <!-- soop_sst_trajectory -->
   <source>
     <schema>soop_sst</schema>
-    <dataTable>select trajectory_id as instance_id, * from measurements</dataTable>
-    <instanceTable>select * from indexed_file</instanceTable>
+    <virtualDataTable>select trajectory_id as instance_id, * from measurements</virtualDataTable>
+    <virtualInstanceTable>select * from indexed_file</virtualInstanceTable>
   </source>
   <dimensions>
     <dimension name="TIME"/>
