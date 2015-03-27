@@ -1,6 +1,12 @@
 <?xml version="1.0"?>
 <definition>
 
+  <source>
+	<schema>soop_sst</schema>
+	<dataTable>select trajectory_id as instance_id, * from measurements</dataTable>
+	<instanceTable>select * from indexed_file</instanceTable>
+  </source>
+
   <dimensions>
     <dimension name="TIME"/>
   </dimensions>

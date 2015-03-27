@@ -1208,13 +1208,16 @@ class NodeWrapper implements Iterable<Node> {
 class Description
 {
 	Description( 
+		String schema,
 		Map< String, IDimension> dimensions,
 		Map< String, IVariableEncoder> encoders
 	) {
+		this.schema = schema;
 		this.dimensions = dimensions;
 		this.encoders = encoders;
 	}
 	
+	final String schema; 
 	final Map< String, IDimension> dimensions; 
 	final Map< String, IVariableEncoder> encoders; 
 
@@ -1225,261 +1228,310 @@ class Description
 
 
 
-	class ConfigParser
+class ConfigParser
+{
+	boolean isNodeName( Node node, String name )
 	{
-		boolean isNodeName( Node node, String name )
-		{
-			return node.getNodeType() == Node.ELEMENT_NODE 
-				&& node.getNodeName().equals( name );
-		}
+		return node.getNodeType() == Node.ELEMENT_NODE 
+			&& node.getNodeName().equals( name );
+	}
 
-		String nodeVal( Node node  )
-		{
-			Node child = node.getFirstChild();
-			if( child != null && child.getNodeType() == Node.TEXT_NODE )
-				return child.getNodeValue();
+	String nodeVal( Node node  )
+	{
+		Node child = node.getFirstChild();
+		if( child != null && child.getNodeType() == Node.TEXT_NODE )
+			return child.getNodeValue();
 
-			return "";
-		}
+		return "";
+	}
 
 
-		Map< String, String> parseKeyVals( Node node )
-		{
-			// have another version that does this for attributes
-			Map< String, String> m = new HashMap< String, String>();	
-			for( Node child : new NodeWrapper(node) ) 
-				if( child.getNodeType() == Node.ELEMENT_NODE )
-					m.put( child.getNodeName(), nodeVal( child ) );
-
-			// add any attributes 
-			NamedNodeMap attrs = node.getAttributes(); 
-			for( int i = 0; i < attrs.getLength(); ++i )
-			{
-				Node child = attrs.item( i) ;
+	Map< String, String> parseKeyVals( Node node )
+	{
+		// have another version that does this for attributes
+		Map< String, String> m = new HashMap< String, String>();	
+		for( Node child : new NodeWrapper(node) ) 
+			if( child.getNodeType() == Node.ELEMENT_NODE )
 				m.put( child.getNodeName(), nodeVal( child ) );
-			}
 
+		// add any xml attributes 
+		NamedNodeMap attrs = node.getAttributes(); 
+		for( int i = 0; i < attrs.getLength(); ++i )
+		{
+			Node child = attrs.item( i) ;
+			m.put( child.getNodeName(), nodeVal( child ) );
+		}
+
+		return m;
+	}
+
+	IDimension parseDimension( Node node)
+	{
+		if( isNodeName( node, "dimension")) {
+			Map< String, String> m = parseKeyVals( node );
+			return new MyDimension( m.get( "name" ) );
+		}
+		return null;
+	}
+
+	// having a simple parse key-vals function, means we can do it with attributes as alternative syntax.
+
+	Map< String, IDimension> parseDimensions( Node node )
+	{
+		if( isNodeName( node, "dimensions"))
+		{
+			Map< String, IDimension> dimensions = new HashMap< String, IDimension> () ;  
+			for( Node child : new NodeWrapper(node) ) {
+				IDimension dimension = parseDimension( child );
+				if( dimension != null)
+					dimensions.put( dimension.getName(), dimension );
+			}
+			return dimensions;
+		}
+		return null;
+	}
+
+
+	IEncodeValue parseEncoder( Node node) 
+	{
+		if( isNodeName( node, "encoder"))
+		{
+			String val = nodeVal( node );
+			if( val.equals( "float")) {
+				return new EncodeFloatValue(); 
+			}
+			else if( val.equals( "byte")) {
+				return new EncodeByteValue(); 
+			}
+			else if( val.equals( "time")) {
+				return new EncodeTimestampValue(); 
+			} 
+			else 
+			{
+				throw new RuntimeException( "Unrecognized value type encoder" );
+			}
+		}
+		return null;
+	}
+
+
+	SimpleImmutableEntry<String, String> parseAttribute( Node node )
+	{
+		// we ought to be able to coerce the object type immediately here.
+		// no, if it's a timevalue then  we want it left as a string 
+
+		// No i think it's better to leave interpreting this until we're right at the point of encoding using
+		// the specific encoder type...
+		// we can cache a fill value if we really required.
+
+		if( isNodeName( node, "attribute"))
+		{
+			Map< String, String> m = parseKeyVals( node );
+			String key = m.get("name"); 
+			String val = m.get("value");
+/*
+			Object val = null;
+
+			if( val_.contains(".") )
+			{
+				// Should be double?
+				val = Float.valueOf(val_).floatValue();	
+			}
+			else {
+				val = val_;
+			}
+*/
+			return new SimpleImmutableEntry< String, String>( key, val );
+		}
+		return null;
+	}
+
+/*
+	- we really need the simplified looping construct  
+	- which should be easy to do.
+*/
+	Map<String, String> parseAttributes( Node node )
+	{
+		if( isNodeName( node, "attributes"))
+		{
+			Map<String, String> m = new HashMap<String, String> ();
+			for( Node child : new NodeWrapper(node) ) {
+				SimpleImmutableEntry< String, String> pair = parseAttribute( child);
+				if( pair != null)
+					m.put( pair.getKey(), pair.getValue());	
+			}
 			return m;
 		}
+		return null;
+	}
 
-		IDimension parseDimension( Node node)
-		{
-			if( isNodeName( node, "dimension")) {
-				Map< String, String> m = parseKeyVals( node );
-				return new MyDimension( m.get( "name" ) );
-			}
-			return null;
+
+	IDimension parseDimensionRef ( Node node, Map< String, IDimension> dimensionsContext )
+	{
+		if( isNodeName( node, "dimension")) {
+			Map< String, String> m = parseKeyVals( node );
+			System.out.println( "found dimension ref " + m.get( "name" ) );
+			return dimensionsContext.get( m.get( "name" ));
 		}
+		return null;
+	}
 
-		// having a simple parse key-vals function, means we can do it with attributes as alternative syntax.
 
-		Map< String, IDimension> parseDimensions( Node node )
+	Map< String, IDimension> parseDimensionsRef( Node node, Map< String, IDimension> dimensionsContext )
+	{
+		if( isNodeName( node, "dimensions"))
 		{
-			if( isNodeName( node, "dimensions"))
-			{
-				Map< String, IDimension> dimensions = new HashMap< String, IDimension> () ;  
-				for( Node child : new NodeWrapper(node) ) {
-					IDimension dimension = parseDimension( child );
-					if( dimension != null)
-						dimensions.put( dimension.getName(), dimension );
-				}
-				return dimensions;
+			Map< String, IDimension> dimensions = new HashMap< String, IDimension> () ;  
+			for( Node child : new NodeWrapper(node) ) {
+				IDimension dimension = parseDimensionRef( child, dimensionsContext);
+				if( dimension != null)
+					dimensions.put( dimension.getName(), dimension );
 			}
-			return null;
+			return dimensions;
 		}
+		return null;
+	}
 
 
-		IEncodeValue parseEncoder( Node node) 
+	// think we may want a more general context ...
+
+
+	IVariableEncoder parseVariableEncoder( Node node, Map< String, IDimension> dimensionsContext  )
+	{
+		String name = null;
+		Map< String, IDimension> dimensions = null;  // this is wrong. we should be looking it up by name.
+		IEncodeValue encodeValue = null; 
+		Map< String, String> attributes = null; 
+
+		if( isNodeName( node, "variable"))
 		{
-			if( isNodeName( node, "encoder"))
+			for( Node child : new NodeWrapper(node) ) 
 			{
-				String val = nodeVal( node );
-				if( val.equals( "float")) {
-					return new EncodeFloatValue(); 
-				}
-				else if( val.equals( "byte")) {
-					return new EncodeByteValue(); 
-				}
-				else if( val.equals( "time")) {
-					return new EncodeTimestampValue(); 
-				} 
-				else 
-				{
-					throw new RuntimeException( "Unrecognized value type encoder" );
-				}
+				// this is very neat. may want to do this explicitly rather than using the map...
+				if( isNodeName( child, "name" ))
+					name = nodeVal( child);
+				if( dimensions == null)
+					dimensions = parseDimensionsRef( child, dimensionsContext );
+				if( encodeValue == null)
+					encodeValue = parseEncoder( child ) ; 
+				if( attributes == null)
+					attributes = parseAttributes( child );
 			}
-			return null;
-		}
 
-
-		SimpleImmutableEntry<String, String> parseAttribute( Node node )
-		{
-			// we ought to be able to coerce the object type immediately here.
-			// no, if it's a timevalue then  we want it left as a string 
-
-			// No i think it's better to leave interpreting this until we're right at the point of encoding using
-			// the specific encoder type...
-			// we can cache a fill value if we really required.
-
-			if( isNodeName( node, "attribute"))
+			if( dimensions == null )
 			{
-				Map< String, String> m = parseKeyVals( node );
-				String key = m.get("name"); 
-				String val = m.get("value");
+				dimensions = new HashMap< String, IDimension> (); 
+			}		
+
+			if( name != null 
+				&& encodeValue != null
+				&& attributes != null )
+			{
+				System.out.println( "whoot creating encoder " + name  );	
+
+				return new MyEncoder ( name , new ArrayList<IDimension>(dimensions.values()), encodeValue , attributes ) ; 
+			}
+			else {
+				throw new RuntimeException("missing something  " );
+				// return null; 
+			}
+		}
+		return null;
+	}
+
+
+	private Map< String, IVariableEncoder> parseVariableEncoders( Node node, Map< String, IDimension> dimensionsContext  )
+	{	
+		if( isNodeName( node, "variables"))
+		{
+			Map< String, IVariableEncoder> m = new HashMap < String, IVariableEncoder>(); 
+			for( Node child : new NodeWrapper(node)) {
+				IVariableEncoder e = parseVariableEncoder( child, dimensionsContext  );
+				if( e != null )
+					m.put( e.getName(), e );
+			}
+			return m;
+		}
+		return null;
+	}
+
+
+
+
+	private Map< String, String> parseSources( Node node ) 
+	{
+		if( isNodeName( node, "source")) /// data or dataSource
+		{
+			Map< String, String> sources = parseKeyVals( node); 
+
+			System.out.println( "*** GOT CONFIG " +  sources.size()   );
+			for( Map.Entry< String, String> entry : sources.entrySet()) {
+				System.out.println( "*** " + entry.getKey() + " " + entry.getValue() );
+
+			}
+			return sources;
+		}	
+		return null;
+
+	}
+
+
+	Description parseDefinition( Node node )
+	{
+		// think we need a context? 
+		if( isNodeName( node, "definition"))
+		{
 /*
-				Object val = null;
-
-				if( val_.contains(".") )
+			// Map< String, IDimension> dimensions = null;
+			Map< String, String> sources = null;
+			for( Node child : new NodeWrapper(node)) {
+				if( dimensions == null )
+					dimensions = parseDimensions( child );
+			}
+			for( Node child : new NodeWrapper(node)) {
+				if( isNodeName( child, "source")) /// data or dataSource
 				{
-					// Should be double?
-					val = Float.valueOf(val_).floatValue();	
-				}
-				else {
-					val = val_;
-				}
+					sources = parseKeyVals( child); 
+					System.out.println( "*** GOT CONFIG " +  m.size()   );
+					for( Map.Entry< String, String> entry : m.entrySet()) {
+						System.out.println( "*** " + entry.getKey() + " " + entry.getValue() );
+
+					}
+				}	
+			}
 */
-				return new SimpleImmutableEntry< String, String>( key, val );
-			}
-			return null;
-		}
 
-	/*
-		- we really need the simplified looping construct  
-		- which should be easy to do.
-	*/
-		Map<String, String> parseAttributes( Node node )
-		{
-			if( isNodeName( node, "attributes"))
-			{
-				Map<String, String> m = new HashMap<String, String> ();
-				for( Node child : new NodeWrapper(node) ) {
-					SimpleImmutableEntry< String, String> pair = parseAttribute( child);
-					if( pair != null)
-						m.put( pair.getKey(), pair.getValue());	
-				}
-				return m;
-			}
-			return null;
-		}
+			Map< String, String> sources = null; 
+			Map< String, IDimension> dimensions = null;
+			Map< String, IVariableEncoder> encoders = null; 
 
-
-		IDimension parseDimensionRef ( Node node, Map< String, IDimension> dimensionsContext )
-		{
-			if( isNodeName( node, "dimension")) {
-				Map< String, String> m = parseKeyVals( node );
-				System.out.println( "found dimension ref " + m.get( "name" ) );
-				return dimensionsContext.get( m.get( "name" ));
-			}
-			return null;
-		}
-
-
-		Map< String, IDimension> parseDimensionsRef( Node node, Map< String, IDimension> dimensionsContext )
-		{
-			if( isNodeName( node, "dimensions"))
-			{
-				Map< String, IDimension> dimensions = new HashMap< String, IDimension> () ;  
-				for( Node child : new NodeWrapper(node) ) {
-					IDimension dimension = parseDimensionRef( child, dimensionsContext);
-					if( dimension != null)
-						dimensions.put( dimension.getName(), dimension );
-				}
-				return dimensions;
-			}
-			return null;
-		}
-
-
-		// think we may want a more general context ...
-
-
-		IVariableEncoder parseVariableEncoder( Node node, Map< String, IDimension> dimensionsContext  )
-		{
-			String name = null;
-			Map< String, IDimension> dimensions = null;  // this is wrong. we should be looking it up by name.
-			IEncodeValue encodeValue = null; 
-			Map< String, String> attributes = null; 
-
-			if( isNodeName( node, "variable"))
-			{
-				for( Node child : new NodeWrapper(node) ) 
-				{
-					// this is very neat. may want to do this explicitly rather than using the map...
-					if( isNodeName( child, "name" ))
-						name = nodeVal( child);
-					if( dimensions == null)
-						dimensions = parseDimensionsRef( child, dimensionsContext );
-					if( encodeValue == null)
-						encodeValue = parseEncoder( child ) ; 
-					if( attributes == null)
-						attributes = parseAttributes( child );
-				}
+			// pick out dimensions
+			for( Node child : new NodeWrapper(node)) {
 
 				if( dimensions == null )
-				{
-					dimensions = new HashMap< String, IDimension> (); 
-				}		
+					dimensions = parseDimensions( child );
 
-				if( name != null 
-					&& encodeValue != null
-					&& attributes != null )
-				{
-					System.out.println( "whoot creating encoder " + name  );	
+				if( sources == null )
+					sources = parseSources( node ); 
 
-					return new MyEncoder ( name , new ArrayList<IDimension>(dimensions.values()), encodeValue , attributes ) ; 
-				}
-				else {
-					throw new RuntimeException("missing something  " );
-					// return null; 
-				}
+				if( encoders == null )
+					encoders = parseVariableEncoders( child, dimensions );
+
 			}
-			return null;
-		}
 
+/*			// pick out the vars
 
-		Map< String, IVariableEncoder> parseVariableEncoders( Node node, Map< String, IDimension> dimensionsContext  )
-		{	
-			if( isNodeName( node, "variables"))
-			{
-				Map< String, IVariableEncoder> m = new HashMap < String, IVariableEncoder>(); 
-				for( Node child : new NodeWrapper(node)) {
-					IVariableEncoder e = parseVariableEncoder( child, dimensionsContext  );
-					if( e != null )
-						m.put( e.getName(), e );
-				}
-				return m;
+			for( Node child : new NodeWrapper(node)) {
+				if( encoders == null )
+					encoders = parseVariableEncoders( child, dimensions );
 			}
-			return null;
+*/
+
+			return new Description( "myschema", dimensions, encoders );
 		}
-
-		Description parseDefinition( Node node )
-		{
-
-
-			// think we need a context? 
-			if( isNodeName( node, "definition"))
-			{
-				Map< String, IDimension> dimensions = null;
-				// pick out dimensions
-				for( Node child : new NodeWrapper(node)) {
-					if( dimensions == null )
-						dimensions = parseDimensions( child );
-				}
-
-				// pick out the vars
-				Map< String, IVariableEncoder> encoders = null; 
-
-				for( Node child : new NodeWrapper(node)) {
-					if( encoders == null )
-						encoders = parseVariableEncoders( child, dimensions );
-				}
-
-
-				return new Description( dimensions, encoders );
-			}
-			return null;	
-		}
+		return null;	
 	}
+}
 
 
 
