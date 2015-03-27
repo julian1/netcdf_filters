@@ -14,6 +14,16 @@
   <variables>
 
 	  <variable>
+		  <name>job_id</name>
+		  <encoder>float</encoder>
+		  <attributes>
+			<attribute name="_FillValue" value="99999."/>
+		  </attributes>
+	  </variable>
+
+
+
+	  <variable>
 		  <name>TIME</name>
 		  <encoder>time</encoder>
 		  <dimensions>
@@ -24,7 +34,6 @@
 			<attribute name="units" value="days since 1950-01-01 00:00:00 UTC"/>
 		  </attributes>
 	  </variable>
-
 
 	  <variable>
 		  <name>LATITUDE</name>

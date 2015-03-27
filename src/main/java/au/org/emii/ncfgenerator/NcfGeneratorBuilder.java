@@ -837,8 +837,11 @@ class EncodeFloatValue implements IEncodeValue
 		else if( value instanceof Double ) {
 			A.setFloat( ima, (float)(double)(Double) value);
 		}
+		else if( value instanceof Long ) { // for testing - should remove
+			A.setFloat( ima, (float)(long)(Long) value);
+		}
 		else {
-			throw new RuntimeException( "Failed to coerce type to float" );
+			throw new RuntimeException( "Failed to coerce type '" + value.getClass() + "' to float" );
 		}
 	}
 }
