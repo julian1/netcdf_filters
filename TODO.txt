@@ -4,6 +4,7 @@ on prod data.
 
 ----
 PRIORITY
+- tidy xml examples - to be more complete .
 - push the sql projections into the xml. 
 - connection pool in the unit tests.
 - check integration test IT naming conventions. change test names to ITtimeseries with IT first 
