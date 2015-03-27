@@ -1795,6 +1795,9 @@ class NcfGeneratorBuilder
 	}
 
 	// not sure if we should do this here...
+
+	// certainly configuration should be pulled out... and put in resources.
+
     public static Connection getConn() throws Exception
 	{
 		//String url = "jdbc:postgresql://127.0.0.1/postgres";
@@ -1826,6 +1829,7 @@ class NcfGeneratorBuilder
 	}
 
 	public NcfGenerator create (
+		InputStream config,
 		String schema, 
 		String instanceTable, 
 		String dataTable, 
@@ -1837,16 +1841,17 @@ class NcfGeneratorBuilder
 		//	DecodeXmlConfiguration x = new DecodeXmlConfiguration(); 
 	
 		// MUST CLOSE - and finally handling of resource...
-		InputStream stream = new FileInputStream( "input.xml" )	; 
+//		InputStream stream = new FileInputStream( "input.xml" )	; 
+
 		Description description = null;
 		try { 
 			// new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
-			Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream);
+			Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(config);
 			Node node =	document.getFirstChild(); 
 			description = new ConfigParser().parseDefinition( node ); 
 
 		} finally {
-			stream.close();
+			config.close();
 		}
 
 		// change name exprParser
@@ -1867,11 +1872,10 @@ class NcfGeneratorBuilder
 		// we are specifying a particular dimension var here...
 		// but we need to suck it out of the jkljlkj;lkjklj
 
-		description.dimensions.size( ); 
-
-		System.out.println( "WHOOT here " + description.dimensions.size( ) );
-	
-		
+		/*
+			description.dimensions.size( ); 
+			System.out.println( "WHOOT here " + description.dimensions.size( ) );
+		*/	
 	
 		NcfGenerator generator = new NcfGenerator( 
 			parser, translate, conn, createWritable, description, schema, instanceTable, dataTable, /*, dimensionVar,*/ filterExpr );

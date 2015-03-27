@@ -27,6 +27,15 @@ public class MyIT {
     }   
 
 
+	 public void streamData( NcfGenerator generator ) throws Exception {
+		NetcdfFileWriteable writer = null;
+		do {  
+			// should try and get lots...
+			writer = generator.get();	
+		}
+		while( writer != null );
+	}
+
     @Test
     public void test1_IT() throws Exception {
 
@@ -36,6 +45,7 @@ public class MyIT {
 		assertTrue(456 == 456 );
 
 		NcfGenerator generator = new NcfGeneratorBuilder().create(	
+			null,
 			"anmn_nrs_ctd_profiles", 
 			"select * from indexed_file",
 		    "select file_id as instance_id, * from measurements",
@@ -43,13 +53,7 @@ public class MyIT {
 			" (lt TIME 2013-6-29T00:40:01Z ) " 
 		);
 
-		NetcdfFileWriteable writer = null;
-		do {  
-			// should try and get lots...
-			writer = generator.get();	
-		}
-		while( writer != null );
-
+		streamData( generator ); 
 		System.out.println( "finished test" );
     }   
 
@@ -62,6 +66,7 @@ public class MyIT {
 		assertTrue(456 == 456 );
 
 		NcfGenerator generator = new NcfGeneratorBuilder().create(	
+			null,
 			"anmn_ts", 
 			"select * from timeseries",
 		    "select ts_id as instance_id, * from measurement",
@@ -70,27 +75,13 @@ public class MyIT {
 			// " (lt TIME 2013-6-29T00:40:01Z ) "
 		);
 
-		NetcdfFileWriteable writer = null;
-		do {  
-			// should try and get lots...
-			writer = generator.get();	
-		}
-		while( writer != null );
-
+		streamData( generator ); 
 		System.out.println( "finished test" );
     }   
 
 
 
-    public void streamData( NcfGenerator generator ) throws Exception {
-		NetcdfFileWriteable writer = null;
-		do {  
-			// should try and get lots...
-			writer = generator.get();	
-		}
-		while( writer != null );
-	}
-
+   
 	@Test
     public void test3_IT() throws Exception {
 
@@ -101,6 +92,7 @@ public class MyIT {
 		System.out.println( "stream config " + config );
 
 		NcfGenerator generator = new NcfGeneratorBuilder().create(	
+			config,
 			"soop_sst", 
 			"select * from indexed_file",
 		    "select trajectory_id as instance_id, * from measurements",
@@ -109,7 +101,6 @@ public class MyIT {
 		);
 
 		streamData( generator ); 
-
 		System.out.println( "finished test" );
 
     }   
