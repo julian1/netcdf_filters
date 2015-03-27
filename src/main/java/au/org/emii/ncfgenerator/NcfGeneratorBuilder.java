@@ -1451,14 +1451,14 @@ class ConfigParser
 	{
 		if( isNodeName( node, "source")) /// data or dataSource
 		{
-			Map< String, String> sources = parseKeyVals( node);
+			Map< String, String> source = parseKeyVals( node);
 
-			System.out.println( "*** GOT CONFIG " +  sources.size()   );
-			for( Map.Entry< String, String> entry : sources.entrySet()) {
+			System.out.println( "*** GOT CONFIG " +  source.size()   );
+			for( Map.Entry< String, String> entry : source.entrySet()) {
 				System.out.println( "*** " + entry.getKey() + " " + entry.getValue() );
 
 			}
-			return sources;
+			return source;
 		}
 		return null;
 
@@ -1587,9 +1587,9 @@ class NcfGenerator
 	final Connection conn;
 	final ICreateWritable createWritable; // generate a writiable
 	final Description description ;
-	final String schema;
-	final String instanceTable;
-	final String dataTable;
+//	final String schema;
+//	final String instanceTable;
+//	final String dataTable;
 //	final String dimensionVar;
 	final String filterExpr;
 
@@ -1603,9 +1603,9 @@ class NcfGenerator
 		Connection conn,
 		ICreateWritable createWritable,
 		Description description,
-		String schema,
-		String instanceTable,
-		String dataTable,
+//		String schema,
+//		String instanceTable,
+//		String dataTable,
 //		String dimensionVar,
 		String filterExpr
 	) {
@@ -1614,9 +1614,9 @@ class NcfGenerator
 		this.conn = conn;
 		this.createWritable = createWritable;
 		this.description = description;
-		this.schema = schema;
-		this.instanceTable = instanceTable;
-		this.dataTable = dataTable;
+//		this.schema = schema;
+//		this.instanceTable = instanceTable;
+//		this.dataTable = dataTable;
 
 		// why are we passing this in??
 //		this.dimensionVar = dimensionVar;
@@ -1635,9 +1635,9 @@ class NcfGenerator
 			throw new RuntimeException( "failed to parse expression" );
 		}
 
-		System.out.println( "setting search_path to " + schema );
+		System.out.println( "setting search_path to " + description.schema );
 
-		PreparedStatement s = conn.prepareStatement("set search_path='" + schema + "'");
+		PreparedStatement s = conn.prepareStatement("set search_path='" + description.schema + "'");
 		// PreparedStatement s = conn.prepareStatement("set search_path='" + schema + "',public");
 		// PreparedStatement s = conn.prepareStatement("set search_path=" + schema + ",public");
 		s.execute();
@@ -1645,7 +1645,7 @@ class NcfGenerator
 
 		String selection = translate.process( selection_expr);
 
-		String query = "SELECT distinct data.instance_id  FROM (" + dataTable + ") as data where " + selection + ";" ;
+		String query = "SELECT distinct data.instance_id  FROM (" + description.dataTable + ") as data where " + selection + ";" ;
 		System.out.println( "first query " + query  );
 
 		PreparedStatement stmt = conn.prepareStatement( query );
@@ -1737,7 +1737,7 @@ class NcfGenerator
 
 			String selection = translate.process( selection_expr); // we ought to be caching the specific query ???
 
-			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + instanceTable + ") as instance where instance.id = " + Long.toString( instance_id) );
+			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + description.instanceTable + ") as instance where instance.id = " + Long.toString( instance_id) );
 
 
 			// is the order clause in sql part of projection or selection ?
@@ -1752,7 +1752,7 @@ class NcfGenerator
 				dimensionVar += "\"" + dimension.getName() + "\"" ;
 			}
 
-			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + dataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by " + dimensionVar  );
+			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + description.dataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by " + dimensionVar  );
 
 			NetcdfFileWriteable writer = createWritable.create();
 
@@ -1893,7 +1893,7 @@ class NcfGeneratorBuilder
 		*/
 
 		NcfGenerator generator = new NcfGenerator(
-			parser, translate, conn, createWritable, description, schema, instanceTable, dataTable, /*, dimensionVar,*/ filterExpr );
+			parser, translate, conn, createWritable, description, /*schema, instanceTable, dataTable,*/ /*, dimensionVar,*/ filterExpr );
 
 		generator.init();	 // change name initGenerator..., distinct action from assembling the dependencies of the class.
 
