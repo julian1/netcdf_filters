@@ -1,29 +1,18 @@
 
-SO MUST MAKE THE DIMS input configured. which means local file. for each one.
-	then combine. 
-
-	1. use dimension to set the order clause
-	2. use config.
-
-Make the sort dimension explicit as var if not already.
-
-- check integration test IT naming conventions. change test names to ITtimeseries with IT first 
+prototype demonstrate end-to-end filter to subset netcdf generation, with streaming 
+on prod data.
 
 ----
 PRIORITY
 - push the sql projections into the xml. 
-- need to be able to select different inputs - either surefile or command line arguments
-
-- have a timeseries, need a trajectory. failsafe to run a specific integration test... 
-
 - connection pool in the unit tests.
-- xml config.
+- check integration test IT naming conventions. change test names to ITtimeseries with IT first 
 
 ----
-prototype demonstrate end-to-end filter to subset netcdf generation, with streaming 
-on prod data.
 
 WHAT'S DONE
+
+- done get dates correctly encoded  (to enable verificiation of filter date range)
 - done sequencing the definition, and data writing phases of netcdf generation 
 - done basic subset expression parser/ 
 - done postgres dialect rewriter instance
@@ -38,37 +27,28 @@ WHAT'S DONE
 	- meaning use spring.
 - done - mvn project
 - done layer configuration into xml file
+- done need to be able to select different feature types - and command line arguments
+- done take dims from config file.. 
+- done - have a timeseries, need a trajectory. failsafe to run a specific integration test... 
+- done xml config.
+- done factor encoder strategy chooser - so it's not instantiated, or else use property setters instead of constructor for the writer. 
 
------
-	http://www.unidata.ucar.edu/software/thredds/v4.3/netcdf-java/reference/faq.html
-
-	Perhaps Easier way to create the array?  
-		Array.factory(DataType dataType, int[] shape, Object javaArray);
-			
 ---
+
 TODO
 
 - organize project sources
-- generalize to trajectory and profile
-- surefire to get code-running.
+- add support to parser/expr for geometry for spatial constraint choice
 - config to specify the tables.
-
-- compose with spring ?
-
+- compose with spring
 -  (cant but have abstracted out) do the netcdf generation in memory
 
-- get dates correctly encoded  (to enable verificiation of filter date range)
 - pass table as paraemter to encoder strategy (not sure)
-- make a tomcat service
+- make a tomcat/http service/ 
 
-- add support to parser/expr for geometry for spatial constraint choice
-- factor encoder strategy chooser - so it's not instantiated, or else use property setters instead of constructor for the writer. 
 - postgres - parametize query parameters, rather than use text
+
 - need time,lat,lon
-- try on another timeseries, / implement for trajectory
-- make it a tomcat webapp
 - zip the file stream
-- factor into classes
-- command-line driven
 
 
