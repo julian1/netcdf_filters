@@ -7,8 +7,7 @@ on prod data.
 
 ----
 PRIORITY
-- get date correctly encoded
-- connection pool in the unit tests.
+- move connection pool in the unit tests.
 
 ----
 
@@ -36,7 +35,8 @@ WHAT'S DONE
 - done factor encoder strategy chooser - so it's not instantiated, or else use property setters instead of constructor for the writer. 
 - done tidy xml examples - to be more complete .
 - push the sql projections into the xml. 
-- done check integration test IT naming conventions. change test names to ITtimeseries with IT first 
+- done done check integration test IT naming conventions. change test names to ITtimeseries with IT first 
+- done get date correctly encoded
 ---
 
 TODO

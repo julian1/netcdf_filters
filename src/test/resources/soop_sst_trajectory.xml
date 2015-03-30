@@ -12,7 +12,7 @@
   <variables>
 
     <variable>
-      <name>job_id</name>
+      <name>id</name>
       <encoder>integer</encoder>
       <attributes>
         <attribute name="_FillValue" value="99999"/>
