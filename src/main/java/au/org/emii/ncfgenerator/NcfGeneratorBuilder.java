@@ -22,6 +22,7 @@ import java.util.List; //io.BufferedInputStream;
 import java.util.HashMap; //io.BufferedInputStream;
 import java.util.Map; //io.BufferedInputStream;
 
+import java.util.Date; 
 
 import java.sql.*;
 
@@ -780,6 +781,8 @@ interface IValueEncoder
 
 	public void encode( Array A, int ima, Map<String, String> attributes, Object value );
 
+	public void init(  Map<String, String> attributes ); 
+
 	//public Class targetType();
 	public DataType targetType();
 }
@@ -794,6 +797,10 @@ class TimestampValueEncoder implements IValueEncoder
 	{
 		return DataType.FLOAT;//.class;
 	}
+
+
+
+	public void init(  Map<String, String> attributes ) { }  
 
 	// should have an init() or prepare() function?
 	// that gets called once...
@@ -812,7 +819,27 @@ class TimestampValueEncoder implements IValueEncoder
 				A.setFloat( ima, fill );
 			}
 			else if( value instanceof java.sql.Timestamp ) {
-				A.setFloat( ima, (float) 0. );
+
+				// this code is really slow...
+/*				long now = 0 ; 
+				long epoch = 0 ; 
+				{
+					now = (Long) ((java.sql.Timestamp)value) .getTime() ;
+				}
+				try { 
+					SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+					Date ts = df.parse( "1950-01-01 00:00:00 UTC"  ); 
+					epoch = (Long) ts.getTime() ;
+
+				} catch( Exception e )
+				{
+					throw new RuntimeException( "couldn't convert " + e.getMessage()  );
+				}
+
+				A.setFloat( ima, (float) now - epoch );
+*/
+
+				A.setFloat( ima, (float) 0);
 			}
 			else {
 				throw new RuntimeException( "Not a timestamp" );
@@ -834,6 +861,8 @@ class FloatValueEncoder implements IValueEncoder
 	{
 		return DataType.FLOAT;
 	}
+
+	public void init(  Map<String, String> attributes ) { }  
 
 	public void encode( Array A, int ima, Map<String, String> attributes, Object value )
 	{
@@ -865,6 +894,8 @@ class ByteValueEncoder implements IValueEncoder
 	{
 		return DataType.BYTE;
 	}
+
+	public void init(  Map<String, String> attributes ) { }  
 
 	public void encode( Array A, int ima, Map<String, String> attributes, Object value )
 	{
@@ -1082,8 +1113,8 @@ class NcfEncoder implements IVariableEncoder
 		else
 		{
 			// System.out.println( "dimIndex " + "  acc " + acc  + "  buffer " + buffer.get( acc ) );
-
 			// public void encode( Array A, int ima, Map<String, Object> attributes, Object value );
+
 			encodeValue.encode( A, acc, attributes, buffer.get( acc ) );
 
 			// A.setFloat( acc, (float) 99999. );
@@ -1115,6 +1146,8 @@ class NcfEncoder implements IVariableEncoder
 		}
 
 		Array A = Array.factory( encodeValue.targetType(), toIntArray(shape ) );
+
+		encodeValue.init( attributes );
 
 		writeValues( dimensions,  0, 0 , A );
 
@@ -1219,8 +1252,8 @@ class NodeWrapper implements Iterable<Node> {
 }
 
 
-// Change name NcfNcfDefinition
-// or definition
+// More data than a class 
+
 class NcfDefinition
 {
 	NcfDefinition(
@@ -1248,7 +1281,7 @@ class NcfDefinition
 
 
 
-class NcfDefinitionParser
+class NcfDefinitionXMLParser
 {
 	private boolean isNodeName( Node node, String name )
 	{
@@ -1569,7 +1602,7 @@ class NcfDefinitionParser
 		Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream);
 		Node node =	document.getFirstChild();
 
-		return new NcfDefinitionParser().parseDefinition( node );
+		return new NcfDefinitionXMLParser().parseDefinition( node );
 	}
 */
 
@@ -1853,7 +1886,7 @@ class NcfGeneratorBuilder
 			// new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
 			Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(config);
 			Node node =	document.getFirstChild();
-			definition = new NcfDefinitionParser().parseDefinition( node );
+			definition = new NcfDefinitionXMLParser().parseDefinition( node );
 
 		} finally {
 			config.close();
