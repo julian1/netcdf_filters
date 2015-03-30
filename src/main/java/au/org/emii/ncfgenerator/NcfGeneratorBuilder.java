@@ -213,7 +213,7 @@ class ExprProc implements IExpression
 
 // change name exprParser
 
-class Parser
+class ExprParser
 {
 
 	// the input source is actually constant. while the pos needs to be held
@@ -243,15 +243,15 @@ class Parser
 	// with whitespace at the end... parseEOF or similar?
 
 
-	public Parser() {
+	public ExprParser() {
 			// TODO don't generate this every time...
 		df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 	}
 
 	// should pass this as a dependency
-	SimpleDateFormat df;
+	final SimpleDateFormat df;
 
-	IExpression parseExpression(String s, int pos)
+	public IExpression parseExpression(String s, int pos)
 	{
 		// advance whitespace
 		while(Character.isSpaceChar(s.charAt(pos))) {
@@ -289,7 +289,7 @@ class Parser
 	// alternatively we could actually point at the symbol.
 	// ('+' a b)
 
-	ExprProc parseProc(String s, int pos)
+	private ExprProc parseProc(String s, int pos)
 	{
 		String symbol = null;
 
@@ -337,7 +337,7 @@ class Parser
 		return new ExprProc ( pos, symbol, children );
 	}
 
-	ExprSymbol parseSymbol( String s, int pos)
+	private ExprSymbol parseSymbol( String s, int pos)
 	{
 		// atom....
 		// symbol
@@ -354,7 +354,7 @@ class Parser
 	}
 
 
-	ExprTimestamp parseTimestamp( String s, int pos )
+	private ExprTimestamp parseTimestamp( String s, int pos )
 	{
 		// eg. if it looks like a date
 		int pos2 = pos;
@@ -376,7 +376,7 @@ class Parser
 		return null;
 	}
 
-	ExprInteger parseInt( String s, int pos )
+	private ExprInteger parseInt( String s, int pos )
 	{
 		int pos2 = pos;
 		while(Character.isDigit(s.charAt(pos2)))
@@ -389,7 +389,7 @@ class Parser
 		return null;
 	}
 
-	ExprLiteral parseLiteral( String s, int pos )
+	private ExprLiteral parseLiteral( String s, int pos )
 	{
 		// TODO pos2
 		int pos2 = pos;
@@ -695,6 +695,8 @@ class Timeseries3
 */
 
 
+/*
+
 class MyType
 {
 	// fill in with some default values, then over-ride with explicit configuration
@@ -721,7 +723,7 @@ class MyType
 
 	public final Object fillValue;
 }
-
+*/
 
 
 
@@ -777,7 +779,7 @@ interface IValueEncoder
 
 
 
-class EncodeTimestampValue implements IValueEncoder
+class TimestampValueEncoder implements IValueEncoder
 {
 	public DataType targetType()
 	{
@@ -816,7 +818,7 @@ class EncodeTimestampValue implements IValueEncoder
 
 
 
-class EncodeFloatValue implements IValueEncoder
+class FloatValueEncoder implements IValueEncoder
 {
 	// change name to targetType
 	public DataType targetType()
@@ -847,7 +849,7 @@ class EncodeFloatValue implements IValueEncoder
 }
 
 
-class EncodeByteValue implements IValueEncoder
+class ByteValueEncoder implements IValueEncoder
 {
 	// assumption that the Object A is a float array
 	public DataType targetType()
@@ -882,6 +884,7 @@ class EncodeByteValue implements IValueEncoder
 
 interface IAddValue
 {
+	// change name to put(), or append? and class to IBufferAddValue
 	public void addValueToBuffer( Object value );
 }
 
@@ -929,11 +932,11 @@ interface IDimension extends IAddValue
 // VERY IMPORTANT - we need to keep the dimension list separately, because they must be written
 // before the variables.
 
-class MyDimension implements IDimension
+class DimensionImpl implements IDimension
 {
 	// dimension determines sql ordering criteria.
 
-	public MyDimension( String name )
+	public DimensionImpl( String name )
 	{
 		this.name = name; // required to encode dimension
 		this.size = 0;
@@ -1277,7 +1280,7 @@ class NcfDefinitionParser
 	{
 		if( isNodeName( node, "dimension")) {
 			Map< String, String> m = parseKeyVals( node );
-			return new MyDimension( m.get( "name" ) );
+			return new DimensionImpl( m.get( "name" ) );
 		}
 		return null;
 	}
@@ -1306,13 +1309,13 @@ class NcfDefinitionParser
 		{
 			String val = nodeVal( node );
 			if( val.equals( "float")) {
-				return new EncodeFloatValue();
+				return new FloatValueEncoder();
 			}
 			else if( val.equals( "byte")) {
-				return new EncodeByteValue();
+				return new ByteValueEncoder();
 			}
 			else if( val.equals( "time")) {
-				return new EncodeTimestampValue();
+				return new TimestampValueEncoder();
 			}
 			else
 			{
@@ -1586,7 +1589,7 @@ class NcfDefinitionParser
 
 class NcfGenerator
 {
-	final Parser exprParser;				// change name to expressionParser or SelectionParser
+	final ExprParser exprParser;				// change name to expressionParser or SelectionParser
 	final IDialectTranslate translate ;		// will also load up the parameters?
 	final Connection conn;
 	final ICreateWritable createWritable; // generate a writiable
@@ -1598,7 +1601,7 @@ class NcfGenerator
 	ResultSet featureInstancesRS;
 
 	public NcfGenerator(
-		Parser exprParser,
+		ExprParser exprParser,
 		IDialectTranslate translate,
 		Connection conn,
 		ICreateWritable createWritable,
@@ -1848,7 +1851,7 @@ class NcfGeneratorBuilder
 		}
 
 		// change name exprParser
-		Parser parser = new Parser();
+		ExprParser parser = new ExprParser();
 		IDialectTranslate translate = new  PostgresDialectTranslate();
 		Connection conn = getConn();
 		ICreateWritable createWritable = new CreateWritable();
