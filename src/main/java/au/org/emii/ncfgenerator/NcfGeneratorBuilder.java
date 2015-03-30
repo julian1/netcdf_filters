@@ -1062,16 +1062,16 @@ class DimensionImpl implements IDimension
 	The final netcdf document is actully a combination of everything
 */
 
-class NcfEncoder implements IVariableEncoder
+class VariableEncoder implements IVariableEncoder
 {
 
 
-		// IVariableEncoder temp = new NcfEncoder ( "TEMP", idimensions, floatEncoder, floatAttributes ) ;
+		// IVariableEncoder temp = new VariableEncoder ( "TEMP", idimensions, floatEncoder, floatAttributes ) ;
 
-	//public NcfEncoder( String variableName, ArrayList< IVariableEncoder>  children )
+	//public VariableEncoder( String variableName, ArrayList< IVariableEncoder>  children )
 
 	//public EncoderD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IValueEncoder encodeValue )
-	public NcfEncoder( String variableName, ArrayList< IDimension> dimensions, IValueEncoder encodeValue, Map<String, String> attributes )
+	public VariableEncoder( String variableName, ArrayList< IDimension> dimensions, IValueEncoder encodeValue, Map<String, String> attributes )
 	{
 		this.variableName = variableName;
 		this.encodeValue = encodeValue;
@@ -1499,7 +1499,7 @@ class NcfDefinitionXMLParser
 			{
 				System.out.println( "whoot creating encoder " + name  );
 
-				return new NcfEncoder ( name , new ArrayList<IDimension>(dimensions.values()), encodeValue , attributes ) ;
+				return new VariableEncoder ( name , new ArrayList<IDimension>(dimensions.values()), encodeValue , attributes ) ;
 			}
 			else {
 				throw new RuntimeException("missing something  " );
