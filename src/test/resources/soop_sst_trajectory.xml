@@ -10,13 +10,15 @@
     <dimension name="TIME"/>
   </dimensions>
   <variables>
+
     <variable>
       <name>job_id</name>
-      <encoder>float</encoder>
+      <encoder>integer</encoder>
       <attributes>
-        <attribute name="_FillValue" value="99999."/>
+        <attribute name="_FillValue" value="99999"/>
       </attributes>
     </variable>
+
     <variable>
       <name>TIME</name>
       <encoder>time</encoder>

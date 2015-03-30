@@ -868,7 +868,6 @@ class TimestampValueEncoder implements IValueEncoder
 
 class FloatValueEncoder implements IValueEncoder
 {
-
 	FloatValueEncoder()
 	{
 		this.fill = 1234; 
@@ -900,14 +899,55 @@ class FloatValueEncoder implements IValueEncoder
 		else if( value instanceof Double ) {
 			A.setFloat( ima, (float)(double)(Double) value);
 		}
-		else if( value instanceof Long ) { // for testing - should remove
-			A.setFloat( ima, (float)(long)(Long) value);
-		}
 		else {
 			throw new RuntimeException( "Failed to coerce type '" + value.getClass() + "' to float" );
 		}
 	}
 }
+
+
+class IntValueEncoder implements IValueEncoder
+{
+	// Int is 32bit in Netcdf 
+
+	IntValueEncoder()
+	{
+		this.fill = 1234; 
+	}
+
+	int fill; 
+
+	// change name to targetType
+	public DataType targetType()
+	{
+		return DataType.INT;
+	}
+
+
+	public void prepare(  Map<String, String> attributes ) 
+	{ 
+		fill = Integer.valueOf( attributes.get( "_FillValue" )).intValue();
+	}  
+
+	public void encode( Array A, int ima, Object value )
+	{
+		if( value == null) {
+			A.setInt( ima, fill );
+		}
+		else if( value instanceof Integer ) { 
+			A.setInt( ima, (Integer) value);
+		}
+		else if( value instanceof Long ) { 
+			A.setInt( ima, (int)(long)(Long) value);
+		}
+		else {
+			throw new RuntimeException( "Failed to coerce type '" + value.getClass() + "' to float" );
+		}
+
+	}
+}
+
+
 
 
 class ByteValueEncoder implements IValueEncoder
@@ -1362,7 +1402,15 @@ class NcdfDefinitionXMLParser
 		if( isNodeName( node, "encoder"))
 		{
 			String val = nodeVal( node );
-			if( val.equals( "float")) {
+			if( val.equals( "integer")) {
+	
+				System.out.println( "WHOOT WHOOT WHOOT" ); 
+
+				return new IntValueEncoder();
+
+				// throw new RuntimeException( "INT" );
+			}
+			else if( val.equals( "float")) {
 				return new FloatValueEncoder();
 			}
 			else if( val.equals( "byte")) {
