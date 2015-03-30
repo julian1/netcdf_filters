@@ -213,7 +213,16 @@ class ExprProc implements IExpression
 
 // change name exprParser
 
-class ExprParser
+
+interface IExprParser
+{
+	public IExpression parseExpression(String s, int pos); 
+	
+
+}
+
+
+class ExprParser implements IExprParser
 {
 
 	// the input source is actually constant. while the pos needs to be held
@@ -1589,7 +1598,7 @@ class NcfDefinitionParser
 
 class NcfGenerator
 {
-	final ExprParser exprParser;				// change name to expressionParser or SelectionParser
+	final IExprParser exprParser;				// change name to expressionParser or SelectionParser
 	final IDialectTranslate translate ;		// will also load up the parameters?
 	final Connection conn;
 	final ICreateWritable createWritable; // generate a writiable
@@ -1601,7 +1610,7 @@ class NcfGenerator
 	ResultSet featureInstancesRS;
 
 	public NcfGenerator(
-		ExprParser exprParser,
+		IExprParser exprParser,
 		IDialectTranslate translate,
 		Connection conn,
 		ICreateWritable createWritable,
@@ -1851,7 +1860,7 @@ class NcfGeneratorBuilder
 		}
 
 		// change name exprParser
-		ExprParser parser = new ExprParser();
+		IExprParser parser = new ExprParser();
 		IDialectTranslate translate = new  PostgresDialectTranslate();
 		Connection conn = getConn();
 		ICreateWritable createWritable = new CreateWritable();
