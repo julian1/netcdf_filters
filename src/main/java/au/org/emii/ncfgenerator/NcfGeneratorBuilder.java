@@ -1000,16 +1000,16 @@ class DimensionImpl implements IDimension
 	The final netcdf document is actully a combination of everything
 */
 
-class NcdfEncoder implements IVariableEncoder
+class NcfEncoder implements IVariableEncoder
 {
 
 
-		// IVariableEncoder temp = new NcdfEncoder ( "TEMP", idimensions, floatEncoder, floatAttributes ) ;
+		// IVariableEncoder temp = new NcfEncoder ( "TEMP", idimensions, floatEncoder, floatAttributes ) ;
 
-	//public NcdfEncoder( String variableName, ArrayList< IVariableEncoder>  children )
+	//public NcfEncoder( String variableName, ArrayList< IVariableEncoder>  children )
 
 	//public EncoderD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IValueEncoder encodeValue )
-	public NcdfEncoder( String variableName, ArrayList< IDimension> dimensions, IValueEncoder encodeValue, Map<String, String> attributes )
+	public NcfEncoder( String variableName, ArrayList< IDimension> dimensions, IValueEncoder encodeValue, Map<String, String> attributes )
 	{
 		this.variableName = variableName;
 		this.encodeValue = encodeValue;
@@ -1092,7 +1092,7 @@ class NcdfEncoder implements IVariableEncoder
 	}
 
 
-	static int[] toIntArray( List<Integer> list)
+	private static int[] toIntArray( List<Integer> list)
 	{
 		// List.toArray() only supports Boxed Integers...
 		int[] ret = new int[list.size()];
@@ -1219,11 +1219,11 @@ class NodeWrapper implements Iterable<Node> {
 }
 
 
-// Change name NcdfNcdfDefinition
+// Change name NcfNcfDefinition
 // or definition
-class NcdfDefinition
+class NcfDefinition
 {
-	NcdfDefinition(
+	NcfDefinition(
 		String schema,
 		String virtualDataTable,
 		String virtualInstanceTable,
@@ -1437,7 +1437,7 @@ class NcfDefinitionParser
 			{
 				System.out.println( "whoot creating encoder " + name  );
 
-				return new NcdfEncoder ( name , new ArrayList<IDimension>(dimensions.values()), encodeValue , attributes ) ;
+				return new NcfEncoder ( name , new ArrayList<IDimension>(dimensions.values()), encodeValue , attributes ) ;
 			}
 			else {
 				throw new RuntimeException("missing something  " );
@@ -1480,7 +1480,7 @@ class NcfDefinitionParser
 
 	}
 
-	NcdfDefinition parseDefinition( Node node )
+	NcfDefinition parseDefinition( Node node )
 	{
 		// think we need a context?
 		if( isNodeName( node, "definition"))
@@ -1506,7 +1506,7 @@ class NcfDefinitionParser
 			String virtualDataTable = source.get( "virtualDataTable" );
 			String virtualInstanceTable =source.get( "virtualInstanceTable" );
 
-			return new NcdfDefinition( schema, virtualDataTable, virtualInstanceTable, dimensions, encoders );
+			return new NcfDefinition( schema, virtualDataTable, virtualInstanceTable, dimensions, encoders );
 		}
 		return null;
 	}
@@ -1563,7 +1563,7 @@ class NcfDefinitionParser
 
 	*/
 /*
-	public NcdfDefinition  test() throws Exception
+	public NcfDefinition  test() throws Exception
 	{
 		InputStream stream = new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
 		Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream);
@@ -1602,7 +1602,7 @@ class NcfGenerator
 	final IDialectTranslate translate ;		// will also load up the parameters?
 	final Connection conn;
 	final ICreateWritable createWritable; // generate a writiable
-	final NcdfDefinition definition ;
+	final NcfDefinition definition ;
 	final String filterExpr;
 
 	final int fetchSize;
@@ -1614,7 +1614,7 @@ class NcfGenerator
 		IDialectTranslate translate,
 		Connection conn,
 		ICreateWritable createWritable,
-		NcdfDefinition definition,
+		NcfDefinition definition,
 		String filterExpr
 	) {
 		this.exprParser = exprParser;
@@ -1848,7 +1848,7 @@ class NcfGeneratorBuilder
 	public NcfGenerator create ( InputStream config, String filterExpr) throws Exception
 	{
 		// not sure if definition decoding should be done here...
-		NcdfDefinition definition = null;
+		NcfDefinition definition = null;
 		try {
 			// new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
 			Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(config);
