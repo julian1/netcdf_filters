@@ -803,6 +803,7 @@ class TimestampValueEncoder implements IValueEncoder
 	// need a date unit...
 	long epoch;  // in seconds 
 	String unit; // seconds, days  
+	float fill;
 
 	public DataType targetType()
 	{
@@ -820,7 +821,6 @@ class TimestampValueEncoder implements IValueEncoder
 		}
 		unit = m.group(1);
 		String epochString = m.group(2);
-
 		try { 
 			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
 			Date ts = df.parse(epochString); 
@@ -829,28 +829,28 @@ class TimestampValueEncoder implements IValueEncoder
 		{
 			throw new RuntimeException( "couldn't extract timestamp '" + epochString + "' " + e.getMessage()  );
 		}
+
+		fill = Float.valueOf( attributes.get( "_FillValue" )).floatValue();
 	}  
 
 	// should have an init() or prepare() function?
 	public void encode( Array A, int ima, Map<String, String> attributes, Object value )
 	{
-
-		System.out.println( "****************** unit is '" + unit + "'"); 
+		// System.out.println( "****************** unit is '" + unit + "'"); 
 
 		// this needs to be changes
 		if( value == null) {
-			// cache...
-			// FIXME
-			float fill = Float.valueOf( attributes.get( "_FillValue" )).floatValue();
 			A.setFloat( ima, fill );
 		}
 		else if( value instanceof java.sql.Timestamp ) {
-			long obs = (Long) ((java.sql.Timestamp)value).getTime() ;
+			long seconds =  ((java.sql.Timestamp)value).getTime() - epoch ;
 			long ret = 123; 
 			if( unit.equals("days"))	
-				ret = (obs - epoch) / 86400; 
-//			else if ( unit.equals("seconds"))
-//				ret = (obs - epoch); 
+				ret = seconds  / 86400; 
+			else if( unit.equals("minutes"))	
+				ret = seconds  / 1440; 
+			else if ( unit.equals("seconds"))
+				ret = seconds ; 
 			else 
 				throw new RuntimeException( "unrecognized unit type " + unit );
 
