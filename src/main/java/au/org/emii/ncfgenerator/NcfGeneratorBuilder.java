@@ -814,7 +814,7 @@ class TimestampValueEncoder implements IValueEncoder
 
 	public void init(  Map<String, String> attributes ) 
 	{ 
-		System.out.println( "****************** unit " ); 
+		// System.out.println( "****************** units " + attributes.get("units") ); 
 
 		Matcher m = Pattern.compile("([a-zA-Z]*)[ ]*since[ ]*(.*)").matcher( attributes.get("units") );
 		if(!m.find())
@@ -826,7 +826,7 @@ class TimestampValueEncoder implements IValueEncoder
 		try { 
 			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
 			Date ts = df.parse(epochString); 
-			epoch = (Long) ts.getTime() ;
+			epoch = (Long) ts.getTime() / 1000 ;
 		} catch( Exception e )
 		{
 			throw new RuntimeException( "couldn't extract timestamp '" + epochString + "' " + e.getMessage()  );
@@ -845,16 +845,16 @@ class TimestampValueEncoder implements IValueEncoder
 			A.setFloat( ima, fill );
 		}
 		else if( value instanceof java.sql.Timestamp ) {
-			long seconds =  ((java.sql.Timestamp)value).getTime() - epoch ;
-			long ret = 123; 
+			long seconds =  ((java.sql.Timestamp)value).getTime() / 1000  ;
+			long ret = seconds - epoch; 
 			if( unit.equals("days"))	
-				ret = seconds  / 86400; 
+				ret /= 86400; 
 			else if( unit.equals("minutes"))	
-				ret = seconds  / 1440; 
+				ret /= 1440; 
 			else if ( unit.equals("seconds"))
-				ret = seconds ; 
+				;
 			else 
-				throw new RuntimeException( "unrecognized unit type " + unit );
+				throw new RuntimeException( "unrecognized time unit " + unit );
 
 			A.setFloat( ima, (float) ret );
 		}
