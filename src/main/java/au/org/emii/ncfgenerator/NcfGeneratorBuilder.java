@@ -1056,32 +1056,19 @@ class DimensionImpl implements IDimension
 
 
 
-
-
-/*
-	The final netcdf document is actully a combination of everything
-*/
-
 class VariableEncoder implements IVariableEncoder
 {
-
-
-		// IVariableEncoder temp = new VariableEncoder ( "TEMP", idimensions, floatEncoder, floatAttributes ) ;
-
-	//public VariableEncoder( String variableName, ArrayList< IVariableEncoder>  children )
-
-	//public EncoderD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IValueEncoder encodeValue )
-	public VariableEncoder( String variableName, ArrayList< IDimension> dimensions, IValueEncoder encodeValue, Map<String, String> attributes )
-	{
+	public VariableEncoder( 
+		String variableName, 
+		ArrayList< IDimension> dimensions, 
+		IValueEncoder encodeValue, 
+		Map<String, String> attributes 
+	) {
 		this.variableName = variableName;
 		this.encodeValue = encodeValue;
 		this.attributes = attributes;
 		this.dimensions = dimensions;
-
 		this.buffer = new ArrayList<Object>( );
-
-//		this.isDefined = false;
-//		this.dimension = null;
 	}
 
 	final String variableName;
@@ -1089,10 +1076,6 @@ class VariableEncoder implements IVariableEncoder
 	final Map<String, String>	attributes;
 	final ArrayList<IDimension>	dimensions; // change name childDimensions
 	final ArrayList<Object>		buffer;
-
-//	boolean isDefined;
-//	Dimension dimension;
-
 
 
 	/*	we can also record the table, or index of table here if we want
@@ -1283,9 +1266,9 @@ class NodeWrapper implements Iterable<Node> {
 
 // More data than a class 
 
-class NcfDefinition
+class NcdfDefinition
 {
-	NcfDefinition(
+	NcdfDefinition(
 		String schema,
 		String virtualDataTable,
 		String virtualInstanceTable,
@@ -1310,7 +1293,7 @@ class NcfDefinition
 
 
 
-class NcfDefinitionXMLParser
+class NcdfDefinitionXMLParser
 {
 	private boolean isNodeName( Node node, String name )
 	{
@@ -1542,7 +1525,7 @@ class NcfDefinitionXMLParser
 
 	}
 
-	NcfDefinition parseDefinition( Node node )
+	NcdfDefinition parseDefinition( Node node )
 	{
 		// think we need a context?
 		if( isNodeName( node, "definition"))
@@ -1568,7 +1551,7 @@ class NcfDefinitionXMLParser
 			String virtualDataTable = source.get( "virtualDataTable" );
 			String virtualInstanceTable =source.get( "virtualInstanceTable" );
 
-			return new NcfDefinition( schema, virtualDataTable, virtualInstanceTable, dimensions, encoders );
+			return new NcdfDefinition( schema, virtualDataTable, virtualInstanceTable, dimensions, encoders );
 		}
 		return null;
 	}
@@ -1625,13 +1608,13 @@ class NcfDefinitionXMLParser
 
 	*/
 /*
-	public NcfDefinition  test() throws Exception
+	public NcdfDefinition  test() throws Exception
 	{
 		InputStream stream = new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
 		Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream);
 		Node node =	document.getFirstChild();
 
-		return new NcfDefinitionXMLParser().parseDefinition( node );
+		return new NcdfDefinitionXMLParser().parseDefinition( node );
 	}
 */
 
@@ -1658,25 +1641,25 @@ class NcfDefinitionXMLParser
 	ok, lets try profile.
 */
 
-class NcfGenerator
+class NcdfGenerator
 {
 	final IExprParser exprParser;				// change name to expressionParser or SelectionParser
 	final IDialectTranslate translate ;		// will also load up the parameters?
 	final Connection conn;
 	final ICreateWritable createWritable; // generate a writiable
-	final NcfDefinition definition ;
+	final NcdfDefinition definition ;
 	final String filterExpr;
 
 	final int fetchSize;
 	IExpression selection_expr;
 	ResultSet featureInstancesRS;
 
-	public NcfGenerator(
+	public NcdfGenerator(
 		IExprParser exprParser,
 		IDialectTranslate translate,
 		Connection conn,
 		ICreateWritable createWritable,
-		NcfDefinition definition,
+		NcdfDefinition definition,
 		String filterExpr
 	) {
 		this.exprParser = exprParser;
@@ -1861,14 +1844,14 @@ class NcfGenerator
 
 // two interfaces a builder to generate, and then a class to use.
 
-class NcfGeneratorBuilder
+class NcdfGeneratorBuilder
 {
 	// default instance creation
 
 	// the assembly of all this,
 	// need to distinguish the user data from inbuild data.
 
-	public NcfGeneratorBuilder()
+	public NcdfGeneratorBuilder()
 	{
 
 	}
@@ -1907,15 +1890,15 @@ class NcfGeneratorBuilder
 		return conn;
 	}
 
-	public NcfGenerator create ( InputStream config, String filterExpr) throws Exception
+	public NcdfGenerator create ( InputStream config, String filterExpr) throws Exception
 	{
 		// not sure if definition decoding should be done here...
-		NcfDefinition definition = null;
+		NcdfDefinition definition = null;
 		try {
 			// new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
 			Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(config);
 			Node node =	document.getFirstChild();
-			definition = new NcfDefinitionXMLParser().parseDefinition( node );
+			definition = new NcdfDefinitionXMLParser().parseDefinition( node );
 
 		} finally {
 			config.close();
@@ -1930,7 +1913,7 @@ class NcfGeneratorBuilder
 		// avoiding ordering clauses that will prevent immediate stream response
 		// we're going to need to sanitize this
 
-		NcfGenerator generator = new NcfGenerator( parser, translate, conn, createWritable, definition, filterExpr );
+		NcdfGenerator generator = new NcdfGenerator( parser, translate, conn, createWritable, definition, filterExpr );
 
 		generator.init();	 // change name initGenerator..., distinct action from assembling the dependencies of the class.
 
