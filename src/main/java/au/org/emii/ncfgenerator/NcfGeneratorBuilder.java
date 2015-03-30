@@ -781,7 +781,7 @@ interface IValueEncoder
 
 	public void encode( Array A, int ima, Object value );
 
-	public void init(  Map<String, String> attributes ); 
+	public void prepare( Map<String, String> attributes ); 
 
 	//public Class targetType();
 	public DataType targetType();
@@ -812,7 +812,7 @@ class TimestampValueEncoder implements IValueEncoder
 		return DataType.FLOAT;//.class;
 	}
 
-	public void init(  Map<String, String> attributes ) 
+	public void prepare(  Map<String, String> attributes ) 
 	{ 
 		// System.out.println( "****************** units " + attributes.get("units") ); 
 
@@ -883,7 +883,7 @@ class FloatValueEncoder implements IValueEncoder
 	}
 
 
-	public void init(  Map<String, String> attributes ) 
+	public void prepare(  Map<String, String> attributes ) 
 	{ 
 		fill = Float.valueOf( attributes.get( "_FillValue" )).floatValue();
 
@@ -924,7 +924,7 @@ class ByteValueEncoder implements IValueEncoder
 		return DataType.BYTE;
 	}
 
-	public void init( Map<String, String> attributes ) 
+	public void prepare( Map<String, String> attributes ) 
 	{ 
 		// eg. no unsigned byte in java, so use integer and downcast
 		fill = (byte) Integer.decode( attributes.get( "_FillValue" ) ).intValue();
@@ -1176,7 +1176,7 @@ class NcfEncoder implements IVariableEncoder
 
 		Array A = Array.factory( encodeValue.targetType(), toIntArray(shape ) );
 
-		encodeValue.init( attributes );
+		encodeValue.prepare( attributes );
 
 		writeValues( dimensions,  0, 0 , A );
 
