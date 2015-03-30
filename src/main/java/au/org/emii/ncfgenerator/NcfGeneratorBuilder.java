@@ -788,25 +788,51 @@ interface IValueEncoder
 }
 
 
-
+// change name init() to prepare() 
 
 
 class TimestampValueEncoder implements IValueEncoder
 {
+
+	TimestampValueEncoder()
+	{
+		// all the date attribute parsing slows the code a lot so calculate once at init . 
+		this.epoch = 0;
+	}
+
+	long epoch;  
+
 	public DataType targetType()
 	{
 		return DataType.FLOAT;//.class;
 	}
 
 
+	public void init(  Map<String, String> attributes ) 
+	{ 
+		System.out.println( "****************** init " ); 
 
-	public void init(  Map<String, String> attributes ) { }  
+		String patternStr="(.*)[ ]*since[ ]*(.*)";
+		Pattern p = Pattern.compile(patternStr);
+		Matcher m = p.matcher( attributes.get("units"));
+		//System.err.println(s);
+		if(!m.find())
+		{
+			throw new RuntimeException( "couldn't parse attribute date");
+		}
+		try { 
+			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+			Date ts = df.parse(m.group(2)); 
+			epoch = (Long) ts.getTime() ;
+			System.out.println( "****************** init epoch " + epoch ); 
+
+		} catch( Exception e )
+		{
+			throw new RuntimeException( "couldn't parse timestamp " + e.getMessage()  );
+		}
+	}  
 
 	// should have an init() or prepare() function?
-	// that gets called once...
-	// this would make this thing stateful. but is not too bad, to do some initial caching stuff.
-
-
 	public void encode( Array A, int ima, Map<String, String> attributes, Object value )
 	{
 		// this needs to be changes
@@ -819,27 +845,8 @@ class TimestampValueEncoder implements IValueEncoder
 				A.setFloat( ima, fill );
 			}
 			else if( value instanceof java.sql.Timestamp ) {
-
-				// this code is really slow...
-/*				long now = 0 ; 
-				long epoch = 0 ; 
-				{
-					now = (Long) ((java.sql.Timestamp)value) .getTime() ;
-				}
-				try { 
-					SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
-					Date ts = df.parse( "1950-01-01 00:00:00 UTC"  ); 
-					epoch = (Long) ts.getTime() ;
-
-				} catch( Exception e )
-				{
-					throw new RuntimeException( "couldn't convert " + e.getMessage()  );
-				}
-
-				A.setFloat( ima, (float) now - epoch );
-*/
-
-				A.setFloat( ima, (float) 0);
+				long obs = (Long) ((java.sql.Timestamp)value) .getTime() ;
+				A.setFloat( ima, (float) (obs - epoch ) );
 			}
 			else {
 				throw new RuntimeException( "Not a timestamp" );
