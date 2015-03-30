@@ -800,61 +800,64 @@ class TimestampValueEncoder implements IValueEncoder
 		this.epoch = 0;
 	}
 
-	long epoch;  
+	// need a date unit...
+	long epoch;  // in seconds 
+	String unit; // seconds, days  
 
 	public DataType targetType()
 	{
 		return DataType.FLOAT;//.class;
 	}
 
-
 	public void init(  Map<String, String> attributes ) 
 	{ 
-		System.out.println( "****************** init " ); 
+		System.out.println( "****************** unit " ); 
 
-		String patternStr="(.*)[ ]*since[ ]*(.*)";
-		Pattern p = Pattern.compile(patternStr);
-		Matcher m = p.matcher( attributes.get("units"));
-		//System.err.println(s);
+		Matcher m = Pattern.compile("([a-zA-Z]*)[ ]*since[ ]*(.*)").matcher( attributes.get("units") );
 		if(!m.find())
 		{
 			throw new RuntimeException( "couldn't parse attribute date");
 		}
+		unit = m.group(1);
+		String epochString = m.group(2);
+
 		try { 
 			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
-			Date ts = df.parse(m.group(2)); 
+			Date ts = df.parse(epochString); 
 			epoch = (Long) ts.getTime() ;
-			System.out.println( "****************** init epoch " + epoch ); 
-
 		} catch( Exception e )
 		{
-			throw new RuntimeException( "couldn't parse timestamp " + e.getMessage()  );
+			throw new RuntimeException( "couldn't extract timestamp '" + epochString + "' " + e.getMessage()  );
 		}
 	}  
 
 	// should have an init() or prepare() function?
 	public void encode( Array A, int ima, Map<String, String> attributes, Object value )
 	{
+
+		System.out.println( "****************** unit is '" + unit + "'"); 
+
 		// this needs to be changes
-		if( attributes.get("units").equals( "days since 1950-01-01 00:00:00 UTC" ))
-		{
-			if( value == null) {
-				// cache...
-				// FIXME
-				float fill = Float.valueOf( attributes.get( "_FillValue" )).floatValue();
-				A.setFloat( ima, fill );
-			}
-			else if( value instanceof java.sql.Timestamp ) {
-				long obs = (Long) ((java.sql.Timestamp)value) .getTime() ;
-				A.setFloat( ima, (float) (obs - epoch ) );
-			}
-			else {
-				throw new RuntimeException( "Not a timestamp" );
-			}
+		if( value == null) {
+			// cache...
+			// FIXME
+			float fill = Float.valueOf( attributes.get( "_FillValue" )).floatValue();
+			A.setFloat( ima, fill );
+		}
+		else if( value instanceof java.sql.Timestamp ) {
+			long obs = (Long) ((java.sql.Timestamp)value).getTime() ;
+			long ret = 123; 
+			if( unit.equals("days"))	
+				ret = (obs - epoch) / 86400; 
+//			else if ( unit.equals("seconds"))
+//				ret = (obs - epoch); 
+			else 
+				throw new RuntimeException( "unrecognized unit type " + unit );
+
+			A.setFloat( ima, (float) ret );
 		}
 		else {
-			// only limited case
-			throw new RuntimeException( "Bad date unit" );
+			throw new RuntimeException( "Not a timestamp" );
 		}
 	}
 }
