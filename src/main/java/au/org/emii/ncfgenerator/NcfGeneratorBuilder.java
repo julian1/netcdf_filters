@@ -777,23 +777,17 @@ interface IVariableEncoderD1 extends IVariableEncoder
 
 interface IValueEncoder
 {
-	// Change name to ValueEncoder Timestamp
+	// Netcdf value encoder from java/sql types
 
 	public void encode( Array A, int ima, Object value );
-
 	public void prepare( Map<String, String> attributes ); 
-
-	//public Class targetType();
 	public DataType targetType();
 }
 
 
-// change name init() to prepare() 
-
 
 class TimestampValueEncoder implements IValueEncoder
 {
-
 	TimestampValueEncoder()
 	{
 		// all the date attribute parsing slows the code a lot so calculate once at init . 
@@ -809,10 +803,10 @@ class TimestampValueEncoder implements IValueEncoder
 
 	public DataType targetType()
 	{
-		return DataType.FLOAT;//.class;
+		return DataType.FLOAT;
 	}
 
-	public void prepare(  Map<String, String> attributes ) 
+	public void prepare( Map<String, String> attributes ) 
 	{ 
 		// System.out.println( "****************** units " + attributes.get("units") ); 
 
@@ -875,14 +869,12 @@ class FloatValueEncoder implements IValueEncoder
 
 	float fill; 
 
-	// change name to targetType
 	public DataType targetType()
 	{
 		return DataType.FLOAT;
 	}
 
-
-	public void prepare(  Map<String, String> attributes ) 
+	public void prepare( Map<String, String> attributes ) 
 	{ 
 		fill = Float.valueOf( attributes.get( "_FillValue" )).floatValue();
 
@@ -917,14 +909,12 @@ class IntValueEncoder implements IValueEncoder
 
 	int fill; 
 
-	// change name to targetType
 	public DataType targetType()
 	{
 		return DataType.INT;
 	}
 
-
-	public void prepare(  Map<String, String> attributes ) 
+	public void prepare( Map<String, String> attributes ) 
 	{ 
 		fill = Integer.valueOf( attributes.get( "_FillValue" )).intValue();
 	}  
@@ -943,11 +933,8 @@ class IntValueEncoder implements IValueEncoder
 		else {
 			throw new RuntimeException( "Failed to coerce type '" + value.getClass() + "' to float" );
 		}
-
 	}
 }
-
-
 
 
 class ByteValueEncoder implements IValueEncoder
