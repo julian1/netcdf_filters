@@ -1,14 +1,14 @@
 
+Important - We don't need to get rid of the example parsers. just ensure it's puggable 
+
+----
 prototype demonstrate end-to-end filter to subset netcdf generation, with streaming 
 on prod data.
 
 ----
 PRIORITY
-- tidy xml examples - to be more complete .
 - get date correctly encoded
-- push the sql projections into the xml. 
 - connection pool in the unit tests.
-- check integration test IT naming conventions. change test names to ITtimeseries with IT first 
 
 ----
 
@@ -34,12 +34,15 @@ WHAT'S DONE
 - done - have a timeseries, need a trajectory. failsafe to run a specific integration test... 
 - done xml config.
 - done factor encoder strategy chooser - so it's not instantiated, or else use property setters instead of constructor for the writer. 
-
+- done tidy xml examples - to be more complete .
+- push the sql projections into the xml. 
+- done check integration test IT naming conventions. change test names to ITtimeseries with IT first 
 ---
 
 TODO
 
 - organize project sources
+- postgres - parametize query parameters, rather than use text, injection attack
 - add support to parser/expr for geometry for spatial constraint choice
 - config to specify the tables.
 - compose with spring
@@ -47,10 +50,5 @@ TODO
 
 - pass table as paraemter to encoder strategy (not sure)
 - make a tomcat/http service/ 
-
-- postgres - parametize query parameters, rather than use text
-
-- need time,lat,lon
 - zip the file stream
-
 

@@ -22,6 +22,7 @@ import java.util.List; //io.BufferedInputStream;
 import java.util.HashMap; //io.BufferedInputStream;
 import java.util.Map; //io.BufferedInputStream;
 
+import java.util.Date; 
 
 import java.sql.*;
 
@@ -213,7 +214,16 @@ class ExprProc implements IExpression
 
 // change name exprParser
 
-class Parser
+
+interface IExprParser
+{
+	public IExpression parseExpression(String s, int pos); 
+	
+
+}
+
+
+class ExprParser implements IExprParser
 {
 
 	// the input source is actually constant. while the pos needs to be held
@@ -243,15 +253,15 @@ class Parser
 	// with whitespace at the end... parseEOF or similar?
 
 
-	public Parser() {
+	public ExprParser() {
 			// TODO don't generate this every time...
 		df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 	}
 
 	// should pass this as a dependency
-	SimpleDateFormat df;
+	final SimpleDateFormat df;
 
-	IExpression parseExpression(String s, int pos)
+	public IExpression parseExpression(String s, int pos)
 	{
 		// advance whitespace
 		while(Character.isSpaceChar(s.charAt(pos))) {
@@ -289,7 +299,7 @@ class Parser
 	// alternatively we could actually point at the symbol.
 	// ('+' a b)
 
-	ExprProc parseProc(String s, int pos)
+	private ExprProc parseProc(String s, int pos)
 	{
 		String symbol = null;
 
@@ -337,7 +347,7 @@ class Parser
 		return new ExprProc ( pos, symbol, children );
 	}
 
-	ExprSymbol parseSymbol( String s, int pos)
+	private ExprSymbol parseSymbol( String s, int pos)
 	{
 		// atom....
 		// symbol
@@ -354,7 +364,7 @@ class Parser
 	}
 
 
-	ExprTimestamp parseTimestamp( String s, int pos )
+	private ExprTimestamp parseTimestamp( String s, int pos )
 	{
 		// eg. if it looks like a date
 		int pos2 = pos;
@@ -376,7 +386,7 @@ class Parser
 		return null;
 	}
 
-	ExprInteger parseInt( String s, int pos )
+	private ExprInteger parseInt( String s, int pos )
 	{
 		int pos2 = pos;
 		while(Character.isDigit(s.charAt(pos2)))
@@ -389,7 +399,7 @@ class Parser
 		return null;
 	}
 
-	ExprLiteral parseLiteral( String s, int pos )
+	private ExprLiteral parseLiteral( String s, int pos )
 	{
 		// TODO pos2
 		int pos2 = pos;
@@ -695,6 +705,8 @@ class Timeseries3
 */
 
 
+/*
+
 class MyType
 {
 	// fill in with some default values, then over-ride with explicit configuration
@@ -721,7 +733,7 @@ class MyType
 
 	public final Object fillValue;
 }
-
+*/
 
 
 
@@ -763,72 +775,123 @@ interface IVariableEncoderD1 extends IVariableEncoder
 
 
 
-interface IEncodeValue
+interface IValueEncoder
 {
-	// Change name to ValueEncoderTimestamp
+	// Change name to ValueEncoder Timestamp
 
-	public void encode( Array A, int ima, Map<String, String> attributes, Object value );
+	public void encode( Array A, int ima, Object value );
+
+	public void init(  Map<String, String> attributes ); 
 
 	//public Class targetType();
 	public DataType targetType();
 }
 
 
+// change name init() to prepare() 
 
 
-
-class EncodeTimestampValue implements IEncodeValue
+class TimestampValueEncoder implements IValueEncoder
 {
+
+	TimestampValueEncoder()
+	{
+		// all the date attribute parsing slows the code a lot so calculate once at init . 
+		this.epoch = 0;
+		this.unit = null;
+		this.fill = 1234;
+	}
+
+	// need a date unit...
+	long epoch;  // in seconds 
+	String unit; // seconds, days  
+	float fill;
+
 	public DataType targetType()
 	{
 		return DataType.FLOAT;//.class;
 	}
 
-	// should have an init() or prepare() function?
-	// that gets called once...
-	// this would make this thing stateful. but is not too bad, to do some initial caching stuff.
+	public void init(  Map<String, String> attributes ) 
+	{ 
+		System.out.println( "****************** unit " ); 
 
-
-	public void encode( Array A, int ima, Map<String, String> attributes, Object value )
-	{
-		// this needs to be changes
-		if( attributes.get("units").equals( "days since 1950-01-01 00:00:00 UTC" ))
+		Matcher m = Pattern.compile("([a-zA-Z]*)[ ]*since[ ]*(.*)").matcher( attributes.get("units") );
+		if(!m.find())
 		{
-			if( value == null) {
-				// cache...
-				// FIXME
-				float fill = Float.valueOf( attributes.get( "_FillValue" )).floatValue();
-				A.setFloat( ima, fill );
-			}
-			else if( value instanceof java.sql.Timestamp ) {
-				A.setFloat( ima, (float) 0. );
-			}
-			else {
-				throw new RuntimeException( "Not a timestamp" );
-			}
+			throw new RuntimeException( "couldn't parse attribute date");
+		}
+		unit = m.group(1);
+		String epochString = m.group(2);
+		try { 
+			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+			Date ts = df.parse(epochString); 
+			epoch = (Long) ts.getTime() ;
+		} catch( Exception e )
+		{
+			throw new RuntimeException( "couldn't extract timestamp '" + epochString + "' " + e.getMessage()  );
+		}
+
+		fill = Float.valueOf( attributes.get( "_FillValue" )).floatValue();
+	}  
+
+	// should have an init() or prepare() function?
+	public void encode( Array A, int ima,  Object value )
+	{
+		// System.out.println( "****************** unit is '" + unit + "'"); 
+
+		// this needs to be changes
+		if( value == null) {
+			A.setFloat( ima, fill );
+		}
+		else if( value instanceof java.sql.Timestamp ) {
+			long seconds =  ((java.sql.Timestamp)value).getTime() - epoch ;
+			long ret = 123; 
+			if( unit.equals("days"))	
+				ret = seconds  / 86400; 
+			else if( unit.equals("minutes"))	
+				ret = seconds  / 1440; 
+			else if ( unit.equals("seconds"))
+				ret = seconds ; 
+			else 
+				throw new RuntimeException( "unrecognized unit type " + unit );
+
+			A.setFloat( ima, (float) ret );
 		}
 		else {
-			// only limited case
-			throw new RuntimeException( "Bad date unit" );
+			throw new RuntimeException( "Not a timestamp" );
 		}
 	}
 }
 
 
 
-class EncodeFloatValue implements IEncodeValue
+class FloatValueEncoder implements IValueEncoder
 {
+
+	FloatValueEncoder()
+	{
+		this.fill = 1234; 
+	}
+
+	float fill; 
+
 	// change name to targetType
 	public DataType targetType()
 	{
 		return DataType.FLOAT;
 	}
 
-	public void encode( Array A, int ima, Map<String, String> attributes, Object value )
+
+	public void init(  Map<String, String> attributes ) 
+	{ 
+		fill = Float.valueOf( attributes.get( "_FillValue" )).floatValue();
+
+	}  
+
+	public void encode( Array A, int ima, Object value )
 	{
 		if( value == null) {
-			// cache...
-			float fill = Float.valueOf( attributes.get( "_FillValue" )).floatValue();
 			A.setFloat( ima, fill );
 		}
 		else if( value instanceof Float ) {
@@ -847,19 +910,29 @@ class EncodeFloatValue implements IEncodeValue
 }
 
 
-class EncodeByteValue implements IEncodeValue
+class ByteValueEncoder implements IValueEncoder
 {
+	ByteValueEncoder()
+	{
+		this.fill = 0x0;	
+	}
+	byte fill;  
+
 	// assumption that the Object A is a float array
 	public DataType targetType()
 	{
 		return DataType.BYTE;
 	}
 
-	public void encode( Array A, int ima, Map<String, String> attributes, Object value )
+	public void init( Map<String, String> attributes ) 
+	{ 
+		// eg. no unsigned byte in java, so use integer and downcast
+		fill = (byte) Integer.decode( attributes.get( "_FillValue" ) ).intValue();
+	}  
+
+	public void encode( Array A, int ima, Object value )
 	{
 		if( value == null) {
-			// cache...
-			byte fill = Byte.valueOf( attributes.get( "_FillValue" )).byteValue();
 			A.setByte( ima, fill );
 		}
 		else if(value instanceof Byte)
@@ -882,6 +955,7 @@ class EncodeByteValue implements IEncodeValue
 
 interface IAddValue
 {
+	// change name to put(), or append? and class to IBufferAddValue
 	public void addValueToBuffer( Object value );
 }
 
@@ -929,11 +1003,11 @@ interface IDimension extends IAddValue
 // VERY IMPORTANT - we need to keep the dimension list separately, because they must be written
 // before the variables.
 
-class MyDimension implements IDimension
+class DimensionImpl implements IDimension
 {
 	// dimension determines sql ordering criteria.
 
-	public MyDimension( String name )
+	public DimensionImpl( String name )
 	{
 		this.name = name; // required to encode dimension
 		this.size = 0;
@@ -988,16 +1062,16 @@ class MyDimension implements IDimension
 	The final netcdf document is actully a combination of everything
 */
 
-class MyEncoder implements IVariableEncoder
+class NcfEncoder implements IVariableEncoder
 {
 
 
-		// IVariableEncoder temp = new MyEncoder ( "TEMP", idimensions, floatEncoder, floatAttributes ) ;
+		// IVariableEncoder temp = new NcfEncoder ( "TEMP", idimensions, floatEncoder, floatAttributes ) ;
 
-	//public MyEncoder( String variableName, ArrayList< IVariableEncoder>  children )
+	//public NcfEncoder( String variableName, ArrayList< IVariableEncoder>  children )
 
-	//public EncoderD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IEncodeValue encodeValue )
-	public MyEncoder( String variableName, ArrayList< IDimension> dimensions, IEncodeValue encodeValue, Map<String, String> attributes )
+	//public EncoderD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IValueEncoder encodeValue )
+	public NcfEncoder( String variableName, ArrayList< IDimension> dimensions, IValueEncoder encodeValue, Map<String, String> attributes )
 	{
 		this.variableName = variableName;
 		this.encodeValue = encodeValue;
@@ -1011,7 +1085,7 @@ class MyEncoder implements IVariableEncoder
 	}
 
 	final String variableName;
-	final IEncodeValue			encodeValue;
+	final IValueEncoder			encodeValue;
 	final Map<String, String>	attributes;
 	final ArrayList<IDimension>	dimensions; // change name childDimensions
 	final ArrayList<Object>		buffer;
@@ -1070,17 +1144,16 @@ class MyEncoder implements IVariableEncoder
 		else
 		{
 			// System.out.println( "dimIndex " + "  acc " + acc  + "  buffer " + buffer.get( acc ) );
-
 			// public void encode( Array A, int ima, Map<String, Object> attributes, Object value );
-			encodeValue.encode( A, acc, attributes, buffer.get( acc ) );
+
+			encodeValue.encode( A, acc, buffer.get( acc ) );
 
 			// A.setFloat( acc, (float) 99999. );
 		}
 
 	}
 
-
-	static int[] toIntArray( List<Integer> list)
+	private static int[] toIntArray( List<Integer> list)
 	{
 		// List.toArray() only supports Boxed Integers...
 		int[] ret = new int[list.size()];
@@ -1088,7 +1161,6 @@ class MyEncoder implements IVariableEncoder
 			ret[i] = list.get(i);
 		return ret;
 	}
-
 
 	public void finish( NetcdfFileWriteable writer) throws Exception
 	{
@@ -1103,6 +1175,8 @@ class MyEncoder implements IVariableEncoder
 		}
 
 		Array A = Array.factory( encodeValue.targetType(), toIntArray(shape ) );
+
+		encodeValue.init( attributes );
 
 		writeValues( dimensions,  0, 0 , A );
 
@@ -1207,26 +1281,27 @@ class NodeWrapper implements Iterable<Node> {
 }
 
 
-// Change name NcdfDescription
-class Description
+// More data than a class 
+
+class NcfDefinition
 {
-	Description(
+	NcfDefinition(
 		String schema,
-		String dataTable,
-		String instanceTable,
+		String virtualDataTable,
+		String virtualInstanceTable,
 		Map< String, IDimension> dimensions,
 		Map< String, IVariableEncoder> encoders
 	) {
 		this.schema = schema;
-		this.dataTable = dataTable;
-		this.instanceTable = instanceTable;
+		this.virtualDataTable = virtualDataTable;
+		this.virtualInstanceTable = virtualInstanceTable;
 		this.dimensions = dimensions;
 		this.encoders = encoders;
 	}
 
 	final String schema;
-	final String dataTable;
-	final String instanceTable;
+	final String virtualDataTable;
+	final String virtualInstanceTable;
 	final Map< String, IDimension> dimensions;
 	final Map< String, IVariableEncoder> encoders;
 }
@@ -1235,7 +1310,7 @@ class Description
 
 
 
-class NcfDescriptionParser
+class NcfDefinitionXMLParser
 {
 	private boolean isNodeName( Node node, String name )
 	{
@@ -1276,7 +1351,7 @@ class NcfDescriptionParser
 	{
 		if( isNodeName( node, "dimension")) {
 			Map< String, String> m = parseKeyVals( node );
-			return new MyDimension( m.get( "name" ) );
+			return new DimensionImpl( m.get( "name" ) );
 		}
 		return null;
 	}
@@ -1299,19 +1374,19 @@ class NcfDescriptionParser
 	}
 
 
-	private IEncodeValue parseEncoder( Node node)
+	private IValueEncoder parseEncoder( Node node)
 	{
 		if( isNodeName( node, "encoder"))
 		{
 			String val = nodeVal( node );
 			if( val.equals( "float")) {
-				return new EncodeFloatValue();
+				return new FloatValueEncoder();
 			}
 			else if( val.equals( "byte")) {
-				return new EncodeByteValue();
+				return new ByteValueEncoder();
 			}
 			else if( val.equals( "time")) {
-				return new EncodeTimestampValue();
+				return new TimestampValueEncoder();
 			}
 			else
 			{
@@ -1395,7 +1470,7 @@ class NcfDescriptionParser
 	{
 		String name = null;
 		Map< String, IDimension> dimensions = null;  // this is wrong. we should be looking it up by name.
-		IEncodeValue encodeValue = null;
+		IValueEncoder encodeValue = null;
 		Map< String, String> attributes = null;
 
 		if( isNodeName( node, "variable"))
@@ -1424,7 +1499,7 @@ class NcfDescriptionParser
 			{
 				System.out.println( "whoot creating encoder " + name  );
 
-				return new MyEncoder ( name , new ArrayList<IDimension>(dimensions.values()), encodeValue , attributes ) ;
+				return new NcfEncoder ( name , new ArrayList<IDimension>(dimensions.values()), encodeValue , attributes ) ;
 			}
 			else {
 				throw new RuntimeException("missing something  " );
@@ -1467,7 +1542,7 @@ class NcfDescriptionParser
 
 	}
 
-	Description parseDefinition( Node node )
+	NcfDefinition parseDefinition( Node node )
 	{
 		// think we need a context?
 		if( isNodeName( node, "definition"))
@@ -1490,10 +1565,10 @@ class NcfDescriptionParser
 			}
 
 			String schema = source.get( "schema" );
-			String dataTable = source.get( "dataTable" );
-			String instanceTable =source.get( "instanceTable" );
+			String virtualDataTable = source.get( "virtualDataTable" );
+			String virtualInstanceTable =source.get( "virtualInstanceTable" );
 
-			return new Description( schema, dataTable, instanceTable, dimensions, encoders );
+			return new NcfDefinition( schema, virtualDataTable, virtualInstanceTable, dimensions, encoders );
 		}
 		return null;
 	}
@@ -1550,13 +1625,13 @@ class NcfDescriptionParser
 
 	*/
 /*
-	public Description  test() throws Exception
+	public NcfDefinition  test() throws Exception
 	{
 		InputStream stream = new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
 		Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream);
 		Node node =	document.getFirstChild();
 
-		return new NcfDescriptionParser().parseDefinition( node );
+		return new NcfDefinitionXMLParser().parseDefinition( node );
 	}
 */
 
@@ -1585,11 +1660,11 @@ class NcfDescriptionParser
 
 class NcfGenerator
 {
-	final Parser exprParser;				// change name to expressionParser or SelectionParser
+	final IExprParser exprParser;				// change name to expressionParser or SelectionParser
 	final IDialectTranslate translate ;		// will also load up the parameters?
 	final Connection conn;
 	final ICreateWritable createWritable; // generate a writiable
-	final Description description ;
+	final NcfDefinition definition ;
 	final String filterExpr;
 
 	final int fetchSize;
@@ -1597,18 +1672,18 @@ class NcfGenerator
 	ResultSet featureInstancesRS;
 
 	public NcfGenerator(
-		Parser exprParser,
+		IExprParser exprParser,
 		IDialectTranslate translate,
 		Connection conn,
 		ICreateWritable createWritable,
-		Description description,
+		NcfDefinition definition,
 		String filterExpr
 	) {
 		this.exprParser = exprParser;
 		this.translate = translate; // sqlEncode.. dialect... specialization
 		this.conn = conn;
 		this.createWritable = createWritable;
-		this.description = description;
+		this.definition = definition;
 		this.filterExpr = filterExpr;
 
 		fetchSize = 1000;
@@ -1624,9 +1699,9 @@ class NcfGenerator
 			throw new RuntimeException( "failed to parse expression" );
 		}
 
-		System.out.println( "setting search_path to " + description.schema );
+		System.out.println( "setting search_path to " + definition.schema );
 
-		PreparedStatement s = conn.prepareStatement("set search_path='" + description.schema + "'");
+		PreparedStatement s = conn.prepareStatement("set search_path='" + definition.schema + "'");
 		// PreparedStatement s = conn.prepareStatement("set search_path='" + schema + "',public");
 		// PreparedStatement s = conn.prepareStatement("set search_path=" + schema + ",public");
 		s.execute();
@@ -1634,7 +1709,7 @@ class NcfGenerator
 
 		String selection = translate.process( selection_expr);
 
-		String query = "SELECT distinct data.instance_id  FROM (" + description.dataTable + ") as data where " + selection + ";" ;
+		String query = "SELECT distinct data.instance_id  FROM (" + definition.virtualDataTable + ") as data where " + selection + ";" ;
 		System.out.println( "first query " + query  );
 
 		PreparedStatement stmt = conn.prepareStatement( query );
@@ -1726,14 +1801,14 @@ class NcfGenerator
 
 			String selection = translate.process( selection_expr); // we ought to be caching the specific query ???
 
-			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + description.instanceTable + ") as instance where instance.id = " + Long.toString( instance_id) );
+			populateValues( definition.dimensions, definition.encoders, "SELECT * FROM (" + definition.virtualInstanceTable + ") as instance where instance.id = " + Long.toString( instance_id) );
 
 
 			// is the order clause in sql part of projection or selection ?
 
 			// eg. concat "," $ map (\x -> x.getName) dimensions.values ...
 			String dimensionVar = "";
-			for( IDimension dimension : description.dimensions.values() )
+			for( IDimension dimension : definition.dimensions.values() )
 			{
 				if( ! dimensionVar.equals("")){
 					dimensionVar += ",";
@@ -1741,24 +1816,24 @@ class NcfGenerator
 				dimensionVar += "\"" + dimension.getName() + "\"" ;
 			}
 
-			populateValues( description.dimensions, description.encoders, "SELECT * FROM (" + description.dataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by " + dimensionVar  );
+			populateValues( definition.dimensions, definition.encoders, "SELECT * FROM (" + definition.virtualDataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by " + dimensionVar  );
 
 			NetcdfFileWriteable writer = createWritable.create();
 
 
 
 
-			for ( IDimension dimension: description.dimensions.values()) {
+			for ( IDimension dimension: definition.dimensions.values()) {
 				dimension.define(writer);
 			}
 
-			for ( IVariableEncoder encoder: description.encoders.values()) {
+			for ( IVariableEncoder encoder: definition.encoders.values()) {
 				encoder.define( writer );
 			}
 			// finish netcdf definition
 			writer.create();
 
-			for ( IVariableEncoder encoder: description.encoders.values()) {
+			for ( IVariableEncoder encoder: definition.encoders.values()) {
 				// change name writeValues
 				encoder.finish( writer );
 			}
@@ -1834,20 +1909,20 @@ class NcfGeneratorBuilder
 
 	public NcfGenerator create ( InputStream config, String filterExpr) throws Exception
 	{
-		// not sure if description decoding should be done here...
-		Description description = null;
+		// not sure if definition decoding should be done here...
+		NcfDefinition definition = null;
 		try {
 			// new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
 			Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(config);
 			Node node =	document.getFirstChild();
-			description = new NcfDescriptionParser().parseDefinition( node );
+			definition = new NcfDefinitionXMLParser().parseDefinition( node );
 
 		} finally {
 			config.close();
 		}
 
 		// change name exprParser
-		Parser parser = new Parser();
+		IExprParser parser = new ExprParser();
 		IDialectTranslate translate = new  PostgresDialectTranslate();
 		Connection conn = getConn();
 		ICreateWritable createWritable = new CreateWritable();
@@ -1855,7 +1930,7 @@ class NcfGeneratorBuilder
 		// avoiding ordering clauses that will prevent immediate stream response
 		// we're going to need to sanitize this
 
-		NcfGenerator generator = new NcfGenerator( parser, translate, conn, createWritable, description, filterExpr );
+		NcfGenerator generator = new NcfGenerator( parser, translate, conn, createWritable, definition, filterExpr );
 
 		generator.init();	 // change name initGenerator..., distinct action from assembling the dependencies of the class.
 

@@ -21,7 +21,6 @@ public class MyIT {
 
     @Before
     public void mergeIT() {
-		System.out.println( "**** MYIT BEFORE " );
 
 		// setup db connection? 
     }   
@@ -41,7 +40,7 @@ public class MyIT {
     @Test
     public void anmn_nrs_ctd_profiles_IT() throws Exception {
 
-		System.out.println( "**** whoot INTEGRATION 1 **** " );
+		System.out.println( "**** anmn_nrs_ctd_profiles **** " );
 		// exception handling needs to be improved a lot...
 		// assertTrue(123 == 123 );
 		// assertTrue(456 == 456 );
