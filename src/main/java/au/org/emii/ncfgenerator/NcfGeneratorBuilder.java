@@ -1641,7 +1641,7 @@ class NcdfDefinitionXMLParser
 	ok, lets try profile.
 */
 
-class NcdfGenerator
+class NcdfEncoder
 {
 	final IExprParser exprParser;				// change name to expressionParser or SelectionParser
 	final IDialectTranslate translate ;		// will also load up the parameters?
@@ -1654,7 +1654,7 @@ class NcdfGenerator
 	IExpression selection_expr;
 	ResultSet featureInstancesRS;
 
-	public NcdfGenerator(
+	public NcdfEncoder(
 		IExprParser exprParser,
 		IDialectTranslate translate,
 		Connection conn,
@@ -1674,7 +1674,7 @@ class NcdfGenerator
 		selection_expr = null;
 	}
 
-	public void init() throws Exception
+	public void prepare() throws Exception
 	{
 		selection_expr = exprParser.parseExpression( filterExpr, 0);
 		// bad, should return expr or throw
@@ -1844,14 +1844,14 @@ class NcdfGenerator
 
 // two interfaces a builder to generate, and then a class to use.
 
-class NcdfGeneratorBuilder
+class NcdfEncoderBuilder
 {
 	// default instance creation
 
 	// the assembly of all this,
 	// need to distinguish the user data from inbuild data.
 
-	public NcdfGeneratorBuilder()
+	public NcdfEncoderBuilder()
 	{
 
 	}
@@ -1890,8 +1890,10 @@ class NcdfGeneratorBuilder
 		return conn;
 	}
 
-	public NcdfGenerator create ( InputStream config, String filterExpr) throws Exception
+	public NcdfEncoder create ( InputStream config, String filterExpr) throws Exception
 	{
+		// not sure if the expression parsing shouldn't go in here?
+
 		// not sure if definition decoding should be done here...
 		NcdfDefinition definition = null;
 		try {
@@ -1913,9 +1915,9 @@ class NcdfGeneratorBuilder
 		// avoiding ordering clauses that will prevent immediate stream response
 		// we're going to need to sanitize this
 
-		NcdfGenerator generator = new NcdfGenerator( parser, translate, conn, createWritable, definition, filterExpr );
+		NcdfEncoder generator = new NcdfEncoder( parser, translate, conn, createWritable, definition, filterExpr );
 
-		generator.init();	 // change name initGenerator..., distinct action from assembling the dependencies of the class.
+		generator.prepare();	 // change name initGenerator..., distinct action from assembling the dependencies of the class.
 
 		return generator ;
 	}
