@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern ;
 import java.util.regex.Matcher;
-import java.util.Properties;
 import java.util.AbstractMap.SimpleImmutableEntry;
 
 import java.sql.*;
@@ -1335,82 +1334,86 @@ class NcdfEncoder
 
 	public NetcdfFileWriteable get() throws Exception
 	{
-		if( featureInstancesRS.next()) {
+		// TODO should just return a readable IStream, client shouldn't care that it's netcdf type. 
 
-
-			// munge
-			long instance_id = -1234;
-			Object o = featureInstancesRS.getObject(1);
-			Class clazz = o.getClass();
-			if( clazz.equals( Integer.class )) {
-				instance_id = (long)(Integer)o;
-			}
-			else if( clazz.equals( Long.class )) {
-				instance_id = (long)(Long)o;
-			} else {
-				throw new RuntimeException( "Can't convert intance_id type to integer" );
-			}
-
-	//		long instance_id = (long)(Long) featureInstancesRS.getObject(1);
-
-			System.out.println( "whoot get(), instance_id is " + instance_id );
-
-			String selection = translate.process( selection_expr); // we ought to be caching the specific query ???
-
-			populateValues( definition.dimensions, definition.encoders, 
-				"SELECT * FROM (" + definition.virtualInstanceTable + ") as instance where instance.id = " + Long.toString( instance_id) );
-
-
-			// is the order clause in sql part of projection or selection ?
-
-			// eg. concat "," $ map (\x -> x.getName) dimensions.values ...
-			String dimensionVar = "";
-			for( IDimension dimension : definition.dimensions.values() )
+		try { 
+			if( featureInstancesRS.next()) 
 			{
-				if( ! dimensionVar.equals("")){
-					dimensionVar += ",";
+				// munge
+				long instance_id = -1234;
+				Object o = featureInstancesRS.getObject(1);
+				Class clazz = o.getClass();
+				if( clazz.equals( Integer.class )) {
+					instance_id = (long)(Integer)o;
 				}
-				dimensionVar += "\"" + dimension.getName() + "\"" ;
+				else if( clazz.equals( Long.class )) {
+					instance_id = (long)(Long)o;
+				} else {
+					throw new RuntimeException( "Can't convert intance_id type to integer" );
+				}
+
+				System.out.println( "whoot get(), instance_id is " + instance_id );
+
+				String selection = translate.process( selection_expr); // we ought to be caching the specific query ???
+
+				populateValues( definition.dimensions, definition.encoders, 
+					"SELECT * FROM (" + definition.virtualInstanceTable + ") as instance where instance.id = " + Long.toString( instance_id) );
+
+
+				// is the order clause in sql part of projection or selection ?
+
+				// eg. concat "," $ map (\x -> x.getName) dimensions.values ...
+				String dimensionVar = "";
+				for( IDimension dimension : definition.dimensions.values() )
+				{
+					if( ! dimensionVar.equals("")){
+						dimensionVar += ",";
+					}
+					dimensionVar += "\"" + dimension.getName() + "\"" ;
+				}
+
+				populateValues( definition.dimensions, definition.encoders, 
+					"SELECT * FROM (" + definition.virtualDataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by " + dimensionVar  );
+
+				NetcdfFileWriteable writer = createWritable.create();
+
+
+				for ( IDimension dimension: definition.dimensions.values()) {
+					dimension.define(writer);
+				}
+
+				for ( IVariableEncoder encoder: definition.encoders.values()) {
+					encoder.define( writer );
+				}
+				// finish netcdf definition
+				writer.create();
+
+				for ( IVariableEncoder encoder: definition.encoders.values()) {
+					// change name writeValues
+					encoder.finish( writer );
+				}
+				// write the file
+				writer.close();
+
+				// TODO must close other record sets.
+				// and if early termination.
+				//		return null;
+
+				// TODO we should be returning a filestream here...
+				// the caller doesn't care that it's a netcdf
+
+				return writer;
 			}
-
-			populateValues( definition.dimensions, definition.encoders, 
-				"SELECT * FROM (" + definition.virtualDataTable + ") as data where " + selection +  " and data.instance_id = " + Long.toString( instance_id) + " order by " + dimensionVar  );
-
-			NetcdfFileWriteable writer = createWritable.create();
-
-
-			for ( IDimension dimension: definition.dimensions.values()) {
-				dimension.define(writer);
+			else {
+				// no more netcdfs
+				conn.close();
+				return null;
 			}
-
-			for ( IVariableEncoder encoder: definition.encoders.values()) {
-				encoder.define( writer );
-			}
-			// finish netcdf definition
-			writer.create();
-
-			for ( IVariableEncoder encoder: definition.encoders.values()) {
-				// change name writeValues
-				encoder.finish( writer );
-			}
-			// write the file
-			writer.close();
-
-			// TODO must close other record sets.
-			// and if early termination.
-			//		return null;
-
-			// TODO we should be returning a filestream here...
-			// the caller doesn't care that it's a netcdf
-
-			return writer;
-		}
-		else {
-
-			// TODO finally close close close !!!@!
-
+		} catch ( Exception e ) {
+			System.out.println( "Opps " + e.getMessage() ); 
+			conn.close();
 			return null;
-		}
+		} 
 	}
 }
 
@@ -1421,31 +1424,14 @@ class NcdfEncoderBuilder
 	public NcdfEncoderBuilder()
 	{ }
 
-    public static Connection getConn() throws Exception
-	{
-		// this stuff needs to be pulled into the integration code
 
-		String url = "jdbc:postgresql://115.146.94.132/harvest";   // nectar instance, needs to move to test resources configuration
-		Properties props = new Properties();
-		props.setProperty("user","meteo");
-		props.setProperty("password","meteo");
-
-
-		props.setProperty("ssl","true");
-		props.setProperty("sslfactory","org.postgresql.ssl.NonValidatingFactory");
-		props.setProperty("driver","org.postgresql.Driver" );
-
-		return DriverManager.getConnection(url, props);
-	}
-
-	public NcdfEncoder create ( InputStream config, String filterExpr) throws Exception
+	public NcdfEncoder create ( InputStream config, String filterExpr, Connection conn ) throws Exception
 	{
 		// not sure if the expression parsing shouldn't go in here?
 		// not sure if definition decoding should be done here...
 
 		NcdfDefinition definition = null;
 		try {
-			// new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
 			Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(config);
 			Node node =	document.getFirstChild();
 			definition = new NcdfDefinitionXMLParser().parseDefinition( node );
@@ -1454,19 +1440,13 @@ class NcdfEncoderBuilder
 			config.close();
 		}
 
-		// change name exprParser
 		IExprParser parser = new ExprParser();
 		IDialectTranslate translate = new  PGDialectTranslate();
-		Connection conn = getConn();
 		ICreateWritable createWritable = new CreateWritable();
 
-		// avoiding ordering clauses that will prevent immediate stream response
-		// we're going to need to sanitize this
-
 		NcdfEncoder generator = new NcdfEncoder( parser, translate, conn, createWritable, definition, filterExpr );
-
+		// think client should probably call prepare()
 		generator.prepare();
-
 		return generator;
 	}
 }

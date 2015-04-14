@@ -8,12 +8,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Properties;
 
 import java.io.InputStream ;
 
 import ucar.nc2.NetcdfFileWriteable; 
 
-//import java.sql.*;
+import java.sql.*;
 
 
 public class MyIT {
@@ -23,6 +24,23 @@ public class MyIT {
 
 		// setup db connection? 
     }   
+
+    public static Connection getConn() throws Exception
+	{
+		// this stuff needs to be pulled into the integration code
+
+		String url = "jdbc:postgresql://115.146.94.132/harvest";   // nectar instance, needs to move to test resources configuration
+		Properties props = new Properties();
+		props.setProperty("user","meteo");
+		props.setProperty("password","meteo");
+
+
+		props.setProperty("ssl","true");
+		props.setProperty("sslfactory","org.postgresql.ssl.NonValidatingFactory");
+		props.setProperty("driver","org.postgresql.Driver" );
+
+		return DriverManager.getConnection(url, props);
+	}
 
 
 	private void streamData( NcdfEncoder generator ) throws Exception {
@@ -47,7 +65,8 @@ public class MyIT {
 		InputStream config = getClass().getResourceAsStream("/anmn_nrs_ctd_profiles.xml");
 		NcdfEncoder generator = new NcdfEncoderBuilder().create(	
 			config,
-			" (lt TIME 2013-6-29T00:40:01Z ) " 
+			" (lt TIME 2013-6-29T00:40:01Z ) ",
+			getConn() 
 		);
 
 		streamData( generator ); 
@@ -65,6 +84,7 @@ public class MyIT {
 			config,
 			 " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "
 			// " (lt TIME 2013-6-29T00:40:01Z ) "
+			, getConn()		
 		);
 
 		streamData( generator ); 
@@ -80,6 +100,7 @@ public class MyIT {
 			config,
 			 " (and (gt TIME 2013-6-27T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "
 			// " (lt TIME 2013-6-29T00:40:01Z ) "
+			, getConn()		
 		);
 
 		// can expect a count ...
