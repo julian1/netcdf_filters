@@ -1,6 +1,6 @@
 
 
-package au.org.emii.ncfgenerator;
+package au.org.emii.ncdfgenerator;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -850,7 +850,6 @@ class VariableEncoder implements IVariableEncoder
 }
 
 
-
 interface ICreateWritable
 {
 	public NetcdfFileWriteable create( )  throws IOException ;
@@ -870,7 +869,7 @@ class CreateWritable implements  ICreateWritable
 		return NetcdfFileWriteable.createNew(filename, false);
 	}
 
-	// method to request as a byte stream and return?
+	// TODO method to request as a byte stream and return?
 	// public getByteStream () { }
 }
 
@@ -1222,8 +1221,6 @@ class NcdfDefinitionXMLParser
 }
 
 
-
-
 class NcdfEncoder
 {
 	final IExprParser exprParser;				
@@ -1418,7 +1415,7 @@ class NcdfEncoder
 }
 
 
-class NcdfEncoderBuilder
+public class NcdfEncoderBuilder
 {
 
 	public NcdfEncoderBuilder()

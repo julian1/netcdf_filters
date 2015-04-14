@@ -1,5 +1,5 @@
 
-package au.org.emii.ncfgenerator;
+package au.org.emii.ncdfgenerator;
 
 import org.junit.Before;
 import org.junit.Test;
