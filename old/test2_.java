@@ -5,11 +5,8 @@
 // time java -cp .:postgresql-9.1-901.jdbc4.jar:netcdfAll-4.2.jar  test2 
 
 //import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.InputStream ;
 import java.io.IOException;
 
-import java.io.FileInputStream;
 import java.io.BufferedInputStream;
 
 import java.util.ArrayList; //io.BufferedInputStream;
@@ -26,7 +23,6 @@ import java.lang.RuntimeException;
 
 import java.text.SimpleDateFormat;
 /*import java.util.List;
-import java.util.Set;
 import java.util.ArrayList;
 */
 //import java.util.Date;
@@ -49,7 +45,6 @@ import ucar.ma2.Index;
 
 
 import java.util.regex.Pattern ; 
-import java.util.regex.Matcher; 
 
 
 //import java.util.StringTokenizer;
