@@ -22,13 +22,11 @@ public class MyIT {
     @Before
     public void mergeIT() {
 
-		// setup db connection? 
+		// setup db conn once? 
     }   
 
     public static Connection getConn() throws Exception
 	{
-		// this stuff needs to be pulled into the integration code
-
 		String url = "jdbc:postgresql://115.146.94.132/harvest";   // nectar instance, needs to move to test resources configuration
 		Properties props = new Properties();
 		props.setProperty("user","meteo");
@@ -52,7 +50,6 @@ public class MyIT {
 		while( writer != null );
 	}
 
-	// we should expose the db... 
 
     @Test
     public void anmn_nrs_ctd_profiles_IT() throws Exception {
