@@ -11,7 +11,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.InputStream ;
 
-// use a stream here. 
 import ucar.nc2.NetcdfFileWriteable; 
 
 //import java.sql.*;
