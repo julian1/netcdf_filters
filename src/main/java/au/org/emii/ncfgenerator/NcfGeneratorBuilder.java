@@ -1907,7 +1907,7 @@ class NcdfEncoderBuilder
 
 		// psql -h test-geoserver -U meteo -d harvest
 
-		String url = "jdbc:postgresql://test-geoserver/harvest";
+		String url = "jdbc:postgresql://115.146.94.132/harvest";   // nectar instance, needs to move to test resources configuration
 		Properties props = new Properties();
 		props.setProperty("user","meteo");
 		props.setProperty("password","meteo");
