@@ -15,7 +15,7 @@
 		<dependency>
 		  <groupId>edu.ucar</groupId>
 			<artifactId>netcdf</artifactId>
-		  <version>4.3.23</version>
+		  <version>4.3.22</version>
 		</dependency>
 
 
@@ -62,6 +62,17 @@
 <!-- http://zeroturnaround.com/rebellabs/the-correct-way-to-use-integration-tests-in-your-build-process/ -->
 <build>
     <plugins>
+
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-compiler-plugin</artifactId>
+  <version>2.3</version>
+  <configuration>
+    <source>1.7</source>
+    <target>1.7</target>
+  </configuration>
+</plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
