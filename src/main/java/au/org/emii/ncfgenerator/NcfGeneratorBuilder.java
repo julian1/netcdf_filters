@@ -79,6 +79,12 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+
+
+import javax.xml.transform.dom.DOMSource; 
+
+
+
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -639,7 +645,7 @@ class Timeseries2
 			throw new RuntimeException( "failed to parse expression" );
 		}
 		String selection = translate.process( expr );
-		String query = "SELECT * FROM anmn_ts.measurement m join anmn_ts.timeseries ts on m.ts_id = ts.id where " + selection + " order by ts_id, \"TIME\"";
+		sTRing query = "SELECT * FROM anmn_ts.measurement m join anmn_ts.timeseries ts on m.ts_id = ts.id where " + selection + " order by ts_id, \"TIME\"";
 		System.out.println( "first query " + query  );
 
 		PreparedStatement stmt = conn.prepareStatement( query );
@@ -777,23 +783,17 @@ interface IVariableEncoderD1 extends IVariableEncoder
 
 interface IValueEncoder
 {
-	// Change name to ValueEncoder Timestamp
+	// Netcdf value encoder from java/sql types
 
 	public void encode( Array A, int ima, Object value );
-
 	public void prepare( Map<String, String> attributes ); 
-
-	//public Class targetType();
 	public DataType targetType();
 }
 
 
-// change name init() to prepare() 
-
 
 class TimestampValueEncoder implements IValueEncoder
 {
-
 	TimestampValueEncoder()
 	{
 		// all the date attribute parsing slows the code a lot so calculate once at init . 
@@ -809,10 +809,10 @@ class TimestampValueEncoder implements IValueEncoder
 
 	public DataType targetType()
 	{
-		return DataType.FLOAT;//.class;
+		return DataType.FLOAT;
 	}
 
-	public void prepare(  Map<String, String> attributes ) 
+	public void prepare( Map<String, String> attributes ) 
 	{ 
 		// System.out.println( "****************** units " + attributes.get("units") ); 
 
@@ -868,7 +868,6 @@ class TimestampValueEncoder implements IValueEncoder
 
 class FloatValueEncoder implements IValueEncoder
 {
-
 	FloatValueEncoder()
 	{
 		this.fill = 1234; 
@@ -876,14 +875,12 @@ class FloatValueEncoder implements IValueEncoder
 
 	float fill; 
 
-	// change name to targetType
 	public DataType targetType()
 	{
 		return DataType.FLOAT;
 	}
 
-
-	public void prepare(  Map<String, String> attributes ) 
+	public void prepare( Map<String, String> attributes ) 
 	{ 
 		fill = Float.valueOf( attributes.get( "_FillValue" )).floatValue();
 
@@ -900,8 +897,44 @@ class FloatValueEncoder implements IValueEncoder
 		else if( value instanceof Double ) {
 			A.setFloat( ima, (float)(double)(Double) value);
 		}
-		else if( value instanceof Long ) { // for testing - should remove
-			A.setFloat( ima, (float)(long)(Long) value);
+		else {
+			throw new RuntimeException( "Failed to coerce type '" + value.getClass() + "' to float" );
+		}
+	}
+}
+
+
+class IntValueEncoder implements IValueEncoder
+{
+	// Int is 32bit in Netcdf 
+
+	IntValueEncoder()
+	{
+		this.fill = 1234; 
+	}
+
+	int fill; 
+
+	public DataType targetType()
+	{
+		return DataType.INT;
+	}
+
+	public void prepare( Map<String, String> attributes ) 
+	{ 
+		fill = Integer.valueOf( attributes.get( "_FillValue" )).intValue();
+	}  
+
+	public void encode( Array A, int ima, Object value )
+	{
+		if( value == null) {
+			A.setInt( ima, fill );
+		}
+		else if( value instanceof Integer ) { 
+			A.setInt( ima, (Integer) value);
+		}
+		else if( value instanceof Long ) { 
+			A.setInt( ima, (int)(long)(Long) value);
 		}
 		else {
 			throw new RuntimeException( "Failed to coerce type '" + value.getClass() + "' to float" );
@@ -1056,32 +1089,19 @@ class DimensionImpl implements IDimension
 
 
 
-
-
-/*
-	The final netcdf document is actully a combination of everything
-*/
-
-class NcfEncoder implements IVariableEncoder
+class VariableEncoder implements IVariableEncoder
 {
-
-
-		// IVariableEncoder temp = new NcfEncoder ( "TEMP", idimensions, floatEncoder, floatAttributes ) ;
-
-	//public NcfEncoder( String variableName, ArrayList< IVariableEncoder>  children )
-
-	//public EncoderD1( NetcdfFileWriteable writer, String variableName, ArrayList<Dimension> dims, Map<String, Object> attributes, IValueEncoder encodeValue )
-	public NcfEncoder( String variableName, ArrayList< IDimension> dimensions, IValueEncoder encodeValue, Map<String, String> attributes )
-	{
+	public VariableEncoder( 
+		String variableName, 
+		ArrayList< IDimension> dimensions, 
+		IValueEncoder encodeValue, 
+		Map<String, String> attributes 
+	) {
 		this.variableName = variableName;
 		this.encodeValue = encodeValue;
 		this.attributes = attributes;
 		this.dimensions = dimensions;
-
 		this.buffer = new ArrayList<Object>( );
-
-//		this.isDefined = false;
-//		this.dimension = null;
 	}
 
 	final String variableName;
@@ -1089,10 +1109,6 @@ class NcfEncoder implements IVariableEncoder
 	final Map<String, String>	attributes;
 	final ArrayList<IDimension>	dimensions; // change name childDimensions
 	final ArrayList<Object>		buffer;
-
-//	boolean isDefined;
-//	Dimension dimension;
-
 
 
 	/*	we can also record the table, or index of table here if we want
@@ -1283,9 +1299,9 @@ class NodeWrapper implements Iterable<Node> {
 
 // More data than a class 
 
-class NcfDefinition
+class NcdfDefinition
 {
-	NcfDefinition(
+	NcdfDefinition(
 		String schema,
 		String virtualDataTable,
 		String virtualInstanceTable,
@@ -1310,7 +1326,7 @@ class NcfDefinition
 
 
 
-class NcfDefinitionXMLParser
+class NcdfDefinitionXMLParser
 {
 	private boolean isNodeName( Node node, String name )
 	{
@@ -1379,7 +1395,15 @@ class NcfDefinitionXMLParser
 		if( isNodeName( node, "encoder"))
 		{
 			String val = nodeVal( node );
-			if( val.equals( "float")) {
+			if( val.equals( "integer")) {
+	
+				System.out.println( "WHOOT WHOOT WHOOT" ); 
+
+				return new IntValueEncoder();
+
+				// throw new RuntimeException( "INT" );
+			}
+			else if( val.equals( "float")) {
 				return new FloatValueEncoder();
 			}
 			else if( val.equals( "byte")) {
@@ -1499,7 +1523,7 @@ class NcfDefinitionXMLParser
 			{
 				System.out.println( "whoot creating encoder " + name  );
 
-				return new NcfEncoder ( name , new ArrayList<IDimension>(dimensions.values()), encodeValue , attributes ) ;
+				return new VariableEncoder ( name , new ArrayList<IDimension>(dimensions.values()), encodeValue , attributes ) ;
 			}
 			else {
 				throw new RuntimeException("missing something  " );
@@ -1542,7 +1566,7 @@ class NcfDefinitionXMLParser
 
 	}
 
-	NcfDefinition parseDefinition( Node node )
+	NcdfDefinition parseDefinition( Node node )
 	{
 		// think we need a context?
 		if( isNodeName( node, "definition"))
@@ -1568,7 +1592,7 @@ class NcfDefinitionXMLParser
 			String virtualDataTable = source.get( "virtualDataTable" );
 			String virtualInstanceTable =source.get( "virtualInstanceTable" );
 
-			return new NcfDefinition( schema, virtualDataTable, virtualInstanceTable, dimensions, encoders );
+			return new NcdfDefinition( schema, virtualDataTable, virtualInstanceTable, dimensions, encoders );
 		}
 		return null;
 	}
@@ -1625,13 +1649,13 @@ class NcfDefinitionXMLParser
 
 	*/
 /*
-	public NcfDefinition  test() throws Exception
+	public NcdfDefinition  test() throws Exception
 	{
 		InputStream stream = new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
 		Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream);
 		Node node =	document.getFirstChild();
 
-		return new NcfDefinitionXMLParser().parseDefinition( node );
+		return new NcdfDefinitionXMLParser().parseDefinition( node );
 	}
 */
 
@@ -1658,25 +1682,25 @@ class NcfDefinitionXMLParser
 	ok, lets try profile.
 */
 
-class NcfGenerator
+class NcdfEncoder
 {
 	final IExprParser exprParser;				// change name to expressionParser or SelectionParser
 	final IDialectTranslate translate ;		// will also load up the parameters?
 	final Connection conn;
 	final ICreateWritable createWritable; // generate a writiable
-	final NcfDefinition definition ;
+	final NcdfDefinition definition ;
 	final String filterExpr;
 
 	final int fetchSize;
 	IExpression selection_expr;
 	ResultSet featureInstancesRS;
 
-	public NcfGenerator(
+	public NcdfEncoder(
 		IExprParser exprParser,
 		IDialectTranslate translate,
 		Connection conn,
 		ICreateWritable createWritable,
-		NcfDefinition definition,
+		NcdfDefinition definition,
 		String filterExpr
 	) {
 		this.exprParser = exprParser;
@@ -1691,7 +1715,7 @@ class NcfGenerator
 		selection_expr = null;
 	}
 
-	public void init() throws Exception
+	public void prepare() throws Exception
 	{
 		selection_expr = exprParser.parseExpression( filterExpr, 0);
 		// bad, should return expr or throw
@@ -1861,14 +1885,14 @@ class NcfGenerator
 
 // two interfaces a builder to generate, and then a class to use.
 
-class NcfGeneratorBuilder
+class NcdfEncoderBuilder
 {
 	// default instance creation
 
 	// the assembly of all this,
 	// need to distinguish the user data from inbuild data.
 
-	public NcfGeneratorBuilder()
+	public NcdfEncoderBuilder()
 	{
 
 	}
@@ -1907,15 +1931,17 @@ class NcfGeneratorBuilder
 		return conn;
 	}
 
-	public NcfGenerator create ( InputStream config, String filterExpr) throws Exception
+	public NcdfEncoder create ( InputStream config, String filterExpr) throws Exception
 	{
+		// not sure if the expression parsing shouldn't go in here?
+
 		// not sure if definition decoding should be done here...
-		NcfDefinition definition = null;
+		NcdfDefinition definition = null;
 		try {
 			// new ByteArrayInputStream(XML.getBytes(StandardCharsets.UTF_8));
 			Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(config);
 			Node node =	document.getFirstChild();
-			definition = new NcfDefinitionXMLParser().parseDefinition( node );
+			definition = new NcdfDefinitionXMLParser().parseDefinition( node );
 
 		} finally {
 			config.close();
@@ -1930,9 +1956,9 @@ class NcfGeneratorBuilder
 		// avoiding ordering clauses that will prevent immediate stream response
 		// we're going to need to sanitize this
 
-		NcfGenerator generator = new NcfGenerator( parser, translate, conn, createWritable, definition, filterExpr );
+		NcdfEncoder generator = new NcdfEncoder( parser, translate, conn, createWritable, definition, filterExpr );
 
-		generator.init();	 // change name initGenerator..., distinct action from assembling the dependencies of the class.
+		generator.prepare();	 // change name initGenerator..., distinct action from assembling the dependencies of the class.
 
 		return generator ;
 	}

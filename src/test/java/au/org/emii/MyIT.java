@@ -26,7 +26,7 @@ public class MyIT {
     }   
 
 
-	private void streamData( NcfGenerator generator ) throws Exception {
+	private void streamData( NcdfEncoder generator ) throws Exception {
 		NetcdfFileWriteable writer = null;
 		do {  
 			// should try and get lots...
@@ -46,7 +46,7 @@ public class MyIT {
 		// assertTrue(456 == 456 );
 
 		InputStream config = getClass().getResourceAsStream("/anmn_nrs_ctd_profiles.xml");
-		NcfGenerator generator = new NcfGeneratorBuilder().create(	
+		NcdfEncoder generator = new NcdfEncoderBuilder().create(	
 			config,
 			" (lt TIME 2013-6-29T00:40:01Z ) " 
 		);
@@ -62,7 +62,7 @@ public class MyIT {
 		// assertTrue(123 == 123 );
 		// assertTrue(456 == 456 );
 		InputStream config = getClass().getResourceAsStream("/anmn_timeseries.xml");
-		NcfGenerator generator = new NcfGeneratorBuilder().create(	
+		NcdfEncoder generator = new NcdfEncoderBuilder().create(	
 			config,
 			 " (and (gt TIME 2013-6-28T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "
 			// " (lt TIME 2013-6-29T00:40:01Z ) "
@@ -77,7 +77,7 @@ public class MyIT {
 
 		System.out.println( "**** sst trajectory ****" );
 		InputStream config = getClass().getResourceAsStream("/soop_sst_trajectory.xml");
-		NcfGenerator generator = new NcfGeneratorBuilder().create(	
+		NcdfEncoder generator = new NcdfEncoderBuilder().create(	
 			config,
 			 " (and (gt TIME 2013-6-27T00:35:01Z ) (lt TIME 2013-6-29T00:40:01Z )) "
 			// " (lt TIME 2013-6-29T00:40:01Z ) "
