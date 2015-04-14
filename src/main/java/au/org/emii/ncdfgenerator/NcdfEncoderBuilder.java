@@ -1386,19 +1386,14 @@ class NcdfEncoder
 				writer.create();
 
 				for ( IVariableEncoder encoder: definition.encoders.values()) {
-					// change name writeValues
+					// maybe change name writeValues
 					encoder.finish( writer );
 				}
 				// write the file
 				writer.close();
 
-				// TODO must close other record sets.
-				// and if early termination.
-				//		return null;
-
 				// TODO we should be returning a filestream here...
 				// the caller doesn't care that it's a netcdf
-
 				return writer;
 			}
 			else {
